@@ -9,12 +9,14 @@ import lk.ijse.exampro.util.JwtUtil;
 import lk.ijse.exampro.util.VarList;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("api/v1/user")
 @CrossOrigin(origins = "http://localhost:63342")
 public class UserController {
+
     private final UserService userService;
     private final JwtUtil jwtUtil;
 
@@ -50,5 +52,27 @@ public class UserController {
                     .body(new ResponseDTO(VarList.INTERNAL_SERVER_ERROR, e.getMessage(), null));
         }
     }
+
+    @DeleteMapping("/delete/{email}")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<ResponseDTO> deleteUserByEmail(@PathVariable String email) {
+        try {
+            int res = userService.deleteUserByEmail(email);
+            if (res == VarList.OK) {
+                return ResponseEntity.status(HttpStatus.OK)
+                        .body(new ResponseDTO(VarList.OK, "User deleted successfully", null));
+            } else if (res == VarList.NOT_FOUND) {
+                return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                        .body(new ResponseDTO(VarList.NOT_FOUND, "User not found", null));
+            } else {
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                        .body(new ResponseDTO(VarList.BAD_REQUEST, "Failed to delete user", null));
+            }
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(new ResponseDTO(VarList.INTERNAL_SERVER_ERROR, e.getMessage(), null));
+        }
+    }
+
 
 }

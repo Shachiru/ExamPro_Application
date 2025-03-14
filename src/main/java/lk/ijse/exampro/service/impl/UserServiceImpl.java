@@ -18,7 +18,6 @@ import org.springframework.transaction.annotation.Transactional;
 import java.util.HashSet;
 import java.util.Set;
 
-
 @Service
 @Transactional
 public class UserServiceImpl implements UserDetailsService, UserService {
@@ -57,17 +56,22 @@ public class UserServiceImpl implements UserDetailsService, UserService {
     }
 
     @Override
+    public int deleteUserByEmail(String email) {
+        if (userRepository.existsByEmail(email)) {
+            userRepository.deleteByEmail(email);
+            return VarList.OK;
+        } else {
+            return VarList.NOT_FOUND;
+        }
+    }
+
+    @Override
     public int saveUser(UserDTO userDTO) {
         if (userRepository.existsByEmail(userDTO.getEmail())) {
             return VarList.NOT_ACCEPTABLE;
         } else {
             BCryptPasswordEncoder passwordEncoder = new BCryptPasswordEncoder();
             userDTO.setPassword(passwordEncoder.encode(userDTO.getPassword()));
-
-            // Make sure the role is valid before saving
-            if (userDTO.getRole() == null || userDTO.getRole().isEmpty()) {
-                userDTO.setRole("USER");  // Default role if none is provided
-            }
 
             // Validate if the role is one of the accepted roles
             if (!userDTO.getRole().equals("ADMIN") && !userDTO.getRole().equals("STUDENT") && !userDTO.getRole().equals("TEACHER")) {

@@ -1,6 +1,7 @@
 package lk.ijse.exampro.controller;
 
 import lk.ijse.exampro.dto.AuthDTO;
+import lk.ijse.exampro.dto.LoginRequestDTO;
 import lk.ijse.exampro.dto.ResponseDTO;
 import lk.ijse.exampro.dto.UserDTO;
 import lk.ijse.exampro.service.impl.UserServiceImpl;
@@ -29,7 +30,37 @@ public class AuthController {
         this.responseDTO = responseDTO;
     }
 
-    @PostMapping("/sign_in/admin")
+    @PostMapping("/sign_in")
+    public ResponseEntity<ResponseDTO> authenticateUser(@RequestBody LoginRequestDTO loginRequestDTO) {
+        try {
+            authenticationManager.authenticate(
+                    new UsernamePasswordAuthenticationToken(loginRequestDTO.getEmail(), loginRequestDTO.getPassword())
+            );
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                    .body(new ResponseDTO(VarList.UNAUTHORIZED, "Invalid Credentials", null));
+        }
+
+        UserDTO loadedUser = userService.searchUser(loginRequestDTO.getEmail());
+        if (loadedUser == null) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                    .body(new ResponseDTO(VarList.NOT_FOUND, "User not found", null));
+        }
+
+        String token = jwtUtil.generateToken(loadedUser);
+
+        // Create AuthDTO to send back the response
+        AuthDTO responseAuth = new AuthDTO();
+        responseAuth.setEmail(loadedUser.getEmail());
+        responseAuth.setToken(token);
+        responseAuth.setRole(loadedUser.getRole()); // Include Role
+
+        return ResponseEntity.ok(new ResponseDTO(VarList.OK, "Login Successful", responseAuth));
+    }
+
+
+
+    /*@PostMapping("/sign_in/admin")
     public ResponseEntity<ResponseDTO> authenticateAdmin(@RequestBody UserDTO userDTO) {
         return authenticateByRole(userDTO, "ADMIN");
     }
@@ -65,5 +96,5 @@ public class AuthController {
         authDTO.setToken(token);
 
         return ResponseEntity.ok(new ResponseDTO(VarList.OK, "Login Successful", authDTO));
-    }
+    }*/
 }

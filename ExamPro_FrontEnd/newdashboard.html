@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard - ExamPro</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdn.jsdelivr.net/npm/font-awesome/css/font-awesome.min.css" rel="stylesheet">
+    <style>
+        body {
+            background-color: #f4f7fc;
+            font-family: 'Arial', sans-serif;
+        }
+        .sidebar {
+            height: 100%;
+            width: 250px;
+            position: fixed;
+            top: 0;
+            left: 0;
+            background-color: #3b82f6;
+            color: white;
+            padding-top: 20px;
+        }
+        .sidebar a {
+            display: block;
+            padding: 12px 20px;
+            text-decoration: none;
+            color: white;
+            font-size: 18px;
+            margin-bottom: 10px;
+        }
+        .sidebar a:hover {
+            background-color: #2563eb;
+            border-radius: 5px;
+        }
+        .content {
+            margin-left: 270px;
+            padding: 20px;
+        }
+        .dashboard-card {
+            background-color: #fff;
+            border-radius: 8px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+        .dashboard-card h3 {
+            margin-bottom: 10px;
+            font-size: 24px;
+        }
+        .card-button {
+            background-color: #3b82f6;
+            color: white;
+            padding: 10px 20px;
+            text-decoration: none;
+            border-radius: 5px;
+            font-size: 16px;
+        }
+        .card-button:hover {
+            background-color: #2563eb;
+        }
+        .logout-btn {
+            background-color: #f44336;
+            color: white;
+            padding: 12px 24px;
+            border-radius: 5px;
+            font-size: 16px;
+            text-decoration: none;
+            margin-top: 20px;
+        }
+        .logout-btn:hover {
+            background-color: #e53935;
+        }
+    </style>
+</head>
+<body>
+
+<!-- Sidebar -->
+<div class="sidebar">
+    <h2 class="text-center text-xl">ExamPro</h2>
+    <a href="dashboard.html"><i class="fa fa-dashboard"></i> Dashboard</a>
+    <a href="my-exams.html"><i class="fa fa-pencil"></i> My Exams</a>
+    <a href="my-results.html"><i class="fa fa-chart-line"></i> My Results</a>
+    <a href="profile.html"><i class="fa fa-user"></i> Profile</a>
+</div>
+
+<!-- Main content -->
+<div class="content">
+    <h2 class="text-2xl font-bold">Welcome to the Dashboard</h2>
+    <p class="text-gray-600 mb-6">Hello, <span id="userName">Loading...</span></p>
+
+    <!-- Dashboard Cards -->
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <div class="dashboard-card">
+            <h3>My Exams</h3>
+            <p>View and manage your exams here.</p>
+            <a href="my-exams.html" class="card-button">Go to My Exams</a>
+        </div>
+
+        <div class="dashboard-card">
+            <h3>My Results</h3>
+            <p>Check your exam results here.</p>
+            <a href="my-results.html" class="card-button">View Results</a>
+        </div>
+
+        <div class="dashboard-card">
+            <h3>Profile Settings</h3>
+            <p>Edit and update your profile details.</p>
+            <a href="profile.html" class="card-button">Edit Profile</a>
+        </div>
+    </div>
+
+    <a href="login.html" class="logout-btn" id="logoutButton">Logout</a>
+</div>
+
+<script>
+    // Fetch user data from localStorage or API
+    document.addEventListener("DOMContentLoaded", function() {
+        const token = localStorage.getItem("token");
+        if (!token) {
+            window.location.href = "login.html"; // Redirect to login if not logged in
+        }
+
+        // Get user information (mocked here; you can fetch it from an API if required)
+        const user = JSON.parse(atob(token.split('.')[1])); // Decode JWT token to get user info
+        const userName = document.getElementById('userName');
+        userName.innerText = user.name;
+
+        // Logout functionality
+        document.getElementById('logoutButton').addEventListener('click', function() {
+            localStorage.removeItem('token'); // Remove token
+            window.location.href = 'login.html'; // Redirect to login page
+        });
+    });
+</script>
+
+</body>
+</html>

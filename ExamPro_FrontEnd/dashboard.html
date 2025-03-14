@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard - ExamPro</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
+    <style>
+        body {
+            background: linear-gradient(to right, #007bff, #6610f2);
+            min-height: 100vh;
+        }
+        .dashboard-container {
+            max-width: 900px;
+            background: white;
+            padding: 3rem;
+            border-radius: 10px;
+            box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.1);
+            margin-top: 50px;
+        }
+        .card {
+            margin-bottom: 1rem;
+        }
+        .btn-logout {
+            background-color: #dc3545;
+            border: none;
+        }
+        .btn-logout:hover {
+            background-color: #c82333;
+        }
+    </style>
+</head>
+<body class="flex justify-center items-center">
+
+<div class="dashboard-container text-center">
+    <h2 class="logo mb-4">Welcome to ExamPro Dashboard</h2>
+
+    <div id="userDetails">
+        <p id="userGreeting" class="h4">Loading user data...</p>
+    </div>
+
+    <div class="row">
+        <div class="col-md-4">
+            <div class="card">
+                <div class="card-body">
+                    <h5 class="card-title">My Exams</h5>
+                    <p class="card-text">View and manage your exams.</p>
+                    <a href="my-exams.html" class="btn btn-primary">Go to My Exams</a>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card">
+                <div class="card-body">
+                    <h5 class="card-title">My Results</h5>
+                    <p class="card-text">Check your exam results here.</p>
+                    <a href="my-results.html" class="btn btn-success">View Results</a>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card">
+                <div class="card-body">
+                    <h5 class="card-title">Profile Settings</h5>
+                    <p class="card-text">Update your account details.</p>
+                    <a href="profile.html" class="btn btn-info">Edit Profile</a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <button class="btn btn-logout mt-4" id="logoutButton">Logout</button>
+</div>
+
+<script>
+    // Fetch user data from localStorage or API
+    document.addEventListener("DOMContentLoaded", function() {
+        const token = localStorage.getItem("token");
+        if (!token) {
+            window.location.href = "login.html"; // Redirect to login if not logged in
+        }
+
+        // Get user information (mocked here; you can fetch it from an API if required)
+        const user = JSON.parse(atob(token.split('.')[1])); // Decode JWT token to get user info
+        const userGreeting = document.getElementById('userGreeting');
+        userGreeting.innerText = `Hello, ${user.name}`;
+
+        // Logout functionality
+        document.getElementById('logoutButton').addEventListener('click', function() {
+            localStorage.removeItem('token'); // Remove token
+            window.location.href = 'login.html'; // Redirect to login page
+        });
+    });
+</script>
+
+</body>
+</html>

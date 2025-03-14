@@ -4,6 +4,7 @@ import lk.ijse.exampro.service.impl.UserServiceImpl;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpMethod;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.config.annotation.authentication.builders.AuthenticationManagerBuilder;
 import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
@@ -54,10 +55,12 @@ public class WebSecurityConfig {
                                 "/swagger-ui/**",
                                 "/swagger-ui.html"
                         ).permitAll()
-                        .requestMatchers("/api/v1/admin/**").hasRole("ADMIN")       // Only ADMIN can access /admin endpoints
-                        .requestMatchers("/api/v1/teacher/**").hasRole("TEACHER")   // Only TEACHER can access /teacher endpoints
-                        .requestMatchers("/api/v1/student/**").hasRole("STUDENT")   // Only STUDENT can access /student endpoints
-                        .anyRequest().authenticated()   // All other requests require authentication
+                        .requestMatchers("/api/v1/admin/**").hasRole("ADMIN")
+                        .requestMatchers("/api/v1/teacher/**").hasRole("TEACHER")
+                        .requestMatchers("/api/v1/student/**").hasRole("STUDENT")
+                        .requestMatchers(HttpMethod.DELETE, "/api/v1/user/delete/**").hasRole("ADMIN")
+                        .requestMatchers("/api/v1/auth/**", "/api/v1/user/register").permitAll()
+                        .anyRequest().authenticated()
                 )
                 .sessionManagement(sess -> sess.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class)

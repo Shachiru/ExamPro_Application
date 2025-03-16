@@ -49,7 +49,6 @@ public class AuthController {
 
         String token = jwtUtil.generateToken(loadedUser);
 
-        // Create AuthDTO to send back the response
         AuthDTO responseAuth = new AuthDTO();
         responseAuth.setEmail(loadedUser.getEmail());
         responseAuth.setToken(token);
@@ -57,44 +56,4 @@ public class AuthController {
 
         return ResponseEntity.ok(new ResponseDTO(VarList.OK, "Login Successful", responseAuth));
     }
-
-
-
-    /*@PostMapping("/sign_in/admin")
-    public ResponseEntity<ResponseDTO> authenticateAdmin(@RequestBody UserDTO userDTO) {
-        return authenticateByRole(userDTO, "ADMIN");
-    }
-
-    @PostMapping("/sign_in/teacher")
-    public ResponseEntity<ResponseDTO> authenticateTeacher(@RequestBody UserDTO userDTO) {
-        return authenticateByRole(userDTO, "TEACHER");
-    }
-
-    @PostMapping("/sign_in/student")
-    public ResponseEntity<ResponseDTO> authenticateStudent(@RequestBody UserDTO userDTO) {
-        return authenticateByRole(userDTO, "STUDENT");
-    }
-
-    private ResponseEntity<ResponseDTO> authenticateByRole(UserDTO userDTO, String expectedRole) {
-        try {
-            authenticationManager.authenticate(
-                    new UsernamePasswordAuthenticationToken(userDTO.getEmail(), userDTO.getPassword()));
-        } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
-                    .body(new ResponseDTO(VarList.UNAUTHORIZED, "Invalid Credentials", e.getMessage()));
-        }
-
-        UserDTO loadedUser = userService.loadUserDetailsByUsername(userDTO.getEmail());
-        if (loadedUser == null || !loadedUser.getRole().equalsIgnoreCase(expectedRole)) {
-            return ResponseEntity.status(HttpStatus.FORBIDDEN)
-                    .body(new ResponseDTO(VarList.FORBIDDEN, "Access Denied! Incorrect Role", null));
-        }
-
-        String token = jwtUtil.generateToken(loadedUser);
-        AuthDTO authDTO = new AuthDTO();
-        authDTO.setEmail(loadedUser.getEmail());
-        authDTO.setToken(token);
-
-        return ResponseEntity.ok(new ResponseDTO(VarList.OK, "Login Successful", authDTO));
-    }*/
 }

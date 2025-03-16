@@ -4,12 +4,18 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+@Data
 @AllArgsConstructor
 @NoArgsConstructor
-@Data
 public class UserDTO {
     private String email;
     private String username;
     private String password;
-    private String role;
+    private String role;  // Must be "ADMIN", "STUDENT", or "TEACHER"
+
+    // Additional fields for role-specific information
+    private String school_name;  // For Admin (Updated from "department")
+    private String grade;       // For Student
+    private String subject;     // For Teacher
 }
+

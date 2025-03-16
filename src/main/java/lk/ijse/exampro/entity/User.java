@@ -3,7 +3,7 @@ package lk.ijse.exampro.entity;
 import jakarta.persistence.*;
 import lombok.*;
 
-import java.util.List;
+import java.util.UUID;
 
 @Entity
 @Table(name = "users")
@@ -12,8 +12,9 @@ import java.util.List;
 @AllArgsConstructor
 public class User {
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+    @GeneratedValue(strategy = GenerationType.UUID)
+    @Column(updatable = false, nullable = false)
+    private UUID id;
 
     @Column(nullable = false, unique = true)
     private String email;
@@ -23,15 +24,4 @@ public class User {
 
     @Column(nullable = false)
     private String password;
-
-    @Column(nullable = false)
-    private String role;
-
-    @OneToMany(mappedBy = "createdBy", cascade = CascadeType.ALL)
-    private List<Exam> examsCreated;
-
-    @OneToMany(mappedBy = "student", cascade = CascadeType.ALL)
-    private List<StudentExam> examsTaken;
 }
-
-

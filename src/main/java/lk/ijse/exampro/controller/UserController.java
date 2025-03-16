@@ -29,22 +29,25 @@ public class UserController {
     public ResponseEntity<ResponseDTO> registerUser(@RequestBody @Valid UserDTO userDTO) {
         try {
             int res = userService.saveUser(userDTO);
+
             switch (res) {
                 case VarList.CREATED -> {
                     String token = jwtUtil.generateToken(userDTO);
                     AuthDTO authDTO = new AuthDTO();
                     authDTO.setEmail(userDTO.getEmail());
                     authDTO.setToken(token);
+                    authDTO.setRole(userDTO.getRole());
+
                     return ResponseEntity.status(HttpStatus.CREATED)
-                            .body(new ResponseDTO(VarList.CREATED, "Success", authDTO));
+                            .body(new ResponseDTO(VarList.CREATED, "User registered successfully", authDTO));
                 }
                 case VarList.NOT_ACCEPTABLE -> {
                     return ResponseEntity.status(HttpStatus.NOT_ACCEPTABLE)
-                            .body(new ResponseDTO(VarList.NOT_ACCEPTABLE, "Email Already Used", null));
+                            .body(new ResponseDTO(VarList.NOT_ACCEPTABLE, "Email already used", null));
                 }
                 default -> {
                     return ResponseEntity.status(HttpStatus.BAD_GATEWAY)
-                            .body(new ResponseDTO(VarList.BAD_GATEWAY, "Error", null));
+                            .body(new ResponseDTO(VarList.BAD_GATEWAY, "Error during registration", null));
                 }
             }
         } catch (Exception e) {
@@ -52,6 +55,7 @@ public class UserController {
                     .body(new ResponseDTO(VarList.INTERNAL_SERVER_ERROR, e.getMessage(), null));
         }
     }
+
 
     @DeleteMapping("/delete/{email}")
     @PreAuthorize("hasRole('ADMIN')")

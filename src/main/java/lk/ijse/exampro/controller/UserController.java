@@ -76,6 +76,4 @@ public class UserController {
                     .body(new ResponseDTO(VarList.INTERNAL_SERVER_ERROR, e.getMessage(), null));
         }
     }
-
-
 }

@@ -99,6 +99,7 @@ public class UserServiceImpl implements UserDetailsService, UserService {
         userDTO.setPassword(passwordEncoder.encode(userDTO.getPassword()));
 
         User user = modelMapper.map(userDTO, User.class);
+        user.setRole(userDTO.getRole().toUpperCase());
         userRepository.save(user);
 
         switch (userDTO.getRole().toUpperCase()) {
@@ -124,8 +125,6 @@ public class UserServiceImpl implements UserDetailsService, UserService {
                 return VarList.NOT_ACCEPTABLE;
             }
         }
-
         return VarList.CREATED;
     }
-
 }

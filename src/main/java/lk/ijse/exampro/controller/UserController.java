@@ -56,7 +56,6 @@ public class UserController {
         }
     }
 
-
     @DeleteMapping("/delete/{email}")
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<ResponseDTO> deleteUserByEmail(@PathVariable String email) {

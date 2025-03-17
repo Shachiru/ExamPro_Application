@@ -11,10 +11,10 @@ public class UserDTO {
     private String email;
     private String username;
     private String password;
-    private String role;  // Must be "ADMIN", "STUDENT", or "TEACHER"
+    private String role;
 
-    // Additional fields for role-specific information
-    private String school_name;  // For Admin (Updated from "department")
+
+    private String school_name;  // For Admin
     private String grade;       // For Student
     private String subject;     // For Teacher
 }

@@ -30,7 +30,7 @@ public class UserController {
         this.jwtUtil = jwtUtil;
     }
 
-    @PostMapping(value = "/register")
+    @PostMapping(value = "/sign_up")
     public ResponseEntity<ResponseDTO> registerUser(@RequestBody @Valid UserDTO userDTO) {
         try {
             int res = userService.saveUser(userDTO);

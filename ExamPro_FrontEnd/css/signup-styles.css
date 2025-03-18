@@ -1,0 +1,176 @@
+body {
+    font-family: 'Poppins', sans-serif;
+    background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 2rem 1rem;
+}
+
+.signup-container {
+    max-width: 700px;
+    background: white;
+    border-radius: 15px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    overflow: hidden;
+    position: relative;
+    margin: 2rem 0;
+}
+
+.header-image {
+    width: 100%;
+    height: 180px;
+    object-fit: cover;
+    border-radius: 15px 15px 0 0;
+}
+
+.content-wrapper {
+    padding: 2rem 3rem;
+}
+
+.logo {
+    font-size: 2.5rem;
+    font-weight: 600;
+    margin-bottom: 1.5rem;
+}
+
+.logo span {
+    color: #0d6efd;
+}
+
+.form-control {
+    border-radius: 8px;
+    padding: 0.75rem 1rem;
+    border: 1px solid #ced4da;
+    font-size: 1rem;
+}
+
+.form-control:focus {
+    border-color: #0d6efd;
+    box-shadow: 0 0 0 0.25rem rgba(13, 110, 253, 0.25);
+}
+
+.btn-primary {
+    background-color: #0d6efd;
+    border: none;
+    padding: 0.85rem 2rem;
+    border-radius: 8px;
+    font-weight: 500;
+    font-size: 1rem;
+    transition: background-color 0.2s;
+}
+
+.btn-primary:hover {
+    background-color: #0b5ed7;
+}
+
+.text-primary {
+    color: #0d6efd !important;
+}
+
+.error-message {
+    color: #dc3545;
+    font-size: 0.875rem;
+    margin-top: 1rem;
+}
+
+.decorative-icon {
+    position: absolute;
+    opacity: 0.1;
+    color: #0d6efd;
+}
+
+.top-left-icon {
+    top: 15px;
+    left: 15px;
+    font-size: 2.5rem;
+}
+
+.bottom-right-icon {
+    bottom: 15px;
+    right: 15px;
+    font-size: 3rem;
+}
+
+.input-group {
+    position: relative;
+}
+
+.toggle-password {
+    position: absolute;
+    right: 10px;
+    top: 50%;
+    transform: translateY(-50%);
+    background: none;
+    border: none;
+    color: #6c757d;
+    cursor: pointer;
+    padding: 0.5rem;
+    z-index: 10;
+}
+
+.toggle-password:hover {
+    color: #0d6efd;
+}
+
+.form-control.password-field {
+    padding-right: 2.5rem; /* Space for the toggle button */
+}
+
+.role-dependent-field {
+    display: none;
+}
+
+.form-row {
+    display: flex;
+    gap: 1rem;
+    margin-bottom: 1rem;
+}
+
+.form-col {
+    flex: 1;
+}
+
+@media (max-width: 768px) {
+    .form-row {
+        flex-direction: column;
+        gap: 0;
+    }
+}
+
+.profile-picture-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    margin-bottom: 1.5rem;
+}
+
+.profile-picture-preview {
+    width: 120px;
+    height: 120px;
+    border-radius: 50%;
+    border: 2px dashed #ced4da;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 1rem;
+    background-size: cover;
+    background-position: center;
+    overflow: hidden;
+}
+
+.profile-picture-placeholder {
+    font-size: 2rem;
+    color: #6c757d;
+}
+
+.profile-picture-input {
+    display: none;
+}
+
+.profile-picture-label {
+    cursor: pointer;
+    font-size: 0.875rem;
+    color: #0d6efd;
+}

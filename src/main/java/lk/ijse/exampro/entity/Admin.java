@@ -13,7 +13,7 @@ public class Admin {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long admin_id;
 
-    private String school_name;
+    private String schoolName;
 
     @OneToOne
     @JoinColumn(name = "user_id", nullable = false, unique = true)

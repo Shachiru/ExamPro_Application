@@ -11,6 +11,7 @@ import lk.ijse.exampro.repository.TeacherRepository;
 import lk.ijse.exampro.repository.UserRepository;
 import lk.ijse.exampro.service.UserService;
 import lk.ijse.exampro.util.VarList;
+import lk.ijse.exampro.util.enums.UserRole;
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
@@ -95,36 +96,49 @@ public class UserServiceImpl implements UserDetailsService, UserService {
             return VarList.NOT_ACCEPTABLE;
         }
 
+        if (userDTO.getRole() == null) {  // Check if role is null
+            return VarList.NOT_ACCEPTABLE;  // Invalid role
+        }
+
+        UserRole role;
+        try {
+            role = userDTO.getRole();
+        } catch (IllegalArgumentException e) {
+            return VarList.NOT_ACCEPTABLE;  // Invalid role
+        }
+
         BCryptPasswordEncoder passwordEncoder = new BCryptPasswordEncoder();
         userDTO.setPassword(passwordEncoder.encode(userDTO.getPassword()));
 
         User user = modelMapper.map(userDTO, User.class);
-        user.setRole(userDTO.getRole().toUpperCase());
+        user.setNic(userDTO.getNic());
+        user.setRole(role);
         userRepository.save(user);
 
-        switch (userDTO.getRole().toUpperCase()) {
-            case "ADMIN" -> {
+        switch (role) {
+            case ADMIN:
                 Admin admin = new Admin();
                 admin.setUser(user);
-                admin.setSchool_name(userDTO.getSchool_name());
+                admin.setSchoolName(userDTO.getSchoolName());
                 adminRepository.save(admin);
-            }
-            case "STUDENT" -> {
+                break;
+
+            case STUDENT:
                 Student student = new Student();
                 student.setUser(user);
                 student.setGrade(userDTO.getGrade());
                 studentRepository.save(student);
-            }
-            case "TEACHER" -> {
+                break;
+
+            case TEACHER:
                 Teacher teacher = new Teacher();
                 teacher.setUser(user);
                 teacher.setSubject(userDTO.getSubject());
                 teacherRepository.save(teacher);
-            }
-            default -> {
-                return VarList.NOT_ACCEPTABLE;
-            }
+                break;
         }
+
         return VarList.CREATED;
     }
+
 }

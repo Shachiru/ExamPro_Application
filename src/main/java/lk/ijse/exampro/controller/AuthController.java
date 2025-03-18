@@ -52,7 +52,7 @@ public class AuthController {
         AuthDTO responseAuth = new AuthDTO();
         responseAuth.setEmail(loadedUser.getEmail());
         responseAuth.setToken(token);
-        responseAuth.setRole(loadedUser.getRole()); // Include Role
+        responseAuth.setRole(String.valueOf(loadedUser.getRole())); // Include Role
 
         return ResponseEntity.ok(new ResponseDTO(VarList.OK, "Login Successful", responseAuth));
     }

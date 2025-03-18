@@ -4,9 +4,11 @@ import jakarta.validation.Valid;
 import lk.ijse.exampro.dto.AuthDTO;
 import lk.ijse.exampro.dto.ResponseDTO;
 import lk.ijse.exampro.dto.UserDTO;
+import lk.ijse.exampro.repository.UserRepository;
 import lk.ijse.exampro.service.UserService;
 import lk.ijse.exampro.util.JwtUtil;
 import lk.ijse.exampro.util.VarList;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -19,6 +21,9 @@ public class UserController {
 
     private final UserService userService;
     private final JwtUtil jwtUtil;
+
+    @Autowired
+    private UserRepository userRepository;
 
     public UserController(UserService userService, JwtUtil jwtUtil) {
         this.userService = userService;
@@ -36,7 +41,7 @@ public class UserController {
                     AuthDTO authDTO = new AuthDTO();
                     authDTO.setEmail(userDTO.getEmail());
                     authDTO.setToken(token);
-                    authDTO.setRole(userDTO.getRole());
+                    authDTO.setRole(String.valueOf(userDTO.getRole()));
 
                     return ResponseEntity.status(HttpStatus.CREATED)
                             .body(new ResponseDTO(VarList.CREATED, "User registered successfully", authDTO));
@@ -76,4 +81,5 @@ public class UserController {
                     .body(new ResponseDTO(VarList.INTERNAL_SERVER_ERROR, e.getMessage(), null));
         }
     }
+
 }

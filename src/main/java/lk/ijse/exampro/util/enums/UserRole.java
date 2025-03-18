@@ -1,5 +1,5 @@
 package lk.ijse.exampro.util.enums;
 
-public enum Role {
+public enum UserRole {
     ADMIN,TEACHER,STUDENT
 }

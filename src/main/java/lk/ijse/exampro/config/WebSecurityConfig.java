@@ -51,21 +51,12 @@ public class WebSecurityConfig {
                 .cors(corsConfigurer -> corsConfigurer.configurationSource(corsConfigurationSource()))
                 .csrf(csrf -> csrf.disable())
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers(
-                                "/api/v1/auth/sign_in/admin",
-                                "/api/v1/auth/sign_in/teacher",
-                                "/api/v1/auth/sign_in/student",
-                                "/api/v1/user/sign_up", // Add your signup endpoint here
-                                "/api/v1/auth/refreshToken",
-                                "/v3/api-docs/**",
-                                "/swagger-ui/**",
-                                "/swagger-ui.html"
-                        ).permitAll()
+                        .requestMatchers("/api/v1/auth/sign_in/**", "/api/v1/user/sign_up").permitAll()
                         .requestMatchers("/api/v1/admin/**").hasRole("ADMIN")
                         .requestMatchers("/api/v1/teacher/**").hasRole("TEACHER")
                         .requestMatchers("/api/v1/student/**").hasRole("STUDENT")
                         .requestMatchers(HttpMethod.DELETE, "/api/v1/user/delete/**").hasRole("ADMIN")
-                        .requestMatchers("/api/v1/auth/**", "/api/v1/user/register").permitAll()
+                        .requestMatchers("/api/v1/user/**").authenticated() // Covers /update
                         .anyRequest().authenticated()
                 )
                 .sessionManagement(sess -> sess.sessionCreationPolicy(SessionCreationPolicy.STATELESS))

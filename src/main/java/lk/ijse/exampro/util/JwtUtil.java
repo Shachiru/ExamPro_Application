@@ -29,32 +29,31 @@ public class JwtUtil implements Serializable {
     @Value("${jwt.secret}")
     private String secretKey;
 
-    // Convert secret key to a secure signing key
     private Key getSigningKey() {
         return Keys.hmacShaKeyFor(secretKey.getBytes());
     }
 
-    // Retrieve username from JWT token
     public String extractUsername(String token) {
         return extractClaim(token, Claims::getSubject);
     }
 
     public Claims getUserRoleCodeFromToken(String token) {
-        return Jwts.parser().setSigningKey(secretKey).parseClaimsJws(token).getBody();
+        return Jwts.parserBuilder()
+                .setSigningKey(getSigningKey())
+                .build()
+                .parseClaimsJws(token)
+                .getBody();
     }
 
-    // Retrieve expiration date from JWT token
     public Date extractExpiration(String token) {
         return extractClaim(token, Claims::getExpiration);
     }
 
-    // Generic method to extract a claim from JWT
     public <T> T extractClaim(String token, Function<Claims, T> claimsResolver) {
         final Claims claims = extractAllClaims(token);
         return claimsResolver.apply(claims);
     }
 
-    // Get all claims from token
     private Claims extractAllClaims(String token) {
         return Jwts.parserBuilder()
                 .setSigningKey(getSigningKey())
@@ -63,19 +62,16 @@ public class JwtUtil implements Serializable {
                 .getBody();
     }
 
-    // Check if the token is expired
     private boolean isTokenExpired(String token) {
         return extractExpiration(token).before(new Date());
     }
 
-    // Generate JWT token with user details and role
     public String generateToken(UserDTO userDTO) {
         Map<String, Object> claims = new HashMap<>();
         claims.put("role", userDTO.getRole()); // Store user role in the token
         return createToken(claims, userDTO.getEmail());
     }
 
-    // Create the JWT token with role claims
     private String createToken(Map<String, Object> claims, String subject) {
         return Jwts.builder()
                 .setClaims(claims)
@@ -86,7 +82,6 @@ public class JwtUtil implements Serializable {
                 .compact();
     }
 
-    // Validate token
     public boolean validateToken(String token, UserDetails userDetails) {
         final String username = extractUsername(token);
         return (username.equals(userDetails.getUsername()) && !isTokenExpired(token));

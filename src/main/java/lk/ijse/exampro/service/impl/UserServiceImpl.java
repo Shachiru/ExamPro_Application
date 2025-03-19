@@ -141,4 +141,59 @@ public class UserServiceImpl implements UserDetailsService, UserService {
         return VarList.CREATED;
     }
 
+    @Override
+    public int updateUserProfile(String email, UserDTO userDTO) {
+        if (!userRepository.existsByEmail(email)) {
+            return VarList.NOT_FOUND; // User doesn’t exist
+        }
+
+        User existingUser = userRepository.findByEmail(email);
+        UserRole role = existingUser.getRole();
+
+        // Update common fields
+        existingUser.setFullName(userDTO.getFullName() != null ? userDTO.getFullName() : existingUser.getFullName());
+        existingUser.setUsername(userDTO.getUsername() != null ? userDTO.getUsername() : existingUser.getUsername());
+        existingUser.setPhoneNumber(userDTO.getPhoneNumber() != null ? userDTO.getPhoneNumber() : existingUser.getPhoneNumber());
+       // existingUser.setProfilePicture(userDTO.getProfilePicture() != null ? userDTO.getProfilePicture() : existingUser.getProfilePicture());
+        existingUser.setDateOfBirth(userDTO.getDateOfBirth() != null ? userDTO.getDateOfBirth() : existingUser.getDateOfBirth());
+
+        // Update password if provided
+        if (userDTO.getPassword() != null && !userDTO.getPassword().isEmpty()) {
+            BCryptPasswordEncoder passwordEncoder = new BCryptPasswordEncoder();
+            existingUser.setPassword(passwordEncoder.encode(userDTO.getPassword()));
+        }
+
+        // Save updated user
+        userRepository.save(existingUser);
+
+        // Update role-specific fields
+        switch (role) {
+            case ADMIN:
+                if (adminRepository.existsByUser(existingUser)) {
+                    Admin admin = adminRepository.findByUser_Email(email);
+                    admin.setSchoolName(userDTO.getSchoolName() != null ? userDTO.getSchoolName() : admin.getSchoolName());
+                    adminRepository.save(admin);
+                }
+                break;
+
+            case STUDENT:
+                if (studentRepository.existsByUser(existingUser)) {
+                    Student student = studentRepository.findByUser_Email(email);
+                    student.setGrade(userDTO.getGrade() != null ? userDTO.getGrade() : student.getGrade());
+                    studentRepository.save(student);
+                }
+                break;
+
+            case TEACHER:
+                if (teacherRepository.existsByUser(existingUser)) {
+                    Teacher teacher = teacherRepository.findByUser_Email(email);
+                    teacher.setSubject(userDTO.getSubject() != null ? userDTO.getSubject() : teacher.getSubject());
+                    teacherRepository.save(teacher);
+                }
+                break;
+        }
+
+        return VarList.OK; // Success
+    }
+
 }

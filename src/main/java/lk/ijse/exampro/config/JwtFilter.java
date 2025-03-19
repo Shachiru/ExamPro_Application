@@ -1,7 +1,6 @@
 package lk.ijse.exampro.config;
 
 import io.jsonwebtoken.Claims;
-import io.jsonwebtoken.Jwts;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -21,6 +20,7 @@ import java.io.IOException;
 
 @Component
 public class JwtFilter extends OncePerRequestFilter {
+
     @Autowired
     private JwtUtil jwtUtil;
 
@@ -36,34 +36,27 @@ public class JwtFilter extends OncePerRequestFilter {
         String token = null;
         String email = null;
 
-
-        if (null != authorization && authorization.startsWith("Bearer ")) {
-
+        if (authorization != null && authorization.startsWith("Bearer ")) {
             token = authorization.substring(7);
-            email = jwtUtil.extractUsername(token);
-            Claims claims = jwtUtil.getUserRoleCodeFromToken(token);
-            httpServletRequest.setAttribute("email", email);
-            httpServletRequest.setAttribute("role", claims.get("role"));
+            try {
+                email = jwtUtil.extractUsername(token);
+                Claims claims = jwtUtil.getUserRoleCodeFromToken(token);
+                httpServletRequest.setAttribute("email", email);
+                httpServletRequest.setAttribute("role", claims.get("role"));
+            } catch (Exception e) {
+                System.out.println("JWT parsing failed: " + e.getMessage());
+            }
         }
 
-        if (null != email && SecurityContextHolder.getContext().getAuthentication() == null) {
+        if (email != null && SecurityContextHolder.getContext().getAuthentication() == null) {
             UserDetails userDetails = userService.loadUserByUsername(email);
-
             if (jwtUtil.validateToken(token, userDetails)) {
-                UsernamePasswordAuthenticationToken usernamePasswordAuthenticationToken
-                        = new UsernamePasswordAuthenticationToken(userDetails,
-                        null, userDetails.getAuthorities());
-
-                usernamePasswordAuthenticationToken.setDetails(
-                        new WebAuthenticationDetailsSource().buildDetails(httpServletRequest)
-                );
+                UsernamePasswordAuthenticationToken usernamePasswordAuthenticationToken =
+                        new UsernamePasswordAuthenticationToken(userDetails, null, userDetails.getAuthorities());
+                usernamePasswordAuthenticationToken.setDetails(new WebAuthenticationDetailsSource().buildDetails(httpServletRequest));
                 SecurityContextHolder.getContext().setAuthentication(usernamePasswordAuthenticationToken);
             }
         }
         filterChain.doFilter(httpServletRequest, httpServletResponse);
-    }
-
-    private Claims getClaimsFromJwtToken(String token) {
-        return Jwts.parser().setSigningKey(secretKey.getBytes()).parseClaimsJws(token).getBody();
     }
 }

@@ -82,4 +82,27 @@ public class UserController {
         }
     }
 
+    @PutMapping("/update")
+    @PreAuthorize("authentication.name == #email") // Use 'name' instead of 'principal' if needed
+    public ResponseEntity<ResponseDTO> updateUserProfile(@RequestParam String email, @RequestBody @Valid UserDTO userDTO) {
+        try {
+            int res = userService.updateUserProfile(email, userDTO);
+
+            switch (res) {
+                case VarList.OK:
+                    return ResponseEntity.status(HttpStatus.OK)
+                            .body(new ResponseDTO(VarList.OK, "Profile updated successfully", null));
+                case VarList.NOT_FOUND:
+                    return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                            .body(new ResponseDTO(VarList.NOT_FOUND, "User not found", null));
+                default:
+                    return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                            .body(new ResponseDTO(VarList.BAD_REQUEST, "Failed to update profile", null));
+            }
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(new ResponseDTO(VarList.INTERNAL_SERVER_ERROR, e.getMessage(), null));
+        }
+    }
+
 }

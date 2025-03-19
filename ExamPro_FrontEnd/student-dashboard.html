@@ -287,6 +287,24 @@
   let examTimerInterval;
   let timeLeft;
 
+  document.addEventListener("DOMContentLoaded", function() {
+    const token = localStorage.getItem("token");
+    if (!token) {
+      window.location.href = "login.html"; // Redirect to login if not logged in
+    }
+
+    // Get user information (mocked here; you can fetch it from an API if required)
+    const user = JSON.parse(atob(token.split('.')[1])); // Decode JWT token to get user info
+    const userGreeting = document.getElementById('userGreeting');
+    userGreeting.innerText = `Hello, ${user.name}`; // Display user's name
+
+    // Logout functionality
+    document.getElementById('logoutButton').addEventListener('click', function() {
+      localStorage.removeItem('token'); // Remove token
+      window.location.href = 'login.html'; // Redirect to login page
+    });
+  });
+
   // Sidebar Toggle
   const sidebar = document.getElementById('sidebar');
   const mainContent = document.getElementById('mainContent');

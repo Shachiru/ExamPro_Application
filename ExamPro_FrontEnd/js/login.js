@@ -35,7 +35,7 @@ document.getElementById("loginForm").addEventListener("submit", async function (
             } else if (data.data.role === "TEACHER") {
                 window.location.href = "teacher-dashboard.html";
             } else if (data.data.role === "STUDENT") {
-                window.location.href = "student-admin-dashboard.html";
+                window.location.href = "student-dashboard.html";
             } else {
                 errorMessage.textContent = "Invalid Role Assigned!";
                 errorMessage.style.display = "block";

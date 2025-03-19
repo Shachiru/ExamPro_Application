@@ -23,7 +23,9 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 @Service
 @Transactional
@@ -53,6 +55,37 @@ public class UserServiceImpl implements UserDetailsService, UserService {
     public UserDTO loadUserDetailsByUsername(String username) throws UsernameNotFoundException {
         User user = userRepository.findByEmail(username);
         return modelMapper.map(user, UserDTO.class);
+    }
+
+    @Override
+    public List<UserDTO> getAllUsers() {
+        List<User> users = userRepository.findAll();
+
+        return users.stream().map(user -> {
+            UserDTO userDTO = new UserDTO();
+            userDTO.setEmail(user.getEmail());
+            userDTO.setFullName(user.getFullName());
+            userDTO.setUsername(user.getUsername());
+            userDTO.setPhoneNumber(user.getPhoneNumber());
+            userDTO.setDateOfBirth(user.getDateOfBirth());
+            userDTO.setRole(user.getRole());
+
+            switch (user.getRole()) {
+                case ADMIN:
+                    Admin admin = adminRepository.findByUser_Email(user.getEmail());
+                    if (admin != null) userDTO.setSchoolName(admin.getSchoolName());
+                    break;
+                case STUDENT:
+                    Student student = studentRepository.findByUser_Email(user.getEmail());
+                    if (student != null) userDTO.setGrade(student.getGrade());
+                    break;
+                case TEACHER:
+                    Teacher teacher = teacherRepository.findByUser_Email(user.getEmail());
+                    if (teacher != null) userDTO.setSubject(teacher.getSubject());
+                    break;
+            }
+            return userDTO;
+        }).collect(Collectors.toList());
     }
 
     private Set<SimpleGrantedAuthority> getAuthority(User user) {
@@ -96,15 +129,15 @@ public class UserServiceImpl implements UserDetailsService, UserService {
             return VarList.NOT_ACCEPTABLE;
         }
 
-        if (userDTO.getRole() == null) {  // Check if role is null
-            return VarList.NOT_ACCEPTABLE;  // Invalid role
+        if (userDTO.getRole() == null) {
+            return VarList.NOT_ACCEPTABLE;
         }
 
         UserRole role;
         try {
             role = userDTO.getRole();
         } catch (IllegalArgumentException e) {
-            return VarList.NOT_ACCEPTABLE;  // Invalid role
+            return VarList.NOT_ACCEPTABLE;
         }
 
         BCryptPasswordEncoder passwordEncoder = new BCryptPasswordEncoder();
@@ -144,7 +177,7 @@ public class UserServiceImpl implements UserDetailsService, UserService {
     @Override
     public int updateUserProfile(String email, UserDTO userDTO) {
         if (!userRepository.existsByEmail(email)) {
-            return VarList.NOT_FOUND; // User doesn’t exist
+            return VarList.NOT_FOUND;
         }
 
         User existingUser = userRepository.findByEmail(email);
@@ -154,19 +187,15 @@ public class UserServiceImpl implements UserDetailsService, UserService {
         existingUser.setFullName(userDTO.getFullName() != null ? userDTO.getFullName() : existingUser.getFullName());
         existingUser.setUsername(userDTO.getUsername() != null ? userDTO.getUsername() : existingUser.getUsername());
         existingUser.setPhoneNumber(userDTO.getPhoneNumber() != null ? userDTO.getPhoneNumber() : existingUser.getPhoneNumber());
-       // existingUser.setProfilePicture(userDTO.getProfilePicture() != null ? userDTO.getProfilePicture() : existingUser.getProfilePicture());
+        // existingUser.setProfilePicture(userDTO.getProfilePicture() != null ? userDTO.getProfilePicture() : existingUser.getProfilePicture());
         existingUser.setDateOfBirth(userDTO.getDateOfBirth() != null ? userDTO.getDateOfBirth() : existingUser.getDateOfBirth());
 
-        // Update password if provided
         if (userDTO.getPassword() != null && !userDTO.getPassword().isEmpty()) {
             BCryptPasswordEncoder passwordEncoder = new BCryptPasswordEncoder();
             existingUser.setPassword(passwordEncoder.encode(userDTO.getPassword()));
         }
-
-        // Save updated user
         userRepository.save(existingUser);
 
-        // Update role-specific fields
         switch (role) {
             case ADMIN:
                 if (adminRepository.existsByUser(existingUser)) {
@@ -193,7 +222,7 @@ public class UserServiceImpl implements UserDetailsService, UserService {
                 break;
         }
 
-        return VarList.OK; // Success
+        return VarList.OK;
     }
 
 }

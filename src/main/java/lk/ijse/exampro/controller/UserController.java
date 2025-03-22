@@ -12,6 +12,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -76,19 +77,37 @@ public class UserController {
     }
 
     @DeleteMapping("/delete/{email}")
-    @PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize("hasAuthority('ADMIN') or authentication.name == #email")
     public ResponseEntity<ResponseDTO> deleteUserByEmail(@PathVariable String email) {
         try {
+            System.out.println("Attempting to delete user: " + email + ", Authenticated user: " + SecurityContextHolder.getContext().getAuthentication().getName());
             int res = userService.deleteUserByEmail(email);
             if (res == VarList.OK) {
-                return ResponseEntity.status(HttpStatus.OK)
-                        .body(new ResponseDTO(VarList.OK, "User deleted successfully", null));
-            } else if (res == VarList.NOT_FOUND) {
+                return ResponseEntity.ok(new ResponseDTO(VarList.OK, "User deleted successfully", null));
+            } else if (res == VarList.FORBIDDEN) {
+                return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                        .body(new ResponseDTO(VarList.FORBIDDEN, "Cannot delete admin users unless by self", null));
+            } else {
                 return ResponseEntity.status(HttpStatus.NOT_FOUND)
                         .body(new ResponseDTO(VarList.NOT_FOUND, "User not found", null));
+            }
+        } catch (Exception e) {
+            System.err.println("Error deleting user: " + e.getMessage());
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(new ResponseDTO(VarList.INTERNAL_SERVER_ERROR, e.getMessage(), null));
+        }
+    }
+
+    @PutMapping("/deactivate")
+    @PreAuthorize("authentication.name == #email and hasRole('ADMIN')")
+    public ResponseEntity<ResponseDTO> deactivateUser(@RequestParam String email) {
+        try {
+            int res = userService.deactivateUser(email);
+            if (res == VarList.OK) {
+                return ResponseEntity.ok(new ResponseDTO(VarList.OK, "Profile deactivated successfully", null));
             } else {
-                return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                        .body(new ResponseDTO(VarList.BAD_REQUEST, "Failed to delete user", null));
+                return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                        .body(new ResponseDTO(VarList.NOT_FOUND, "User not found", null));
             }
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)

@@ -97,7 +97,7 @@
       <a href="#" class="nav-link" data-bs-toggle="modal" data-bs-target="#profileModal"><i class="fas fa-user me-2"></i> Profile</a>
     </li>
     <li class="nav-item mt-auto">
-      <a href="#" class="nav-link"><i class="fas fa-sign-out-alt me-2"></i> Logout</a>
+      <a href="index.html" class="nav-link"><i class="fas fa-sign-out-alt me-2"></i> Logout</a>
     </li>
   </ul>
 </div>
@@ -114,7 +114,7 @@
         <ul class="dropdown-menu dropdown-menu-end">
           <li><a class="dropdown-item" href="#" data-bs-toggle="modal" data-bs-target="#profileModal">View Profile</a></li>
           <li><a class="dropdown-item" href="#">Settings</a></li>
-          <li><a class="dropdown-item" href="#">Logout</a></li>
+          <li><a class="dropdown-item" href="index.html">Logout</a></li>
         </ul>
       </div>
     </div>
@@ -290,22 +290,19 @@
   document.addEventListener("DOMContentLoaded", function() {
     const token = localStorage.getItem("token");
     if (!token) {
-      window.location.href = "login.html"; // Redirect to login if not logged in
+      window.location.href = "login.html";
     }
 
-    // Get user information (mocked here; you can fetch it from an API if required)
-    const user = JSON.parse(atob(token.split('.')[1])); // Decode JWT token to get user info
+    const user = JSON.parse(atob(token.split('.')[1]));
     const userGreeting = document.getElementById('userGreeting');
-    userGreeting.innerText = `Hello, ${user.name}`; // Display user's name
+    userGreeting.innerText = `Hello, ${user.name}`;
 
-    // Logout functionality
     document.getElementById('logoutButton').addEventListener('click', function() {
-      localStorage.removeItem('token'); // Remove token
-      window.location.href = 'login.html'; // Redirect to login page
+      localStorage.removeItem('token');
+      window.location.href = 'index.html';
     });
   });
 
-  // Sidebar Toggle
   const sidebar = document.getElementById('sidebar');
   const mainContent = document.getElementById('mainContent');
   const toggleSidebar = document.getElementById('toggleSidebar');
@@ -314,10 +311,9 @@
     mainContent.classList.toggle('expanded');
   });
 
-  // Exam Functionality
   function startExam(title, duration) {
     document.getElementById('examTitle').textContent = title;
-    timeLeft = duration * 60; // Convert minutes to seconds
+    timeLeft = duration * 60;
     updateTimerDisplay();
     clearInterval(examTimerInterval);
     examTimerInterval = setInterval(() => {
@@ -340,7 +336,7 @@
     const options = element.parentElement.querySelectorAll('.question-option');
     options.forEach(opt => opt.classList.remove('selected'));
     element.classList.add('selected');
-    console.log(`Selected option: ${optionId}`); // For debugging; replace with actual logic
+    console.log(`Selected option: ${optionId}`);
   }
 
   function submitExam() {
@@ -350,18 +346,17 @@
       'question2': document.querySelectorAll('.question-option.selected')[1]?.textContent || '',
       'question3': document.getElementById('question3').value
     };
-    console.log('Submitted Answers:', answers); // Replace with API call to backend
+    console.log('Submitted Answers:', answers);
     alert('Exam submitted successfully!');
     bootstrap.Modal.getInstance(document.getElementById('examModal')).hide();
   }
 
-  // Profile Functionality
   function toggleEditProfile() {
     const inputs = document.querySelectorAll('#profileForm input');
     const editBtn = document.getElementById('editProfileBtn');
     const saveBtn = document.getElementById('saveProfileBtn');
     inputs.forEach(input => {
-      if (input.id !== 'fullName' && input.id !== 'email') { // Keep name and email readonly
+      if (input.id !== 'fullName' && input.id !== 'email') {
         input.readOnly = !input.readOnly;
       }
     });
@@ -374,7 +369,7 @@
       phoneNumber: document.getElementById('phoneNumber').value,
       grade: document.getElementById('grade').value
     };
-    console.log('Profile Updated:', profileData); // Replace with API call to backend
+    console.log('Profile Updated:', profileData);
     toggleEditProfile();
     alert('Profile saved successfully!');
   }

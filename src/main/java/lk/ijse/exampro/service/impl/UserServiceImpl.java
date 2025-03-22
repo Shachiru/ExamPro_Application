@@ -14,7 +14,9 @@ import lk.ijse.exampro.util.VarList;
 import lk.ijse.exampro.util.enums.UserRole;
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.core.Authentication;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
@@ -90,15 +92,18 @@ public class UserServiceImpl implements UserDetailsService, UserService {
 
     private Set<SimpleGrantedAuthority> getAuthority(User user) {
         Set<SimpleGrantedAuthority> authorities = new HashSet<>();
-
-        if (adminRepository.existsByUser(user)) {
-            authorities.add(new SimpleGrantedAuthority("ROLE_ADMIN"));
-        } else if (studentRepository.existsByUser(user)) {
-            authorities.add(new SimpleGrantedAuthority("ROLE_STUDENT"));
-        } else if (teacherRepository.existsByUser(user)) {
-            authorities.add(new SimpleGrantedAuthority("ROLE_TEACHER"));
-        } else {
-            authorities.add(new SimpleGrantedAuthority("ROLE_USER"));
+        switch (user.getRole()) {
+            case ADMIN:
+                authorities.add(new SimpleGrantedAuthority("ADMIN"));
+                break;
+            case TEACHER:
+                authorities.add(new SimpleGrantedAuthority("TEACHER"));
+                break;
+            case STUDENT:
+                authorities.add(new SimpleGrantedAuthority("STUDENT"));
+                break;
+            default:
+                authorities.add(new SimpleGrantedAuthority("USER"));
         }
         return authorities;
     }
@@ -115,12 +120,55 @@ public class UserServiceImpl implements UserDetailsService, UserService {
 
     @Override
     public int deleteUserByEmail(String email) {
-        if (userRepository.existsByEmail(email)) {
-            userRepository.deleteByEmail(email);
-            return VarList.OK;
-        } else {
+        if (!userRepository.existsByEmail(email)) {
             return VarList.NOT_FOUND;
         }
+        User user = userRepository.findByEmail(email);
+
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        boolean isSelfDeletion = auth != null && auth.getName().equals(email);
+        boolean isAdminDeleting = auth != null && auth.getAuthorities().stream()
+                .anyMatch(a -> a.getAuthority().equals("ADMIN"));
+
+        if (user.getRole() == UserRole.ADMIN && !isSelfDeletion) {
+            return VarList.FORBIDDEN;
+        }
+
+        switch (user.getRole()) {
+            case TEACHER:
+                Teacher teacher = teacherRepository.findByUser_Email(email);
+                if (teacher != null) {
+                    teacherRepository.delete(teacher);
+                }
+                break;
+            case STUDENT:
+                Student student = studentRepository.findByUser_Email(email);
+                if (student != null) {
+                    studentRepository.delete(student);
+                }
+                break;
+            case ADMIN:
+                Admin admin = adminRepository.findByUser_Email(email);
+                if (admin != null) {
+                    adminRepository.delete(admin);
+                }
+                break;
+        }
+
+        userRepository.deleteByEmail(email);
+        return VarList.OK;
+    }
+
+    @Override
+    public int deactivateUser(String email) {
+        if (!userRepository.existsByEmail(email)) {
+            return VarList.NOT_FOUND;
+        }
+
+        User user = userRepository.findByEmail(email);
+        user.setActive(false); // Mark as inactive
+        userRepository.save(user);
+        return VarList.OK;
     }
 
     @Override

@@ -10,4 +10,5 @@ public interface UserService {
     int deleteUserByEmail(String email);
     int updateUserProfile(String email, UserDTO userDTO);
     List<UserDTO> getAllUsers();
+    int deactivateUser(String email);
 }

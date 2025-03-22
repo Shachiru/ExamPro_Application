@@ -24,5 +24,9 @@ public class UserDTO {
     private String schoolName;  // For Admin
     private String grade;       // For Student
     private String subject;     // For Teacher
+
+    private boolean isActive;
+    public boolean isActive() { return isActive; }
+    public void setActive(boolean active) { isActive = active; }
 }
 

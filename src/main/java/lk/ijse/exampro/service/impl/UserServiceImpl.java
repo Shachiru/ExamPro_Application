@@ -31,7 +31,8 @@ import java.util.stream.Collectors;
 
 @Service
 @Transactional
-public class UserServiceImpl implements UserDetailsService, UserService {
+public class
+UserServiceImpl implements UserDetailsService, UserService {
 
     @Autowired
     private UserRepository userRepository;
@@ -94,16 +95,16 @@ public class UserServiceImpl implements UserDetailsService, UserService {
         Set<SimpleGrantedAuthority> authorities = new HashSet<>();
         switch (user.getRole()) {
             case ADMIN:
-                authorities.add(new SimpleGrantedAuthority("ADMIN"));
+                authorities.add(new SimpleGrantedAuthority("ROLE_ADMIN"));
                 break;
             case TEACHER:
-                authorities.add(new SimpleGrantedAuthority("TEACHER"));
+                authorities.add(new SimpleGrantedAuthority("ROLE_TEACHER"));
                 break;
             case STUDENT:
-                authorities.add(new SimpleGrantedAuthority("STUDENT"));
+                authorities.add(new SimpleGrantedAuthority("ROLE_STUDENT"));
                 break;
             default:
-                authorities.add(new SimpleGrantedAuthority("USER"));
+                authorities.add(new SimpleGrantedAuthority("ROLE_USER"));
         }
         return authorities;
     }

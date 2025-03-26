@@ -21,8 +21,8 @@ public class StudentExam {
     @JoinColumn(name = "exam_id", nullable = false)
     private Exam exam;
 
-    @Column(nullable = false)
-    private int score;
+    @Column(nullable = true) // Allow null in DB
+    private Integer score;
 
     @Column(nullable = false)
     private Boolean isCompleted;

@@ -7,7 +7,8 @@
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap"
+          rel="stylesheet">
     <link href="css/admin-dashboard-styles.css" rel="stylesheet">
 </head>
 <body class="bg-gray-100 font-poppins text-gray-900">
@@ -38,7 +39,8 @@
             <div class="d-flex align-items-center">
                 <span id="welcomeName" class="text-gray-700 mr-3">Welcome, Admin</span>
                 <div class="dropdown">
-                    <button class="btn btn-outline-primary dropdown-toggle" type="button" id="profileDropdown" data-bs-toggle="dropdown">
+                    <button class="btn btn-outline-primary dropdown-toggle" type="button" id="profileDropdown"
+                            data-bs-toggle="dropdown">
                         <i class="fas fa-user-circle"></i>
                     </button>
                     <ul class="dropdown-menu dropdown-menu-end">
@@ -79,13 +81,15 @@
             </div>
             <div class="col-md-6">
                 <div class="form-floating">
-                    <input type="text" class="form-control" id="phoneNumber" placeholder="Phone Number" value="0712345678">
+                    <input type="text" class="form-control" id="phoneNumber" placeholder="Phone Number"
+                           value="0712345678">
                     <label for="phoneNumber">Phone Number</label>
                 </div>
             </div>
             <div class="col-md-6">
                 <div class="form-floating">
-                    <input type="text" class="form-control" id="schoolName" placeholder="School Name" value="XYZ Institute">
+                    <input type="text" class="form-control" id="schoolName" placeholder="School Name"
+                           value="XYZ Institute">
                     <label for="schoolName">School Name</label>
                 </div>
             </div>
@@ -103,150 +107,200 @@
 
     <section class="bg-white shadow-lg rounded-lg p-6">
         <h3 class="text-xl font-semibold text-[#4361ee] mb-4">Manage Users</h3>
-        <div class="table-responsive">
-            <table class="table table-hover">
-                <thead>
-                <tr>
-                    <th>Email</th>
-                    <th>Full Name</th>
-                    <th>Role</th>
-                    <th>Actions</th>
-                </tr>
-                </thead>
-                <tbody id="userTableBody">
-                <!-- Dynamically populated -->
-                </tbody>
-            </table>
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <!-- Admin Users Card -->
+            <div class="card p-4 bg-gray-50 shadow-md rounded-lg">
+                <h4 class="text-lg font-semibold text-[#4361ee] mb-3">Admins</h4>
+                <div id="adminUsers" class="space-y-3">
+                    <!-- Admin users will be populated here -->
+                </div>
+            </div>
+
+            <!-- Teacher Users Card -->
+            <div class="card p-4 bg-gray-50 shadow-md rounded-lg">
+                <h4 class="text-lg font-semibold text-[#4361ee] mb-3">Teachers</h4>
+                <div id="teacherUsers" class="space-y-3">
+                    <!-- Teacher users will be populated here -->
+                </div>
+            </div>
+
+            <!-- Student Users Card -->
+            <div class="card p-4 bg-gray-50 shadow-md rounded-lg">
+                <h4 class="text-lg font-semibold text-[#4361ee] mb-3">Students</h4>
+                <div id="studentUsers" class="space-y-3">
+                    <!-- Student users will be populated here -->
+                </div>
+            </div>
         </div>
     </section>
 </main>
 
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 <script>
     const API_BASE_URL = 'http://localhost:8080/api/v1';
     const token = localStorage.getItem('token');
     const email = 'admin@example.com';
 
-    document.addEventListener("DOMContentLoaded", function() {
+    $(document).ready(function () {
         const token = localStorage.getItem("token");
-        const role = localStorage.getItem("role")
-        // check role ADMIN
-        // not admin redirect login
+        const role = localStorage.getItem("role");
 
-        console.log(token)
         if (!token || role !== "ADMIN") {
-            // need clear
+            localStorage.clear();
             window.location.href = "login.html";
         }
 
+        loadUsers();
+        loadUserData();
+
         const user = JSON.parse(atob(token.split('.')[1]));
-        const userGreeting = document.getElementById('userGreeting');
-        if (userGreeting) {
-            userGreeting.innerText = `Hello, ${user.name}`;
+        const $userGreeting = $('#userGreeting');
+        if ($userGreeting.length) {
+            $userGreeting.text(`Hello, ${user.name}`);
         }
 
-        const logoutButton = document.getElementById('logoutButton');
-        if (logoutButton) {
-            logoutButton.addEventListener('click', function() {
-                localStorage.removeItem('token');
-                window.location.href = 'index.html';
-            });
-        }
+        $('#logoutButton').on('click', function () {
+            localStorage.removeItem('token');
+            window.location.href = 'index.html';
+        });
     });
 
-    async function loadUserData() {
-        try {
-            const response = await fetch(`${API_BASE_URL}/user/search?email=${email}`, {
-                headers: { 'Authorization': `Bearer ${token}` }
-            });
-            const result = await response.json();
-            if (result.code === 200) {
-                const user = result.data;
-                document.getElementById('welcomeName').textContent = `Welcome, ${user.fullName}`;
-                document.getElementById('fullName').value = user.fullName;
-                document.getElementById('phoneNumber').value = user.phoneNumber;
-                document.getElementById('schoolName').value = user.schoolName || 'N/A';
+    function loadUserData() {
+        $.ajax({
+            url: `${API_BASE_URL}/user/search?email=${email}`,
+            method: 'GET',
+            headers: {
+                'Authorization': `Bearer ${token}`
+            },
+            success: function (result) {
+                if (result.code === 200) {
+                    const user = result.data;
+                    $('#welcomeName').text(`Welcome, ${user.fullName}`);
+                    $('#fullName').val(user.fullName);
+                    $('#phoneNumber').val(user.phoneNumber);
+                    $('#schoolName').val(user.schoolName || 'N/A');
+                }
+            },
+            error: function (xhr, status, error) {
+                console.error('Error loading user data:', error);
             }
-        } catch (error) {
-            console.error('Error loading user data:', error);
-        }
+        });
     }
 
-    // Update profile
-    document.getElementById('profileForm').addEventListener('submit', async (e) => {
+    $('#profileForm').on('submit', function (e) {
         e.preventDefault();
         const data = {
-            fullName: document.getElementById('fullName').value,
-            phoneNumber: document.getElementById('phoneNumber').value,
-            schoolName: document.getElementById('schoolName').value,
-            password: document.getElementById('password').value || undefined
+            fullName: $('#fullName').val(),
+            phoneNumber: $('#phoneNumber').val(),
+            schoolName: $('#schoolName').val(),
+            password: $('#password').val() || undefined
         };
 
-        try {
-            const response = await fetch(`${API_BASE_URL}/user/update?email=${email}`, {
-                method: 'PUT',
-                headers: {
-                    'Authorization': `Bearer ${token}`,
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify(data)
-            });
-            const result = await response.json();
-            if (result.code === 200) {
-                alert('Profile updated successfully!');
-                loadUserData();
-            } else {
-                alert(result.message);
-            }
-        } catch (error) {
-            console.error('Error updating profile:', error);
-            alert('An error occurred while updating the profile.');
-        }
-    });
-
-    async function loadUsers() {
-        try {
-            const response = await fetch(`${API_BASE_URL}/user/search?email=${email}`, { // Replace with proper endpoint
-                headers: { 'Authorization': `Bearer ${token}` }
-            });
-            const result = await response.json();
-            if (result.code === 200) {
-                const user = result.data;
-                const tbody = document.getElementById('userTableBody');
-                tbody.innerHTML = `
-            <tr>
-              <td>${user.email}</td>
-              <td>${user.fullName}</td>
-              <td>${user.role}</td>
-              <td>
-                <button class="btn btn-sm btn-outline-primary mr-2" onclick="editUser('${user.email}')"><i class="fas fa-edit"></i></button>
-                <button class="btn btn-sm btn-outline-danger" onclick="deleteUser('${user.email}')"><i class="fas fa-trash"></i></button>
-              </td>
-            </tr>
-          `;
-            }
-        } catch (error) {
-            console.error('Error loading users:', error);
-        }
-    }
-
-    async function deleteUser(email) {
-        if (confirm('Are you sure you want to delete this user?')) {
-            try {
-                const response = await fetch(`${API_BASE_URL}/user/delete/${email}`, {
-                    method: 'DELETE',
-                    headers: { 'Authorization': `Bearer ${token}` }
-                });
-                const result = await response.json();
+        $.ajax({
+            url: `${API_BASE_URL}/user/update?email=${email}`,
+            method: 'PUT',
+            headers: {
+                'Authorization': `Bearer ${token}`,
+                'Content-Type': 'application/json'
+            },
+            data: JSON.stringify(data),
+            success: function (result) {
                 if (result.code === 200) {
-                    alert('User deleted successfully!');
-                    loadUsers();
+                    alert('Profile updated successfully!');
+                    loadUserData();
                 } else {
                     alert(result.message);
                 }
-            } catch (error) {
-                console.error('Error deleting user:', error);
+            },
+            error: function (xhr, status, error) {
+                console.error('Error updating profile:', error);
+                alert('An error occurred while updating the profile.');
             }
+        });
+    });
+
+    function loadUsers() {
+        $.ajax({
+            url: `${API_BASE_URL}/admin/users`,
+            method: 'GET',
+            headers: {
+                'Authorization': `Bearer ${token}`,
+                'Content-Type': 'application/json'
+            },
+            success: function (result) {
+                if (result.code === 200 && Array.isArray(result.data)) {
+                    const $adminContainer = $('#adminUsers');
+                    const $teacherContainer = $('#teacherUsers');
+                    const $studentContainer = $('#studentUsers');
+
+                    $adminContainer.empty();
+                    $teacherContainer.empty();
+                    $studentContainer.empty();
+
+                    result.data.forEach(user => {
+                        const userCard = `
+                        <div class="p-3 bg-white rounded-md shadow-sm hover:shadow-md transition-shadow">
+                            <p class="font-medium">${user.fullName}</p>
+                            <p class="text-sm text-gray-600">${user.email}</p>
+                            <div class="mt-2 flex space-x-2">
+                                <button class="btn btn-sm btn-outline-primary" onclick="editUser('${user.email}')">
+                                    <i class="fas fa-edit"></i>
+                                </button>
+                                <button class="btn btn-sm btn-outline-danger" onclick="deleteUser('${user.email}')">
+                                    <i class="fas fa-trash"></i>
+                                </button>
+                            </div>
+                        </div>
+                    `;
+
+                        switch (user.role) {
+                            case 'ADMIN':
+                                $adminContainer.append(userCard);
+                                break;
+                            case 'TEACHER':
+                                $teacherContainer.append(userCard);
+                                break;
+                            case 'STUDENT':
+                                $studentContainer.append(userCard);
+                                break;
+                            default:
+                                console.warn(`Unknown role: ${user.role}`);
+                        }
+                    });
+
+                    $('#totalUsers').text(result.data.length);
+                } else {
+                    console.error('Unexpected response format or error:', result);
+                    alert('Failed to load users: ' + result.message);
+                }
+            },
+            error: function (xhr, status, error) {
+                console.error('Error loading users:', error);
+                alert('An error occurred while loading users. Please try again.');
+            }
+        });
+    }
+
+    function deleteUser(email) {
+        if (confirm('Are you sure you want to delete this user?')) {
+            $.ajax({
+                url: `${API_BASE_URL}/user/delete/${email}`,
+                method: 'DELETE',
+                headers: {
+                    'Authorization': `Bearer ${token}`
+                },
+                success: function (result) {
+                    if (result.code === 200) {
+                        alert('User deleted successfully!');
+                        loadUsers();
+                    } else {
+                        alert(result.message);
+                    }
+                },
+                error: function (xhr, status, error) {
+                    console.error('Error deleting user:', error);
+                }
+            });
         }
     }
 

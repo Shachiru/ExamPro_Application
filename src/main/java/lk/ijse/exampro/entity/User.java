@@ -58,12 +58,4 @@ public class User {
 
     @Column(nullable = false)
     private boolean isActive = true;
-
-    public boolean isActive() {
-        return isActive;
-    }
-
-    public void setActive(boolean active) {
-        isActive = active;
-    }
 }

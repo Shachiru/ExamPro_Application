@@ -3,7 +3,7 @@ package lk.ijse.exampro.service;
 import lk.ijse.exampro.dto.AnswerDTO;
 import lk.ijse.exampro.dto.ExamDTO;
 import lk.ijse.exampro.dto.QuestionDTO;
-import lk.ijse.exampro.dto.StudentExamDTO;
+import lk.ijse.exampro.dto.StudentResultDTO;
 
 import java.util.List;
 
@@ -13,10 +13,10 @@ public interface ExamService {
     QuestionDTO updateQuestion(Long questionId, QuestionDTO questionDTO);
     void deleteQuestion(Long questionId);
     List<QuestionDTO> getQuestionsByExam(Long examId);
-    StudentExamDTO startExam(Long examId, String studentEmail);
+    StudentResultDTO startExam(Long examId, String studentEmail);
     void submitAnswers(Long studentExamId, List<AnswerDTO> answers);
     void gradeShortAnswer(Long answerId, int score);
     void autoSubmitExam(Long studentExamId);
-    long getRemainingTime(Long examId);
+    long getRemainingTimeForStudent(Long studentExamId);
     ExamDTO getExam(Long examId);
 }

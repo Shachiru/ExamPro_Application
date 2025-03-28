@@ -3,136 +3,132 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Dashboard - ExamPro</title>
+    <title>ExamPro - Teacher Dashboard</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
     <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://cdn.jsdelivr.net/npm/font-awesome/css/font-awesome.min.css" rel="stylesheet">
-    <style>
-        body {
-            background-color: #f4f7fc;
-            font-family: 'Arial', sans-serif;
-        }
-        .sidebar {
-            height: 100%;
-            width: 250px;
-            position: fixed;
-            top: 0;
-            left: 0;
-            background-color: #3b82f6;
-            color: white;
-            padding-top: 20px;
-        }
-        .sidebar a {
-            display: block;
-            padding: 12px 20px;
-            text-decoration: none;
-            color: white;
-            font-size: 18px;
-            margin-bottom: 10px;
-        }
-        .sidebar a:hover {
-            background-color: #2563eb;
-            border-radius: 5px;
-        }
-        .content {
-            margin-left: 270px;
-            padding: 20px;
-        }
-        .dashboard-card {
-            background-color: #fff;
-            border-radius: 8px;
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-            padding: 20px;
-            margin-bottom: 20px;
-        }
-        .dashboard-card h3 {
-            margin-bottom: 10px;
-            font-size: 24px;
-        }
-        .card-button {
-            background-color: #3b82f6;
-            color: white;
-            padding: 10px 20px;
-            text-decoration: none;
-            border-radius: 5px;
-            font-size: 16px;
-        }
-        .card-button:hover {
-            background-color: #2563eb;
-        }
-        .logout-btn {
-            background-color: #f44336;
-            color: white;
-            padding: 12px 24px;
-            border-radius: 5px;
-            font-size: 16px;
-            text-decoration: none;
-            margin-top: 20px;
-        }
-        .logout-btn:hover {
-            background-color: #e53935;
-        }
-    </style>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link href="css/teacher-dashboard-styles.css" rel="stylesheet">
 </head>
-<body>
-
+<body class="bg-gray-100 font-poppins text-gray-900">
 <!-- Sidebar -->
-<div class="sidebar">
-    <h2 class="text-center text-xl">ExamPro</h2>
-    <a href="admin-dashboard.html"><i class="fa fa-dashboard"></i> Dashboard</a>
-    <a href="my-exams.html"><i class="fa fa-pencil"></i> My Exams</a>
-    <a href="my-results.html"><i class="fa fa-chart-line"></i> My Results</a>
-    <a href="profile.html"><i class="fa fa-user"></i> Profile</a>
-</div>
+<aside class="fixed top-0 left-0 h-full w-64 bg-white shadow-lg transition-all duration-300">
+    <div class="p-4">
+        <a href="#" class="text-2xl font-bold">Exam<span class="text-[#4cc9f0]">Pro</span></a>
+    </div>
+    <nav class="mt-6">
+        <ul class="space-y-2">
+            <li><a href="#" class="sidebar-link"><i class="fas fa-tachometer-alt"></i> Dashboard</a></li>
+            <li><a href="#manage-exams" class="sidebar-link"><i class="fas fa-file-alt"></i> Manage Exams</a></li>
+            <li><a href="#profile" class="sidebar-link"><i class="fas fa-user"></i> Profile</a></li>
+        </ul>
+    </nav>
+    <div class="absolute bottom-4 px-4 w-full">
+        <a href="#" class="sidebar-link rounded-md" onclick="logout()"><i class="fas fa-sign-out-alt"></i> Logout</a>
+    </div>
+</aside>
 
-<!-- Main content -->
-<div class="content">
-    <h2 class="text-2xl font-bold">Welcome to the Dashboard</h2>
-    <p class="text-gray-600 mb-6">Hello, <span id="userName">Loading...</span></p>
-
-    <!-- Dashboard Cards -->
-    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <div class="dashboard-card">
-            <h3>My Exams</h3>
-            <p>View and manage your exams here.</p>
-            <a href="my-exams.html" class="card-button">Go to My Exams</a>
+<!-- Main Content -->
+<main class="ml-64 p-6">
+    <nav class="navbar navbar-light bg-white shadow-sm mb-6 rounded-lg">
+        <div class="container-fluid">
+            <h2 class="text-2xl font-semibold text-[#4361ee]">Teacher Dashboard</h2>
+            <div class="d-flex align-items-center">
+                <span id="welcomeName" class="text-gray-700 mr-3">Welcome, Teacher</span>
+                <div class="dropdown">
+                    <button class="btn btn-outline-primary dropdown-toggle" type="button" id="profileDropdown" data-bs-toggle="dropdown">
+                        <i class="fas fa-user-circle"></i>
+                    </button>
+                    <ul class="dropdown-menu dropdown-menu-end">
+                        <li><a class="dropdown-item" href="#profile">Profile</a></li>
+                        <li><a class="dropdown-item" href="index.html" onclick="logout()">Logout</a></li>
+                    </ul>
+                </div>
+            </div>
         </div>
+    </nav>
 
-        <div class="dashboard-card">
-            <h3>My Results</h3>
-            <p>Check your exam results here.</p>
-            <a href="my-results.html" class="card-button">View Results</a>
+    <!-- Profile Section -->
+    <section class="bg-white shadow-lg rounded-lg p-6 mb-6" id="profile">
+        <h3 class="text-xl font-semibold text-[#4361ee] mb-4">Update Profile</h3>
+        <form id="profileForm" class="row g-3">
+            <div class="col-md-6">
+                <div class="form-floating">
+                    <input type="text" class="form-control" id="fullName" placeholder="Full Name">
+                    <label for="fullName">Full Name</label>
+                </div>
+            </div>
+            <div class="col-md-6">
+                <div class="form-floating">
+                    <input type="text" class="form-control" id="phoneNumber" placeholder="Phone Number">
+                    <label for="phoneNumber">Phone Number</label>
+                </div>
+            </div>
+            <div class="col-md-6">
+                <div class="form-floating">
+                    <input type="text" class="form-control" id="schoolName" placeholder="School Name">
+                    <label for="schoolName">School Name</label>
+                </div>
+            </div>
+            <div class="col-md-6">
+                <div class="form-floating">
+                    <input type="password" class="form-control" id="password" placeholder="New Password">
+                    <label for="password">New Password (optional)</label>
+                </div>
+            </div>
+            <div class="col-12">
+                <button type="submit" class="btn btn-primary">Update Profile</button>
+            </div>
+        </form>
+    </section>
+
+    <!-- Exam Management Section -->
+    <section class="bg-white shadow-lg rounded-lg p-6" id="manage-exams">
+        <h3 class="text-xl font-semibold text-[#4361ee] mb-4">Manage Exams</h3>
+        <div class="mb-4">
+            <button class="btn btn-primary" onclick="openCreateExamModal()">Create New Exam</button>
         </div>
+        <div id="examList" class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <!-- Exams will be populated here via AJAX -->
+        </div>
+    </section>
+</main>
 
-        <div class="dashboard-card">
-            <h3>Profile Settings</h3>
-            <p>Edit and update your profile details.</p>
-            <a href="profile.html" class="card-button">Edit Profile</a>
+<!-- Create Exam Modal -->
+<div class="modal fade" id="createExamModal" tabindex="-1" aria-labelledby="createExamModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="createExamModalLabel">Create New Exam</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form id="createExamForm">
+                    <div class="mb-3">
+                        <label for="examTitle" class="form-label">Exam Title</label>
+                        <input type="text" class="form-control" id="examTitle" placeholder="e.g., Maths Exam" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="examDuration" class="form-label">Duration (minutes)</label>
+                        <input type="number" class="form-control" id="examDuration" min="1" placeholder="e.g., 60" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="examStartTime" class="form-label">Start Time</label>
+                        <input type="datetime-local" class="form-control" id="examStartTime" required>
+                    </div>
+                    <button type="submit" class="btn btn-primary">Create Exam</button>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                <button type="button" class="btn btn-primary" onclick="createExam()">Create Exam</button>
+            </div>
         </div>
     </div>
-
-    <a href="index.html" class="logout-btn" id="logoutButton">Logout</a>
 </div>
 
-<script>
-    // Fetch user data from localStorage or API
-    document.addEventListener("DOMContentLoaded", function() {
-        const token = localStorage.getItem("token");
-        if (!token) {
-            window.location.href = "login.html"; // Redirect to login if not logged in
-        }
-
-        // Get user information (mocked here; you can fetch it from an API if required)
-        const user = JSON.parse(atob(token.split('.')[1])); // Decode JWT token to get user info
-        const userName = document.getElementById('userName');
-        userName.innerText = user.name;
-
-        // Logout functionality
-        document.getElementById('logoutButton').addEventListener('click', function() {
-            localStorage.removeItem('token'); // Remove token
-            window.location.href = 'login.html'; // Redirect to login page
-        });
-    });
-</script>
-
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
+<script src="js/teacher-dashboard.js"></script>
 </body>
 </html>

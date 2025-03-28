@@ -23,11 +23,21 @@ public class EmailServiceImpl implements EmailService {
     }
 
     @Override
-    public void sendResultNotification(String to, String examTitle, int score) {
+    public void sendResultNotification(String to, String examTitle, Integer score) {
         SimpleMailMessage message = new SimpleMailMessage();
         message.setTo(to);
         message.setSubject("Results for: " + examTitle);
         message.setText("You scored " + score + " in the exam '" + examTitle + "'.");
         mailSender.send(message);
     }
+
+    @Override
+    public void sendSubmissionNotification(String to, String examTitle) {
+        SimpleMailMessage message = new SimpleMailMessage();
+        message.setTo(to);
+        message.setSubject("Exam Submission Confirmation: " + examTitle);
+        message.setText("Your submission for the exam '" + examTitle + "' has been received. Results will be available once grading is complete.");
+        mailSender.send(message);
+    }
+
 }

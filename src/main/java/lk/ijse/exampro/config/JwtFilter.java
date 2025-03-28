@@ -33,29 +33,48 @@ public class JwtFilter extends OncePerRequestFilter {
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain)
             throws ServletException, IOException {
         String authorization = request.getHeader("Authorization");
-        String token = null;
-        String email = null;
+        logger.info("Request URI: " + request.getRequestURI());
 
-        if (authorization != null && authorization.startsWith("Bearer ")) {
-            token = authorization.substring(7);
-            try {
-                email = jwtUtil.extractUsername(token);
-                if (email != null && SecurityContextHolder.getContext().getAuthentication() == null) {
-                    UserDetails userDetails = userService.loadUserByUsername(email);
-                    if (jwtUtil.validateToken(token, userDetails)) {
-                        UsernamePasswordAuthenticationToken authToken =
-                                new UsernamePasswordAuthenticationToken(userDetails, null, userDetails.getAuthorities());
-                        authToken.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
-                        SecurityContextHolder.getContext().setAuthentication(authToken);
-                    } else {
-                        logger.warn("Invalid JWT token for email: " + email);
-                    }
-                }
-            } catch (Exception e) {
-                logger.error("JWT parsing failed: " + e.getMessage());
-            }
+        if (authorization == null || !authorization.startsWith("Bearer ")) {
+            logger.warn("No Bearer token provided");
+            filterChain.doFilter(request, response);
+            return;
         }
 
-        filterChain.doFilter(request, response);
+        String token = authorization.substring(7);
+        logger.info("Token: " + token);
+        try {
+            String email = jwtUtil.extractUsername(token);
+            logger.info("Extracted email: " + email);
+            if (email != null && SecurityContextHolder.getContext().getAuthentication() == null) {
+                UserDetails userDetails = userService.loadUserByUsername(email);
+                logger.info("UserDetails: " + userDetails.getUsername() + ", Roles: " + userDetails.getAuthorities());
+                if (jwtUtil.validateToken(token, userDetails)) {
+                    UsernamePasswordAuthenticationToken authToken =
+                            new UsernamePasswordAuthenticationToken(userDetails, null, userDetails.getAuthorities());
+                    authToken.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
+                    SecurityContextHolder.getContext().setAuthentication(authToken);
+                    logger.info("Authentication set for: " + email);
+                    filterChain.doFilter(request, response);
+                } else {
+                    logger.warn("Token validation failed for: " + email);
+                    sendErrorResponse(response, "Invalid or expired token");
+                    return;
+                }
+            } else {
+                logger.warn("Email null or already authenticated");
+                filterChain.doFilter(request, response);
+            }
+        } catch (Exception e) {
+            logger.error("JWT validation failed: " + e.getMessage());
+            sendErrorResponse(response, "Authentication failed: " + e.getMessage());
+            return;
+        }
+    }
+
+    private void sendErrorResponse(HttpServletResponse response, String message) throws IOException {
+        response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+        response.setContentType("application/json");
+        response.getWriter().write("{\"code\": 401, \"message\": \"" + message + "\", \"data\": null}");
     }
 }

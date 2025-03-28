@@ -3,12 +3,17 @@ package lk.ijse.exampro.entity;
 import jakarta.persistence.*;
 import lombok.*;
 
+import java.time.LocalDateTime;
+
 @Entity
-@Table(name = "student_exams")
+@Table(name = "student_results")
+
+
+
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-public class StudentExam {
+public class StudentResult {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
@@ -26,5 +31,8 @@ public class StudentExam {
 
     @Column(nullable = false)
     private Boolean isCompleted;
+
+    @Column // Added field
+    private LocalDateTime startTime;
 }
 

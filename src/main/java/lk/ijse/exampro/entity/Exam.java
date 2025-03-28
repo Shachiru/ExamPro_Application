@@ -29,4 +29,3 @@ public class Exam {
     @JoinColumn(name = "teacher_id", nullable = false)
     private User createdBy;
 }
-

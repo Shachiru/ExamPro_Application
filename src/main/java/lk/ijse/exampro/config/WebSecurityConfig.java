@@ -1,5 +1,6 @@
 package lk.ijse.exampro.config;
 
+import jakarta.servlet.http.HttpServletResponse;
 import lk.ijse.exampro.service.impl.UserServiceImpl;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
@@ -61,9 +62,16 @@ public class WebSecurityConfig {
                         .requestMatchers("/api/v1/admin/**").hasRole("ADMIN")
                         .requestMatchers("/api/v1/teacher/**").hasRole("TEACHER")
                         .requestMatchers("/api/v1/student/**").hasRole("STUDENT")
-                        .requestMatchers(HttpMethod.DELETE, "/api/v1/user/delete/**").authenticated() // Minimal check
+                        .requestMatchers(HttpMethod.DELETE, "/api/v1/user/delete/**").authenticated()
                         .requestMatchers("/api/v1/user/**").authenticated()
                         .anyRequest().authenticated()
+                )
+                .exceptionHandling(ex -> ex
+                        .authenticationEntryPoint((request, response, authException) -> {
+                            response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+                            response.setContentType("application/json");
+                            response.getWriter().write("{\"code\": 401, \"message\": \"Authentication failed\", \"data\": null}");
+                        })
                 )
                 .sessionManagement(sess -> sess.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class)

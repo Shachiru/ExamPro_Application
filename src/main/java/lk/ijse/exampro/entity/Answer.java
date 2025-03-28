@@ -15,7 +15,7 @@ public class Answer {
 
     @ManyToOne
     @JoinColumn(name = "student_exam_id", nullable = false)
-    private StudentExam studentExam;
+    private StudentResult studentResult;
 
     @ManyToOne
     @JoinColumn(name = "question_id", nullable = false)
@@ -23,4 +23,7 @@ public class Answer {
 
     @Column(nullable = false)
     private String studentAnswer;
+
+    @Column
+    private Integer score;
 }

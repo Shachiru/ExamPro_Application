@@ -48,7 +48,7 @@ public class ExamController {
         }
     }
 
-    @PostMapping("/exams/{studentExamId}/submit")
+    /*@PostMapping("/exams/{studentExamId}/submit")
     @PreAuthorize("hasRole('STUDENT')")
     public ResponseEntity<ResponseDTO> submitAnswers(@PathVariable Long studentExamId, @RequestBody List<AnswerDTO> answers) {
         try {
@@ -58,22 +58,41 @@ public class ExamController {
             return ResponseEntity.status(VarList.INTERNAL_SERVER_ERROR)
                     .body(new ResponseDTO(VarList.INTERNAL_SERVER_ERROR, e.getMessage(), null));
         }
-    }
+    }*/
 
     @PostMapping("/{examId}/start")
     @PreAuthorize("hasRole('STUDENT')")
-    public ResponseEntity<StudentExamDTO> startExam(@PathVariable Long examId, @RequestParam String studentEmail) {
-        System.out.println("Received startExam request for examId: " + examId + ", studentEmail: " + studentEmail);
-        StudentExamDTO result = examService.startExam(examId, studentEmail);
-        return ResponseEntity.ok(result);
+    public ResponseEntity<ResponseDTO> startExam(@PathVariable Long examId) {
+        try {
+            Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+            String studentEmail = auth.getName(); // Email from JWT
+            StudentResultDTO result = examService.startExam(examId, studentEmail);
+            return ResponseEntity.status(VarList.CREATED)
+                    .body(new ResponseDTO(VarList.CREATED, "Exam started successfully", result));
+        } catch (Exception e) {
+            return ResponseEntity.status(VarList.INTERNAL_SERVER_ERROR)
+                    .body(new ResponseDTO(VarList.INTERNAL_SERVER_ERROR, e.getMessage(), null));
+        }
     }
 
-    @GetMapping("/exams/{examId}/time-remaining")
-    @PreAuthorize("hasAnyRole('STUDENT', 'TEACHER')")
-    public ResponseEntity<ResponseDTO> getRemainingTime(@PathVariable Long examId) {
+    @GetMapping("/student-exams/{studentExamId}/time-remaining")
+    @PreAuthorize("hasRole('STUDENT')")
+    public ResponseEntity<ResponseDTO> getRemainingTime(@PathVariable Long studentExamId) {
         try {
-            long secondsRemaining = examService.getRemainingTime(examId);
+            long secondsRemaining = examService.getRemainingTimeForStudent(studentExamId);
             return ResponseEntity.ok(new ResponseDTO(VarList.OK, "Time remaining", secondsRemaining));
+        } catch (Exception e) {
+            return ResponseEntity.status(VarList.INTERNAL_SERVER_ERROR)
+                    .body(new ResponseDTO(VarList.INTERNAL_SERVER_ERROR, e.getMessage(), null));
+        }
+    }
+
+    @PostMapping("/answers/{answerId}/grade")
+    @PreAuthorize("hasRole('TEACHER')")
+    public ResponseEntity<ResponseDTO> gradeShortAnswer(@PathVariable Long answerId, @RequestParam int score) {
+        try {
+            examService.gradeShortAnswer(answerId, score);
+            return ResponseEntity.ok(new ResponseDTO(VarList.OK, "Answer graded successfully", null));
         } catch (Exception e) {
             return ResponseEntity.status(VarList.INTERNAL_SERVER_ERROR)
                     .body(new ResponseDTO(VarList.INTERNAL_SERVER_ERROR, e.getMessage(), null));

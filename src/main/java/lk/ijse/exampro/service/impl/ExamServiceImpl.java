@@ -1,10 +1,14 @@
 package lk.ijse.exampro.service.impl;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+import jakarta.persistence.EntityNotFoundException;
 import lk.ijse.exampro.dto.AnswerDTO;
 import lk.ijse.exampro.dto.ExamDTO;
 import lk.ijse.exampro.dto.QuestionDTO;
-import lk.ijse.exampro.dto.StudentExamDTO;
+import lk.ijse.exampro.dto.StudentResultDTO;
 import lk.ijse.exampro.entity.*;
+import lk.ijse.exampro.exeption.ExamNotStartedException;
+import lk.ijse.exampro.exeption.ExamSubmissionException;
 import lk.ijse.exampro.repository.*;
 import lk.ijse.exampro.service.EmailService;
 import lk.ijse.exampro.service.ExamService;
@@ -21,6 +25,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 @Service
@@ -36,7 +41,7 @@ public class ExamServiceImpl implements ExamService {
     private QuestionRepository questionRepository;
 
     @Autowired
-    private StudentExamRepository studentExamRepository;
+    private StudentResultRepository studentResultRepository;
 
     @Autowired
     private StudentRepository studentRepository;
@@ -55,6 +60,8 @@ public class ExamServiceImpl implements ExamService {
 
     @Autowired
     private EmailService emailService;
+
+    private final ObjectMapper objectMapper = new ObjectMapper();
 
     @Override
     public ExamDTO createExam(ExamDTO examDTO) {
@@ -75,7 +82,7 @@ public class ExamServiceImpl implements ExamService {
         }
 
         Exam exam = modelMapper.map(examDTO, Exam.class);
-        exam.setCreatedBy(user); // Adjusted to use Teacher
+        exam.setCreatedBy(user);
         exam = examRepository.save(exam);
         logger.info("Exam created: {} by {}", exam.getTitle(), teacher.getUser().getEmail());
 
@@ -92,36 +99,28 @@ public class ExamServiceImpl implements ExamService {
 
     @Override
     public QuestionDTO addQuestionToExam(Long examId, QuestionDTO questionDTO) {
-        // 1. Validate the exam exists
         Exam exam = examRepository.findById(examId)
                 .orElseThrow(() -> new RuntimeException("Exam not found with ID: " + examId));
-
-        // 2. Ensure the current user is the exam creator (teacher)
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
         User currentUser = userRepository.findByEmail(auth.getName());
 
         if (currentUser == null || currentUser.getRole() != UserRole.TEACHER) {
             throw new IllegalArgumentException("Only teachers can add questions");
         }
-
         if (!exam.getCreatedBy().getId().equals(currentUser.getId())) {
             throw new IllegalArgumentException("You are not the owner of this exam");
         }
 
-        // 3. Validate question data
         if (questionDTO.getType() == null || !List.of("MCQ", "TRUE_FALSE", "SHORT_ANSWER").contains(questionDTO.getType())) {
             throw new IllegalArgumentException("Invalid question type");
         }
-
         if (questionDTO.getType().equals("MCQ") && (questionDTO.getOptions() == null || questionDTO.getOptions().isEmpty())) {
             throw new IllegalArgumentException("MCQ questions require options");
         }
 
-        // 4. Map DTO to entity and save
         Question question = modelMapper.map(questionDTO, Question.class);
-        question.setExam(exam); // Link to the exam
+        question.setExam(exam);
         question = questionRepository.save(question);
-
         return modelMapper.map(question, QuestionDTO.class);
     }
 
@@ -157,97 +156,151 @@ public class ExamServiceImpl implements ExamService {
     }
 
     @Override
-    public StudentExamDTO startExam(Long examId, String studentEmail) {
+    public StudentResultDTO startExam(Long examId, String studentEmail) {
         Exam exam = examRepository.findById(examId)
-                .orElseThrow(() -> new RuntimeException("Exam not found"));
-        User user = userRepository.findByEmail(studentEmail);
-        if (user == null || user.getRole() != UserRole.STUDENT) {
-            throw new IllegalArgumentException("Only students can take exams");
-        }
-        Student student = studentRepository.findByUser_Email(user.getEmail());
+                .orElseThrow(() -> new EntityNotFoundException("Exam not found with ID: " + examId));
+        User student = userRepository.findByEmail(studentEmail);
         if (student == null) {
-            throw new IllegalArgumentException("Student not found for user: " + user.getEmail());
+            throw new EntityNotFoundException("Student not found with email: " + studentEmail);
         }
 
-        LocalDateTime now = LocalDateTime.now();
-        LocalDateTime endTime = exam.getStartTime().plusMinutes(exam.getDuration());
-        if (now.isBefore(exam.getStartTime()) || now.isAfter(endTime)) {
-            throw new IllegalStateException("Exam is not available at this time");
+        logger.info("Current time: {}, Exam start time: {}", LocalDateTime.now(), exam.getStartTime());
+        if (LocalDateTime.now().isBefore(exam.getStartTime())) {
+            throw new ExamNotStartedException("Exam has not started yet");
         }
 
-        StudentExam studentExam = new StudentExam();
-        studentExam.setStudent(user); // Assuming StudentExam uses User
-        studentExam.setExam(exam);
-        studentExam.setIsCompleted(false);
-        studentExam = studentExamRepository.save(studentExam);
-        return modelMapper.map(studentExam, StudentExamDTO.class);
+        Optional<StudentResult> existingAttempt = studentResultRepository.findByStudentAndExam(student, exam);
+        if (existingAttempt.isPresent()) {
+            throw new ExamSubmissionException("You have already started this exam");
+        }
+
+        StudentResult studentResult = new StudentResult();
+        studentResult.setStudent(student);
+        studentResult.setExam(exam);
+        studentResult.setIsCompleted(false);
+        studentResult.setStartTime(LocalDateTime.now());
+        studentResult = studentResultRepository.save(studentResult);
+
+        return modelMapper.map(studentResult, StudentResultDTO.class);
     }
 
     @Override
     public void submitAnswers(Long studentExamId, List<AnswerDTO> answers) {
-        StudentExam studentExam = studentExamRepository.findById(studentExamId)
+        /*StudentResult studentResult = studentResultRepository.findById(studentExamId)
                 .orElseThrow(() -> new RuntimeException("StudentExam not found with ID: " + studentExamId));
+
+        // Verify authenticated user matches the student who started the exam
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        String authenticatedEmail = auth.getName();
+        String studentEmail = studentResult.getStudent().getEmail();
+        if (!authenticatedEmail.equals(studentEmail)) {
+            throw new SecurityException("You are not authorized to submit answers for this exam");
+        }
+
         LocalDateTime now = LocalDateTime.now();
-        LocalDateTime endTime = studentExam.getExam().getStartTime().plusMinutes(studentExam.getExam().getDuration());
+        LocalDateTime endTime = studentResult.getStartTime().plusMinutes(studentResult.getExam().getDuration());
         if (now.isAfter(endTime)) {
             throw new IllegalStateException("Exam time has expired");
         }
 
-        int score = 0;
         for (AnswerDTO answerDTO : answers) {
             Question question = questionRepository.findById(answerDTO.getQuestionId())
                     .orElseThrow(() -> new RuntimeException("Question not found with ID: " + answerDTO.getQuestionId()));
-            Answer answer = modelMapper.map(answerDTO, Answer.class);
-            answer.setStudentExam(studentExam);
+            Answer answer = new Answer();
+            answer.setStudentResult(studentResult);
             answer.setQuestion(question);
-            answerRepository.save(answer);
-
+            answer.setStudentAnswer(answerDTO.getStudentAnswer());
             if ("MCQ".equals(question.getType()) || "TRUE_FALSE".equals(question.getType())) {
-                if (answer.getStudentAnswer().equals(question.getCorrectAnswer())) {
-                    score += 1; // Assuming 1 point per correct answer
-                }
+                answer.setScore(answer.getStudentAnswer().equals(question.getCorrectAnswer()) ? 1 : 0);
+            } else {
+                answer.setScore(null);
             }
+            answerRepository.save(answer);
         }
 
-        Integer currentScore = studentExam.getScore() != null ? studentExam.getScore() : 0;
-        studentExam.setScore(currentScore + score);
+        int totalScore = answerRepository.findByStudentResult(studentResult).stream()
+                .filter(a -> a.getScore() != null)
+                .mapToInt(Answer::getScore)
+                .sum();
+        studentResult.setScore(totalScore);
 
-        // Check if the exam has short-answer questions
-        int shortAnswerCount = questionRepository.countByExamAndType(studentExam.getExam(), "SHORT_ANSWER");
+        int shortAnswerCount = questionRepository.countByExamAndType(studentResult.getExam(), "SHORT_ANSWER");
         if (shortAnswerCount == 0) {
-            // No short answers: Mark as completed and send email
-            studentExam.setIsCompleted(true);
+            studentResult.setIsCompleted(true);
             emailService.sendResultNotification(
-                    studentExam.getStudent().getEmail(),
-                    studentExam.getExam().getTitle(),
-                    studentExam.getScore()
+                    studentResult.getStudent().getEmail(),
+                    studentResult.getExam().getTitle(),
+                    studentResult.getScore()
             );
         } else {
-            // Short answers exist: Wait for manual grading
-            studentExam.setIsCompleted(false);
+            studentResult.setIsCompleted(false);
+            emailService.sendExamNotification(
+                    studentResult.getStudent().getEmail(),
+                    studentResult.getExam().getTitle(),
+                    studentResult.getExam().getStartTime()
+            );
         }
-
-        studentExamRepository.save(studentExam);
+        studentResultRepository.save(studentResult);*/
     }
 
     @Override
     public void gradeShortAnswer(Long answerId, int score) {
+        Answer answer = answerRepository.findById(answerId)
+                .orElseThrow(() -> new RuntimeException("Answer not found with ID: " + answerId));
+        if (!"SHORT_ANSWER".equals(answer.getQuestion().getType())) {
+            throw new IllegalArgumentException("Can only grade SHORT_ANSWER questions");
+        }
+        answer.setScore(score);
+        answerRepository.save(answer);
 
+        StudentResult studentResult = answer.getStudentResult();
+        List<Answer> allAnswers = answerRepository.findByStudentResult(studentResult);
+        int totalScore = allAnswers.stream()
+                .filter(a -> a.getScore() != null)
+                .mapToInt(Answer::getScore)
+                .sum();
+        studentResult.setScore(totalScore);
+
+        boolean allGraded = allAnswers.stream().allMatch(a -> a.getScore() != null);
+        if (allGraded) {
+            studentResult.setIsCompleted(true);
+            emailService.sendResultNotification(
+                    studentResult.getStudent().getEmail(),
+                    studentResult.getExam().getTitle(),
+                    studentResult.getScore()
+            );
+        }
+        studentResultRepository.save(studentResult);
     }
 
     @Override
     public void autoSubmitExam(Long studentExamId) {
-        StudentExam studentExam = studentExamRepository.findById(studentExamId)
+        StudentResult studentResult = studentResultRepository.findById(studentExamId)
                 .orElseThrow(() -> new RuntimeException("StudentExam not found with ID: " + studentExamId));
-        if (!studentExam.getIsCompleted()) {
-            studentExam.setIsCompleted(true);
-            studentExam.setScore(studentExam.getScore() != null ? studentExam.getScore() : 0);
-            studentExamRepository.save(studentExam);
-            emailService.sendResultNotification(
-                    studentExam.getStudent().getEmail(),
-                    studentExam.getExam().getTitle(),
-                    studentExam.getScore()
-            );
+        if (!studentResult.getIsCompleted()) {
+            int totalScore = answerRepository.findByStudentResult(studentResult).stream()
+                    .filter(a -> a.getScore() != null)
+                    .mapToInt(Answer::getScore)
+                    .sum();
+            studentResult.setScore(totalScore);
+            studentResult.setIsCompleted(true);
+            studentResultRepository.save(studentResult);
+
+            boolean hasUngraded = answerRepository.findByStudentResult(studentResult).stream()
+                    .anyMatch(a -> a.getScore() == null);
+            if (hasUngraded) {
+                emailService.sendExamNotification( // Temporary replacement until sendSubmissionNotification is implemented
+                        studentResult.getStudent().getEmail(),
+                        studentResult.getExam().getTitle(),
+                        studentResult.getExam().getStartTime()
+                );
+            } else {
+                emailService.sendResultNotification(
+                        studentResult.getStudent().getEmail(),
+                        studentResult.getExam().getTitle(),
+                        studentResult.getScore()
+                );
+            }
             logger.info("Exam auto-submitted for studentExamId: {}", studentExamId);
         }
     }
@@ -260,12 +313,12 @@ public class ExamServiceImpl implements ExamService {
     }
 
     @Override
-    public long getRemainingTime(Long examId) {
-        Exam exam = examRepository.findById(examId)
-                .orElseThrow(() -> new RuntimeException("Exam not found with ID: " + examId));
+    public long getRemainingTimeForStudent(Long studentExamId) {
+        StudentResult studentResult = studentResultRepository.findById(studentExamId)
+                .orElseThrow(() -> new RuntimeException("StudentExam not found with ID: " + studentExamId));
+        LocalDateTime endTime = studentResult.getStartTime().plusMinutes(studentResult.getExam().getDuration());
         LocalDateTime now = LocalDateTime.now();
-        LocalDateTime endTime = exam.getStartTime().plusMinutes(exam.getDuration());
         long remainingSeconds = ChronoUnit.SECONDS.between(now, endTime);
-        return Math.max(remainingSeconds, 0); // Ensure no negative time
+        return Math.max(remainingSeconds, 0);
     }
 }

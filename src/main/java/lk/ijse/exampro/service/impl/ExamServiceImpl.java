@@ -17,6 +17,7 @@ import org.modelmapper.ModelMapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
@@ -184,21 +185,33 @@ public class ExamServiceImpl implements ExamService {
         return modelMapper.map(studentResult, StudentResultDTO.class);
     }
 
+    @PreAuthorize("hasRole('STUDENT')")
     @Override
     public void submitAnswers(Long studentExamId, List<AnswerDTO> answers) {
-        /*StudentResult studentResult = studentResultRepository.findById(studentExamId)
+        StudentResult studentResult = studentResultRepository.findById(studentExamId)
                 .orElseThrow(() -> new RuntimeException("StudentExam not found with ID: " + studentExamId));
 
-        // Verify authenticated user matches the student who started the exam
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        if (auth == null) {
+            logger.error("Authentication is null for studentExamId: {}", studentExamId);
+            throw new SecurityException("Authentication failed: No user authenticated");
+        }
         String authenticatedEmail = auth.getName();
         String studentEmail = studentResult.getStudent().getEmail();
+        logger.info("Authenticated email: {}, Student email: {}", authenticatedEmail, studentEmail);
+
         if (!authenticatedEmail.equals(studentEmail)) {
+            logger.error("Email mismatch: {} vs {}", authenticatedEmail, studentEmail);
             throw new SecurityException("You are not authorized to submit answers for this exam");
         }
 
         LocalDateTime now = LocalDateTime.now();
-        LocalDateTime endTime = studentResult.getStartTime().plusMinutes(studentResult.getExam().getDuration());
+        LocalDateTime startTime = studentResult.getStartTime();
+        LocalDateTime endTime = startTime.plusMinutes(studentResult.getExam().getDuration());
+
+        if (now.isBefore(startTime)) {
+            throw new IllegalStateException("Exam has not yet started for you");
+        }
         if (now.isAfter(endTime)) {
             throw new IllegalStateException("Exam time has expired");
         }
@@ -227,20 +240,12 @@ public class ExamServiceImpl implements ExamService {
         int shortAnswerCount = questionRepository.countByExamAndType(studentResult.getExam(), "SHORT_ANSWER");
         if (shortAnswerCount == 0) {
             studentResult.setIsCompleted(true);
-            emailService.sendResultNotification(
-                    studentResult.getStudent().getEmail(),
-                    studentResult.getExam().getTitle(),
-                    studentResult.getScore()
-            );
+            emailService.sendResultNotification(studentEmail, studentResult.getExam().getTitle(), studentResult.getScore());
         } else {
             studentResult.setIsCompleted(false);
-            emailService.sendExamNotification(
-                    studentResult.getStudent().getEmail(),
-                    studentResult.getExam().getTitle(),
-                    studentResult.getExam().getStartTime()
-            );
+            emailService.sendExamNotification(studentEmail, studentResult.getExam().getTitle(), studentResult.getExam().getStartTime());
         }
-        studentResultRepository.save(studentResult);*/
+        studentResultRepository.save(studentResult);
     }
 
     @Override
@@ -289,7 +294,7 @@ public class ExamServiceImpl implements ExamService {
             boolean hasUngraded = answerRepository.findByStudentResult(studentResult).stream()
                     .anyMatch(a -> a.getScore() == null);
             if (hasUngraded) {
-                emailService.sendExamNotification( // Temporary replacement until sendSubmissionNotification is implemented
+                emailService.sendExamNotification(
                         studentResult.getStudent().getEmail(),
                         studentResult.getExam().getTitle(),
                         studentResult.getExam().getStartTime()

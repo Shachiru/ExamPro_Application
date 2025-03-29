@@ -3,8 +3,11 @@ package lk.ijse.exampro.controller;
 import lk.ijse.exampro.dto.*;
 import lk.ijse.exampro.service.ExamService;
 import lk.ijse.exampro.util.VarList;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
+import org.springframework.mail.MailAuthenticationException;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -16,6 +19,9 @@ import java.util.List;
 @RequestMapping("api/v1/exam")
 @CrossOrigin(origins = "http://localhost:63342")
 public class ExamController {
+
+    private static final Logger logger = LoggerFactory.getLogger(ExamController.class);
+
     @Autowired
     private ExamService examService;
 
@@ -48,17 +54,36 @@ public class ExamController {
         }
     }
 
-    /*@PostMapping("/exams/{studentExamId}/submit")
+    @PostMapping("/exams/{studentExamId}/submit")
     @PreAuthorize("hasRole('STUDENT')")
-    public ResponseEntity<ResponseDTO> submitAnswers(@PathVariable Long studentExamId, @RequestBody List<AnswerDTO> answers) {
+    public ResponseEntity<ResponseDTO> submitAnswers(
+            @PathVariable Long studentExamId,
+            @RequestBody List<AnswerDTO> answers) {
         try {
+            Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+            String studentEmail = auth.getName();
+            logger.info("Student {} submitting answers for studentExamId: {}", studentEmail, studentExamId);
             examService.submitAnswers(studentExamId, answers);
+            logger.info("Answers submitted successfully for studentExamId: {}", studentExamId);
             return ResponseEntity.ok(new ResponseDTO(VarList.OK, "Answers submitted successfully", null));
+        } catch (SecurityException e) {
+            logger.warn("Unauthorized submission attempt: {}", e.getMessage());
+            return ResponseEntity.status(VarList.FORBIDDEN)
+                    .body(new ResponseDTO(VarList.FORBIDDEN, e.getMessage(), null));
+        } catch (IllegalStateException e) {
+            logger.warn("Invalid submission timing: {}", e.getMessage());
+            return ResponseEntity.status(VarList.BAD_REQUEST)
+                    .body(new ResponseDTO(VarList.BAD_REQUEST, e.getMessage(), null));
+        } catch (MailAuthenticationException e) {
+            logger.error("Email authentication failed: {}", e.getMessage());
+            return ResponseEntity.status(VarList.INTERNAL_SERVER_ERROR)
+                    .body(new ResponseDTO(VarList.INTERNAL_SERVER_ERROR, "Failed to send notification: " + e.getMessage(), null));
         } catch (Exception e) {
+            logger.error("Error submitting answers: {}", e.getMessage(), e);
             return ResponseEntity.status(VarList.INTERNAL_SERVER_ERROR)
                     .body(new ResponseDTO(VarList.INTERNAL_SERVER_ERROR, e.getMessage(), null));
         }
-    }*/
+    }
 
     @PostMapping("/{examId}/start")
     @PreAuthorize("hasRole('STUDENT')")

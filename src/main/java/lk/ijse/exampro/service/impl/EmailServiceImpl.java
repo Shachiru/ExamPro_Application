@@ -1,7 +1,10 @@
 package lk.ijse.exampro.service.impl;
 
 import lk.ijse.exampro.service.EmailService;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.mail.MailException;
 import org.springframework.mail.SimpleMailMessage;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.stereotype.Service;
@@ -10,6 +13,9 @@ import java.time.LocalDateTime;
 
 @Service
 public class EmailServiceImpl implements EmailService {
+
+    private static final Logger logger = LoggerFactory.getLogger(EmailServiceImpl.class);
+
     @Autowired
     private JavaMailSender mailSender;
 
@@ -24,11 +30,17 @@ public class EmailServiceImpl implements EmailService {
 
     @Override
     public void sendResultNotification(String to, String examTitle, Integer score) {
-        SimpleMailMessage message = new SimpleMailMessage();
-        message.setTo(to);
-        message.setSubject("Results for: " + examTitle);
-        message.setText("You scored " + score + " in the exam '" + examTitle + "'.");
-        mailSender.send(message);
+        try {
+            SimpleMailMessage message = new SimpleMailMessage();
+            message.setTo(to);
+            message.setSubject("Exam Result: " + examTitle);
+            message.setText("Your score for " + examTitle + " is: " + score);
+            mailSender.send(message);
+            logger.info("Result notification sent to: {}", to);
+        } catch (MailException e) {
+            logger.error("Failed to send result notification to {}: {}", to, e.getMessage(), e);
+            // Optionally rethrow or handle gracefully
+        }
     }
 
     @Override

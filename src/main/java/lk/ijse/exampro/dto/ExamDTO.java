@@ -12,6 +12,7 @@ import java.time.LocalDateTime;
 public class ExamDTO {
     private Long id;
     private String title;
+    private String subject;
     private int duration;
     private LocalDateTime startTime;
     private String createdByEmail;

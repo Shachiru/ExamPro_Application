@@ -12,15 +12,12 @@ import java.time.LocalDateTime;
 @AllArgsConstructor
 public class StudentResultDTO {
     private Long id;
-
     @NotNull
     private Long examId;
-
     @NotNull
     private String studentEmail;
-
     private Integer score;
-
     private Boolean isCompleted;
     private LocalDateTime startTime;
+    private String examSubject;
 }

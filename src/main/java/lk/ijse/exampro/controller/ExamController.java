@@ -123,4 +123,21 @@ public class ExamController {
                     .body(new ResponseDTO(VarList.INTERNAL_SERVER_ERROR, e.getMessage(), null));
         }
     }
+
+    @GetMapping("/students-by-subject/{subject}")
+    @PreAuthorize("hasAnyRole('TEACHER', 'ADMIN')")
+    public ResponseEntity<ResponseDTO> getStudentsBySubject(@PathVariable String subject) {
+        try {
+            List<StudentResultDTO> studentResults = examService.getStudentsBySubject(subject);
+            return ResponseEntity.ok(new ResponseDTO(VarList.OK, "Students retrieved successfully", studentResults));
+        } catch (SecurityException e) {
+            logger.warn("Unauthorized access: {}", e.getMessage());
+            return ResponseEntity.status(VarList.FORBIDDEN)
+                    .body(new ResponseDTO(VarList.FORBIDDEN, e.getMessage(), null));
+        } catch (Exception e) {
+            logger.error("Error retrieving students: {}", e.getMessage());
+            return ResponseEntity.status(VarList.INTERNAL_SERVER_ERROR)
+                    .body(new ResponseDTO(VarList.INTERNAL_SERVER_ERROR, e.getMessage(), null));
+        }
+    }
 }

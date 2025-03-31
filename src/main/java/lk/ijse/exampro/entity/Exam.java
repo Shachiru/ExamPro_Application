@@ -20,6 +20,9 @@ public class Exam {
     private String title;
 
     @Column(nullable = false)
+    private String subject;
+
+    @Column(nullable = false)
     private int duration;
 
     @Column(nullable = false)

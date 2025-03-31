@@ -19,4 +19,5 @@ public interface ExamService {
     void autoSubmitExam(Long studentExamId);
     long getRemainingTimeForStudent(Long studentExamId);
     ExamDTO getExam(Long examId);
+    List<StudentResultDTO> getStudentsBySubject(String subject);
 }

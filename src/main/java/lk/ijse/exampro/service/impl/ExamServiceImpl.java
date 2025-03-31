@@ -84,6 +84,7 @@ public class ExamServiceImpl implements ExamService {
 
         Exam exam = modelMapper.map(examDTO, Exam.class);
         exam.setCreatedBy(user);
+        exam.setSubject(examDTO.getSubject() != null ? examDTO.getSubject() : teacher.getSubject());
         exam = examRepository.save(exam);
         logger.info("Exam created: {} by {}", exam.getTitle(), teacher.getUser().getEmail());
 
@@ -325,5 +326,42 @@ public class ExamServiceImpl implements ExamService {
         LocalDateTime now = LocalDateTime.now();
         long remainingSeconds = ChronoUnit.SECONDS.between(now, endTime);
         return Math.max(remainingSeconds, 0);
+    }
+
+    @Override
+    public List<StudentResultDTO> getStudentsBySubject(String subject) {
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        User currentUser = userRepository.findByEmail(auth.getName());
+
+        if (currentUser == null) {
+            throw new SecurityException("User not authenticated");
+        }
+
+        List<StudentResult> studentResults;
+        if (currentUser.getRole() == UserRole.TEACHER) {
+            Teacher teacher = teacherRepository.findByUser_Email(currentUser.getEmail());
+            if (teacher == null) {
+                throw new IllegalStateException("Teacher profile not found");
+            }
+            if (!teacher.getSubject().equals(subject)) {
+                throw new SecurityException("You can only view students for your subject: " + teacher.getSubject());
+            }
+            List<Exam> teacherExams = examRepository.findByCreatedByAndSubject(currentUser, subject);
+            studentResults = studentResultRepository.findByExamIn(teacherExams);
+        } else if (currentUser.getRole() == UserRole.ADMIN) {
+            List<Exam> exams = examRepository.findBySubject(subject);
+            studentResults = studentResultRepository.findByExamIn(exams);
+        } else {
+            throw new SecurityException("Only teachers and admins can access this information");
+        }
+
+        return studentResults.stream()
+                .map(result -> {
+                    StudentResultDTO dto = modelMapper.map(result, StudentResultDTO.class);
+                    dto.setExamSubject(result.getExam().getSubject()); // Set subject in DTO
+                    dto.setStudentEmail(result.getStudent().getEmail()); // Ensure email is set
+                    return dto;
+                })
+                .collect(Collectors.toList());
     }
 }

@@ -16,4 +16,7 @@ public interface ExamRepository extends JpaRepository<Exam, Long> {
 
     // Optional: Find exams by title (for search functionality)
     List<Exam> findByTitleContainingIgnoreCase(String title);
+
+    List<Exam> findByCreatedByAndSubject(User createdBy, String subject);
+    List<Exam> findBySubject(String subject);
 }

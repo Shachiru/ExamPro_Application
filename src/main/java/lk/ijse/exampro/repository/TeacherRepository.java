@@ -4,13 +4,9 @@ import lk.ijse.exampro.entity.Teacher;
 import lk.ijse.exampro.entity.User;
 import org.springframework.data.jpa.repository.JpaRepository;
 
+import java.util.Optional;
+
 public interface TeacherRepository extends JpaRepository<Teacher, Long> {
-
-    boolean existsByUser(User user);
-
-    boolean existsByUser_Email(String email);
-
-    Teacher findByUser_Email(String email);
-
-    void deleteByUser_Email(String email);
+    Optional<Teacher> findByUser(User user);
+    Optional<Teacher> findByUser_Email(String email);
 }

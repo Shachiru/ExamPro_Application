@@ -8,6 +8,7 @@ import lk.ijse.exampro.repository.UserRepository;
 import lk.ijse.exampro.service.UserService;
 import lk.ijse.exampro.util.JwtUtil;
 import lk.ijse.exampro.util.VarList;
+import lk.ijse.exampro.util.enums.UserRole;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -33,30 +34,98 @@ public class UserController {
         this.jwtUtil = jwtUtil;
     }
 
-    @PostMapping(value = "/sign_up")
-    public ResponseEntity<ResponseDTO> registerUser(@RequestBody @Valid UserDTO userDTO) {
+    @PostMapping(value = "/sign_up/admin")
+    @PreAuthorize("hasRole('SUPER_ADMIN')")
+    public ResponseEntity<ResponseDTO> registerAdmin(@RequestBody @Valid UserDTO userDTO) {
         try {
+            if (userDTO.getRole() != UserRole.ADMIN) {
+                return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                        .body(new ResponseDTO(VarList.FORBIDDEN, "Only admins can be registered by super admins", null));
+            }
             int res = userService.saveUser(userDTO);
-
             switch (res) {
-                case VarList.CREATED -> {
+                case VarList.CREATED:
                     String token = jwtUtil.generateToken(userDTO);
                     AuthDTO authDTO = new AuthDTO();
                     authDTO.setEmail(userDTO.getEmail());
                     authDTO.setToken(token);
                     authDTO.setRole(String.valueOf(userDTO.getRole()));
-
                     return ResponseEntity.status(HttpStatus.CREATED)
-                            .body(new ResponseDTO(VarList.CREATED, "User registered successfully", authDTO));
-                }
-                case VarList.NOT_ACCEPTABLE -> {
+                            .body(new ResponseDTO(VarList.CREATED, "Admin registered successfully by super admin", authDTO));
+                case VarList.NOT_ACCEPTABLE:
                     return ResponseEntity.status(HttpStatus.NOT_ACCEPTABLE)
                             .body(new ResponseDTO(VarList.NOT_ACCEPTABLE, "Email already used", null));
-                }
-                default -> {
+                default:
                     return ResponseEntity.status(HttpStatus.BAD_GATEWAY)
                             .body(new ResponseDTO(VarList.BAD_GATEWAY, "Error during registration", null));
-                }
+            }
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(new ResponseDTO(VarList.INTERNAL_SERVER_ERROR, e.getMessage(), null));
+        }
+    }
+
+    @PostMapping(value = "/sign_up/teacher")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<ResponseDTO> registerTeacher(@RequestBody @Valid UserDTO userDTO) {
+        try {
+            if (userDTO.getRole() != UserRole.TEACHER) {
+                return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                        .body(new ResponseDTO(VarList.FORBIDDEN, "Only teachers can be registered by admins", null));
+            }
+
+            int res = userService.saveUser(userDTO);
+
+            switch (res) {
+                case VarList.CREATED:
+                    String token = jwtUtil.generateToken(userDTO);
+                    AuthDTO authDTO = new AuthDTO();
+                    authDTO.setEmail(userDTO.getEmail());
+                    authDTO.setToken(token);
+                    authDTO.setRole(String.valueOf(userDTO.getRole()));
+                    return ResponseEntity.status(HttpStatus.CREATED)
+                            .body(new ResponseDTO(VarList.CREATED, "Teacher registered successfully by admin", authDTO));
+                case VarList.NOT_ACCEPTABLE:
+                    return ResponseEntity.status(HttpStatus.NOT_ACCEPTABLE)
+                            .body(new ResponseDTO(VarList.NOT_ACCEPTABLE, "Email already used", null));
+                default:
+                    return ResponseEntity.status(HttpStatus.BAD_GATEWAY)
+                            .body(new ResponseDTO(VarList.BAD_GATEWAY, "Error during registration", null));
+            }
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(new ResponseDTO(VarList.INTERNAL_SERVER_ERROR, e.getMessage(), null));
+        }
+    }
+
+    @PostMapping(value = "/sign_up/student")
+    public ResponseEntity<ResponseDTO> registerStudent(@RequestBody @Valid UserDTO userDTO) {
+        try {
+            if (userDTO.getRole() == null) {
+                userDTO.setRole(UserRole.STUDENT);
+            }
+            if (userDTO.getRole() != UserRole.STUDENT) {
+                return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                        .body(new ResponseDTO(VarList.FORBIDDEN, "Only students can register themselves", null));
+            }
+
+            int res = userService.saveUser(userDTO);
+
+            switch (res) {
+                case VarList.CREATED:
+                    String token = jwtUtil.generateToken(userDTO);
+                    AuthDTO authDTO = new AuthDTO();
+                    authDTO.setEmail(userDTO.getEmail());
+                    authDTO.setToken(token);
+                    authDTO.setRole(String.valueOf(userDTO.getRole()));
+                    return ResponseEntity.status(HttpStatus.CREATED)
+                            .body(new ResponseDTO(VarList.CREATED, "Student registered successfully", authDTO));
+                case VarList.NOT_ACCEPTABLE:
+                    return ResponseEntity.status(HttpStatus.NOT_ACCEPTABLE)
+                            .body(new ResponseDTO(VarList.NOT_ACCEPTABLE, "Email already used", null));
+                default:
+                    return ResponseEntity.status(HttpStatus.BAD_GATEWAY)
+                            .body(new ResponseDTO(VarList.BAD_GATEWAY, "Error during registration", null));
             }
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
@@ -68,7 +137,7 @@ public class UserController {
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<ResponseDTO> getAllUsers() {
         try {
-            List<UserDTO> users = userService.getAllUsers(); // Add this method to UserService
+            List<UserDTO> users = userService.getAllUsers();
             return ResponseEntity.ok(new ResponseDTO(VarList.OK, "Users retrieved successfully", users));
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)

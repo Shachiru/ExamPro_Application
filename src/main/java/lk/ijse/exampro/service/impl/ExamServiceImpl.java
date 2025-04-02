@@ -66,14 +66,13 @@ public class ExamServiceImpl implements ExamService {
 
     @Override
     public ExamDTO createExam(ExamDTO examDTO) {
-        User user = userRepository.findByEmail(examDTO.getCreatedByEmail());
-        if (user == null || user.getRole() != UserRole.TEACHER) {
+        User user = userRepository.findByEmail(examDTO.getCreatedByEmail())
+                .orElseThrow(() -> new IllegalArgumentException("User not found with email: " + examDTO.getCreatedByEmail()));
+        if (user.getRole() != UserRole.TEACHER) {
             throw new IllegalArgumentException("Only teachers can create exams");
         }
-        Teacher teacher = teacherRepository.findByUser_Email(user.getEmail());
-        if (teacher == null) {
-            throw new IllegalArgumentException("Teacher not found for user: " + user.getEmail());
-        }
+        Teacher teacher = teacherRepository.findByUser_Email(user.getEmail())
+                .orElseThrow(() -> new IllegalArgumentException("Teacher not found for user: " + user.getEmail()));
 
         if (examDTO.getStartTime().isBefore(LocalDateTime.now())) {
             throw new IllegalArgumentException("Start time must be in the future");
@@ -104,9 +103,10 @@ public class ExamServiceImpl implements ExamService {
         Exam exam = examRepository.findById(examId)
                 .orElseThrow(() -> new RuntimeException("Exam not found with ID: " + examId));
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
-        User currentUser = userRepository.findByEmail(auth.getName());
+        User currentUser = userRepository.findByEmail(auth.getName())
+                .orElseThrow(() -> new SecurityException("Authenticated user not found: " + auth.getName()));
 
-        if (currentUser == null || currentUser.getRole() != UserRole.TEACHER) {
+        if (currentUser.getRole() != UserRole.TEACHER) {
             throw new IllegalArgumentException("Only teachers can add questions");
         }
         if (!exam.getCreatedBy().getId().equals(currentUser.getId())) {
@@ -161,10 +161,8 @@ public class ExamServiceImpl implements ExamService {
     public StudentResultDTO startExam(Long examId, String studentEmail) {
         Exam exam = examRepository.findById(examId)
                 .orElseThrow(() -> new EntityNotFoundException("Exam not found with ID: " + examId));
-        User student = userRepository.findByEmail(studentEmail);
-        if (student == null) {
-            throw new EntityNotFoundException("Student not found with email: " + studentEmail);
-        }
+        User student = userRepository.findByEmail(studentEmail)
+                .orElseThrow(() -> new EntityNotFoundException("Student not found with email: " + studentEmail));
 
         logger.info("Current time: {}, Exam start time: {}", LocalDateTime.now(), exam.getStartTime());
         if (LocalDateTime.now().isBefore(exam.getStartTime())) {
@@ -331,18 +329,13 @@ public class ExamServiceImpl implements ExamService {
     @Override
     public List<StudentResultDTO> getStudentsBySubject(String subject) {
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
-        User currentUser = userRepository.findByEmail(auth.getName());
-
-        if (currentUser == null) {
-            throw new SecurityException("User not authenticated");
-        }
+        User currentUser = userRepository.findByEmail(auth.getName())
+                .orElseThrow(() -> new SecurityException("User not authenticated"));
 
         List<StudentResult> studentResults;
         if (currentUser.getRole() == UserRole.TEACHER) {
-            Teacher teacher = teacherRepository.findByUser_Email(currentUser.getEmail());
-            if (teacher == null) {
-                throw new IllegalStateException("Teacher profile not found");
-            }
+            Teacher teacher = teacherRepository.findByUser_Email(currentUser.getEmail())
+                    .orElseThrow(() -> new IllegalStateException("Teacher profile not found"));
             if (!teacher.getSubject().equals(subject)) {
                 throw new SecurityException("You can only view students for your subject: " + teacher.getSubject());
             }
@@ -358,8 +351,8 @@ public class ExamServiceImpl implements ExamService {
         return studentResults.stream()
                 .map(result -> {
                     StudentResultDTO dto = modelMapper.map(result, StudentResultDTO.class);
-                    dto.setExamSubject(result.getExam().getSubject()); // Set subject in DTO
-                    dto.setStudentEmail(result.getStudent().getEmail()); // Ensure email is set
+                    dto.setExamSubject(result.getExam().getSubject());
+                    dto.setStudentEmail(result.getStudent().getEmail());
                     return dto;
                 })
                 .collect(Collectors.toList());

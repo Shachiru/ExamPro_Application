@@ -11,23 +11,18 @@ import lk.ijse.exampro.repository.TeacherRepository;
 import lk.ijse.exampro.repository.UserRepository;
 import lk.ijse.exampro.service.UserService;
 import lk.ijse.exampro.util.VarList;
-import lk.ijse.exampro.util.enums.UserRole;
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.security.core.Authentication;
+import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
-import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
-import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Service
@@ -50,235 +45,175 @@ UserServiceImpl implements UserDetailsService, UserService {
     @Autowired
     private ModelMapper modelMapper;
 
+    @Autowired
+    private PasswordEncoder passwordEncoder;
+
     @Override
     public UserDetails loadUserByUsername(String email) throws UsernameNotFoundException {
-        User user = userRepository.findByEmail(email);
-        if (user == null) {
-            throw new UsernameNotFoundException("User not found with email: " + email);
-        }
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new UsernameNotFoundException("User not found with email: " + email));
         return new org.springframework.security.core.userdetails.User(
                 user.getEmail(),
                 user.getPassword(),
-                Collections.singletonList(new SimpleGrantedAuthority("ROLE_" + user.getRole()))
+                Collections.singletonList(new SimpleGrantedAuthority("ROLE_" + user.getRole().name()))
         );
     }
 
-    public UserDTO loadUserDetailsByUsername(String username) throws UsernameNotFoundException {
-        User user = userRepository.findByEmail(username);
-        return modelMapper.map(user, UserDTO.class);
-    }
-
-    @Override
-    public List<UserDTO> getAllUsers() {
-        List<User> users = userRepository.findAll();
-
-        return users.stream().map(user -> {
-            UserDTO userDTO = new UserDTO();
-            userDTO.setEmail(user.getEmail());
-            userDTO.setFullName(user.getFullName());
-            userDTO.setUsername(user.getUsername());
-            userDTO.setPhoneNumber(user.getPhoneNumber());
-            userDTO.setDateOfBirth(user.getDateOfBirth());
-            userDTO.setRole(user.getRole());
-
-            switch (user.getRole()) {
-                case ADMIN:
-                    Admin admin = adminRepository.findByUser_Email(user.getEmail());
-                    if (admin != null) userDTO.setSchoolName(admin.getSchoolName());
-                    break;
-                case STUDENT:
-                    Student student = studentRepository.findByUser_Email(user.getEmail());
-                    if (student != null) userDTO.setGrade(student.getGrade());
-                    break;
-                case TEACHER:
-                    Teacher teacher = teacherRepository.findByUser_Email(user.getEmail());
-                    if (teacher != null) userDTO.setSubject(teacher.getSubject());
-                    break;
-            }
-            return userDTO;
-        }).collect(Collectors.toList());
-    }
-
-    private Set<SimpleGrantedAuthority> getAuthority(User user) {
-        Set<SimpleGrantedAuthority> authorities = new HashSet<>();
-        switch (user.getRole()) {
-            case ADMIN:
-                authorities.add(new SimpleGrantedAuthority("ROLE_ADMIN"));
-                break;
-            case TEACHER:
-                authorities.add(new SimpleGrantedAuthority("ROLE_TEACHER"));
-                break;
-            case STUDENT:
-                authorities.add(new SimpleGrantedAuthority("ROLE_STUDENT"));
-                break;
-            default:
-                authorities.add(new SimpleGrantedAuthority("ROLE_USER"));
-        }
-        return authorities;
-    }
-
-    @Override
-    public UserDTO searchUser(String username) {
-        if (userRepository.existsByEmail(username)) {
-            User user = userRepository.findByEmail(username);
-            return modelMapper.map(user, UserDTO.class);
-        } else {
-            return null;
-        }
-    }
-
-    @Override
-    public int deleteUserByEmail(String email) {
-        if (!userRepository.existsByEmail(email)) {
-            return VarList.NOT_FOUND;
-        }
-        User user = userRepository.findByEmail(email);
-
-        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
-        boolean isSelfDeletion = auth != null && auth.getName().equals(email);
-        boolean isAdminDeleting = auth != null && auth.getAuthorities().stream()
-                .anyMatch(a -> a.getAuthority().equals("ADMIN"));
-
-        if (user.getRole() == UserRole.ADMIN && !isSelfDeletion) {
-            return VarList.FORBIDDEN;
-        }
-
-        switch (user.getRole()) {
-            case TEACHER:
-                Teacher teacher = teacherRepository.findByUser_Email(email);
-                if (teacher != null) {
-                    teacherRepository.delete(teacher);
-                }
-                break;
-            case STUDENT:
-                Student student = studentRepository.findByUser_Email(email);
-                if (student != null) {
-                    studentRepository.delete(student);
-                }
-                break;
-            case ADMIN:
-                Admin admin = adminRepository.findByUser_Email(email);
-                if (admin != null) {
-                    adminRepository.delete(admin);
-                }
-                break;
-        }
-
-        userRepository.deleteByEmail(email);
-        return VarList.OK;
-    }
-
-    @Override
-    public int deactivateUser(String email) {
-        if (!userRepository.existsByEmail(email)) {
-            return VarList.NOT_FOUND;
-        }
-
-        User user = userRepository.findByEmail(email);
-        user.setActive(false); // Mark as inactive
-        userRepository.save(user);
-        return VarList.OK;
+    private Collection<? extends GrantedAuthority> getAuthorities(User user) {
+        String role = "ROLE_" + user.getRole().name();
+        return Collections.singletonList(new SimpleGrantedAuthority(role));
     }
 
     @Override
     public int saveUser(UserDTO userDTO) {
         if (userRepository.existsByEmail(userDTO.getEmail())) {
-            return VarList.NOT_ACCEPTABLE;
+            System.out.println("Email already exists: " + userDTO.getEmail());
+            return VarList.NOT_ACCEPTABLE; // Email already in use
         }
-
-        if (userDTO.getRole() == null) {
-            return VarList.NOT_ACCEPTABLE;
-        }
-
-        UserRole role;
-        try {
-            role = userDTO.getRole();
-        } catch (IllegalArgumentException e) {
-            return VarList.NOT_ACCEPTABLE;
-        }
-
-        BCryptPasswordEncoder passwordEncoder = new BCryptPasswordEncoder();
-        userDTO.setPassword(passwordEncoder.encode(userDTO.getPassword()));
-
         User user = modelMapper.map(userDTO, User.class);
-        user.setNic(userDTO.getNic());
-        user.setRole(role);
-        userRepository.save(user);
+        user.setPassword(passwordEncoder.encode(userDTO.getPassword()));
+        user.setActive(true); // Set user as active by default
 
-        switch (role) {
+        try {
+            System.out.println("Saving user: " + user.getEmail());
+            userRepository.save(user);
+            System.out.println("User saved successfully: " + user.getEmail());
+        } catch (Exception e) {
+            System.err.println("Error saving user: " + e.getMessage());
+            throw e; // Re-throw to rollback transaction and log in DataInitializer
+        }
+
+        // Create role-specific entity based on the user's role
+        switch (user.getRole()) {
             case ADMIN:
                 Admin admin = new Admin();
                 admin.setUser(user);
                 admin.setSchoolName(userDTO.getSchoolName());
                 adminRepository.save(admin);
                 break;
-
-            case STUDENT:
-                Student student = new Student();
-                student.setUser(user);
-                student.setGrade(userDTO.getGrade());
-                studentRepository.save(student);
-                break;
-
             case TEACHER:
                 Teacher teacher = new Teacher();
                 teacher.setUser(user);
                 teacher.setSubject(userDTO.getSubject());
                 teacherRepository.save(teacher);
                 break;
+            case STUDENT:
+                Student student = new Student();
+                student.setUser(user);
+                student.setGrade(userDTO.getGrade());
+                studentRepository.save(student);
+                break;
+            case SUPER_ADMIN:
+                // No additional entity needed for SUPER_ADMIN
+                break;
         }
-
         return VarList.CREATED;
     }
 
     @Override
+    public List<UserDTO> getAllUsers() {
+        List<User> users = userRepository.findAll();
+        return users.stream().map(user -> {
+            UserDTO dto = modelMapper.map(user, UserDTO.class);
+            switch (user.getRole()) {
+                case ADMIN:
+                    adminRepository.findByUser_Email(user.getEmail())
+                            .ifPresent(admin -> dto.setSchoolName(admin.getSchoolName()));
+                    break;
+                case TEACHER:
+                    teacherRepository.findByUser_Email(user.getEmail())
+                            .ifPresent(teacher -> dto.setSubject(teacher.getSubject()));
+                    break;
+                case STUDENT:
+                    studentRepository.findByUser_Email(user.getEmail())
+                            .ifPresent(student -> dto.setGrade(student.getGrade()));
+                    break;
+            }
+            return dto;
+        }).collect(Collectors.toList());
+    }
+
+    @Override
+    public UserDTO searchUser(String email) {
+        return userRepository.findByEmail(email)
+                .map(user -> modelMapper.map(user, UserDTO.class))
+                .orElse(null);
+    }
+
+    @Override
     public int updateUserProfile(String email, UserDTO userDTO) {
-        if (!userRepository.existsByEmail(email)) {
+        User user = userRepository.findByEmail(email).orElse(null);
+        if (user == null) {
             return VarList.NOT_FOUND;
         }
-
-        User existingUser = userRepository.findByEmail(email);
-        UserRole role = existingUser.getRole();
-
-        // Update common fields
-        existingUser.setFullName(userDTO.getFullName() != null ? userDTO.getFullName() : existingUser.getFullName());
-        existingUser.setUsername(userDTO.getUsername() != null ? userDTO.getUsername() : existingUser.getUsername());
-        existingUser.setPhoneNumber(userDTO.getPhoneNumber() != null ? userDTO.getPhoneNumber() : existingUser.getPhoneNumber());
-        // existingUser.setProfilePicture(userDTO.getProfilePicture() != null ? userDTO.getProfilePicture() : existingUser.getProfilePicture());
-        existingUser.setDateOfBirth(userDTO.getDateOfBirth() != null ? userDTO.getDateOfBirth() : existingUser.getDateOfBirth());
-
+        // Update basic fields (excluding role)
+        user.setFullName(userDTO.getFullName());
+        user.setUsername(userDTO.getUsername());
         if (userDTO.getPassword() != null && !userDTO.getPassword().isEmpty()) {
-            BCryptPasswordEncoder passwordEncoder = new BCryptPasswordEncoder();
-            existingUser.setPassword(passwordEncoder.encode(userDTO.getPassword()));
+            user.setPassword(passwordEncoder.encode(userDTO.getPassword()));
         }
-        userRepository.save(existingUser);
+        userRepository.save(user);
 
-        switch (role) {
+        switch (user.getRole()) {
             case ADMIN:
-                if (adminRepository.existsByUser(existingUser)) {
-                    Admin admin = adminRepository.findByUser_Email(email);
-                    admin.setSchoolName(userDTO.getSchoolName() != null ? userDTO.getSchoolName() : admin.getSchoolName());
-                    adminRepository.save(admin);
-                }
+                adminRepository.findByUser_Email(email)
+                        .ifPresent(admin -> {
+                            admin.setSchoolName(userDTO.getSchoolName() != null ? userDTO.getSchoolName() : admin.getSchoolName());
+                            adminRepository.save(admin);
+                        });
                 break;
-
-            case STUDENT:
-                if (studentRepository.existsByUser(existingUser)) {
-                    Student student = studentRepository.findByUser_Email(email);
-                    student.setGrade(userDTO.getGrade() != null ? userDTO.getGrade() : student.getGrade());
-                    studentRepository.save(student);
-                }
-                break;
-
             case TEACHER:
-                if (teacherRepository.existsByUser(existingUser)) {
-                    Teacher teacher = teacherRepository.findByUser_Email(email);
-                    teacher.setSubject(userDTO.getSubject() != null ? userDTO.getSubject() : teacher.getSubject());
-                    teacherRepository.save(teacher);
-                }
+                teacherRepository.findByUser_Email(email)
+                        .ifPresent(teacher -> {
+                            teacher.setSubject(userDTO.getSubject() != null ? userDTO.getSubject() : teacher.getSubject());
+                            teacherRepository.save(teacher);
+                        });
+                break;
+            case STUDENT:
+                studentRepository.findByUser_Email(email)
+                        .ifPresent(student -> {
+                            student.setGrade(userDTO.getGrade() != null ? userDTO.getGrade() : student.getGrade());
+                            studentRepository.save(student);
+                        });
                 break;
         }
+        return VarList.OK;
+    }
 
+    @Override
+    public int deleteUserByEmail(String email) {
+        User user = userRepository.findByEmail(email).orElse(null);
+        if (user == null) {
+            return VarList.NOT_FOUND;
+        }
+        // Delete role-specific entity
+        switch (user.getRole()) {
+            case ADMIN:
+                adminRepository.findByUser_Email(email)
+                        .ifPresent(adminRepository::delete);
+                break;
+            case TEACHER:
+                teacherRepository.findByUser_Email(email)
+                        .ifPresent(teacherRepository::delete);
+                break;
+            case STUDENT:
+                studentRepository.findByUser_Email(email)
+                        .ifPresent(studentRepository::delete);
+                break;
+        }
+        userRepository.delete(user);
+        return VarList.OK;
+    }
+
+    @Override
+    public int deactivateUser(String email) {
+        Optional<User> userOpt = userRepository.findByEmail(email);
+        if (userOpt.isEmpty()) {
+            return VarList.NOT_FOUND;
+        }
+        User user = userOpt.get();
+        user.setActive(false);
+        userRepository.save(user);
         return VarList.OK;
     }
 

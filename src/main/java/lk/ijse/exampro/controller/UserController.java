@@ -152,6 +152,33 @@ public class UserController {
         }
     }
 
+    @PutMapping("/update")
+    @PreAuthorize("authentication.name == #email")
+    public ResponseEntity<ResponseDTO> updateUserProfile(@RequestParam String email, @RequestBody @Valid UserDTO userDTO) {
+        try {
+            int res = userService.updateUserProfile(email, userDTO);
+
+            switch (res) {
+                case VarList.OK:
+                    UserDTO updatedUser = userService.searchUser(email);
+                    return ResponseEntity.status(HttpStatus.OK)
+                            .body(new ResponseDTO(VarList.OK, "Profile updated successfully", updatedUser));
+                case VarList.NOT_FOUND:
+                    return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                            .body(new ResponseDTO(VarList.NOT_FOUND, "User not found", null));
+                case VarList.UNAUTHORIZED:
+                    return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                            .body(new ResponseDTO(VarList.UNAUTHORIZED, "Incorrect old password", null));
+                default:
+                    return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                            .body(new ResponseDTO(VarList.BAD_REQUEST, "Failed to update profile", null));
+            }
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(new ResponseDTO(VarList.INTERNAL_SERVER_ERROR, e.getMessage(), null));
+        }
+    }
+
     @PutMapping("/deactivate")
     @PreAuthorize("authentication.name == #email and hasRole('ADMIN')")
     public ResponseEntity<ResponseDTO> deactivateUser(@RequestParam String email) {
@@ -161,25 +188,6 @@ public class UserController {
                 return ResponseEntity.ok(new ResponseDTO(VarList.OK, "Profile deactivated successfully", null));
             } else {
                 return ResponseEntity.status(HttpStatus.NOT_FOUND).body(new ResponseDTO(VarList.NOT_FOUND, "User not found", null));
-            }
-        } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(new ResponseDTO(VarList.INTERNAL_SERVER_ERROR, e.getMessage(), null));
-        }
-    }
-
-    @PutMapping("/update")
-    @PreAuthorize("authentication.name == #email") // Use 'name' instead of 'principal' if needed
-    public ResponseEntity<ResponseDTO> updateUserProfile(@RequestParam String email, @RequestBody @Valid UserDTO userDTO) {
-        try {
-            int res = userService.updateUserProfile(email, userDTO);
-
-            switch (res) {
-                case VarList.OK:
-                    return ResponseEntity.status(HttpStatus.OK).body(new ResponseDTO(VarList.OK, "Profile updated successfully", null));
-                case VarList.NOT_FOUND:
-                    return ResponseEntity.status(HttpStatus.NOT_FOUND).body(new ResponseDTO(VarList.NOT_FOUND, "User not found", null));
-                default:
-                    return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(new ResponseDTO(VarList.BAD_REQUEST, "Failed to update profile", null));
             }
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(new ResponseDTO(VarList.INTERNAL_SERVER_ERROR, e.getMessage(), null));

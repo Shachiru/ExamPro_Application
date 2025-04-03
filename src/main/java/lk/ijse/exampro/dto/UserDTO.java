@@ -15,6 +15,7 @@ public class UserDTO {
     private String fullName;
     private String username;
     private String password;
+    private String oldPassword;
     private String nic;
     private String phoneNumber;
     private LocalDate dateOfBirth;

@@ -137,14 +137,23 @@ UserServiceImpl implements UserDetailsService, UserService {
         if (user == null) {
             return VarList.NOT_FOUND;
         }
-        // Update basic fields (excluding role)
-        user.setFullName(userDTO.getFullName());
-        user.setUsername(userDTO.getUsername());
+
         if (userDTO.getPassword() != null && !userDTO.getPassword().isEmpty()) {
+            if (userDTO.getOldPassword() == null || !passwordEncoder.matches(userDTO.getOldPassword(), user.getPassword())) {
+                return VarList.UNAUTHORIZED;
+            }
             user.setPassword(passwordEncoder.encode(userDTO.getPassword()));
         }
+
+        user.setFullName(userDTO.getFullName() != null ? userDTO.getFullName() : user.getFullName());
+        user.setUsername(userDTO.getUsername() != null ? userDTO.getUsername() : user.getUsername());
+        user.setPhoneNumber(userDTO.getPhoneNumber() != null ? userDTO.getPhoneNumber() : user.getPhoneNumber());
+        user.setDateOfBirth(userDTO.getDateOfBirth() != null ? userDTO.getDateOfBirth() : user.getDateOfBirth());
+        user.setProfilePicture(userDTO.getProfilePicture() != null ? userDTO.getProfilePicture() : user.getProfilePicture());
+
         userRepository.save(user);
 
+        // Update role-specific entity
         switch (user.getRole()) {
             case ADMIN:
                 adminRepository.findByUser_Email(email)
@@ -166,6 +175,9 @@ UserServiceImpl implements UserDetailsService, UserService {
                             student.setGrade(userDTO.getGrade() != null ? userDTO.getGrade() : student.getGrade());
                             studentRepository.save(student);
                         });
+                break;
+            case SUPER_ADMIN:
+                // No additional fields to update
                 break;
         }
         return VarList.OK;

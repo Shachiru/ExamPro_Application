@@ -11,6 +11,7 @@ import lk.ijse.exampro.repository.TeacherRepository;
 import lk.ijse.exampro.repository.UserRepository;
 import lk.ijse.exampro.service.UserService;
 import lk.ijse.exampro.util.VarList;
+import lk.ijse.exampro.util.enums.UserRole;
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.GrantedAuthority;
@@ -111,26 +112,16 @@ UserServiceImpl implements UserDetailsService, UserService {
     }
 
     @Override
-    public List<UserDTO> getAllUsers() {
-        List<User> users = userRepository.findAll();
-        return users.stream().map(user -> {
-            UserDTO dto = modelMapper.map(user, UserDTO.class);
-            switch (user.getRole()) {
-                case ADMIN:
-                    adminRepository.findByUser_Email(user.getEmail())
-                            .ifPresent(admin -> dto.setSchoolName(admin.getSchoolName()));
-                    break;
-                case TEACHER:
-                    teacherRepository.findByUser_Email(user.getEmail())
-                            .ifPresent(teacher -> dto.setSubject(teacher.getSubject()));
-                    break;
-                case STUDENT:
-                    studentRepository.findByUser_Email(user.getEmail())
-                            .ifPresent(student -> dto.setGrade(student.getGrade()));
-                    break;
-            }
-            return dto;
-        }).collect(Collectors.toList());
+    public List<UserDTO> getAllUsers(UserRole authenticatedRole) {
+        List<User> users;
+        if (authenticatedRole == UserRole.SUPER_ADMIN) {
+            users = userRepository.findAll();
+        } else {
+            users = userRepository.findAllByRoleNot(UserRole.SUPER_ADMIN);
+        }
+        return users.stream()
+                .map(user -> modelMapper.map(user, UserDTO.class))
+                .collect(Collectors.toList());
     }
 
     @Override

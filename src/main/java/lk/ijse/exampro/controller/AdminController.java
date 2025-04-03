@@ -58,18 +58,4 @@ public class AdminController {
         return "Everyone can access this!";
     }
 
-    @GetMapping("/users")
-    @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<ResponseDTO> getAllUsers() {
-        try {
-            System.out.println("Fetching all users for admin...");
-            List<UserDTO> users = userService.getAllUsers();
-            System.out.println("Users retrieved: " + users.size());
-            return ResponseEntity.ok(new ResponseDTO(VarList.OK, "Users retrieved successfully", users));
-        } catch (Exception e) {
-            System.err.println("Error: " + e.getMessage());
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body(new ResponseDTO(VarList.INTERNAL_SERVER_ERROR, "Error retrieving users: " + e.getMessage(), null));
-        }
-    }
 }

@@ -153,7 +153,6 @@ UserServiceImpl implements UserDetailsService, UserService {
 
         userRepository.save(user);
 
-        // Update role-specific entity
         switch (user.getRole()) {
             case ADMIN:
                 adminRepository.findByUser_Email(email)
@@ -177,7 +176,6 @@ UserServiceImpl implements UserDetailsService, UserService {
                         });
                 break;
             case SUPER_ADMIN:
-                // No additional fields to update
                 break;
         }
         return VarList.OK;
@@ -189,7 +187,6 @@ UserServiceImpl implements UserDetailsService, UserService {
         if (user == null) {
             return VarList.NOT_FOUND;
         }
-        // Delete role-specific entity
         switch (user.getRole()) {
             case ADMIN:
                 adminRepository.findByUser_Email(email)

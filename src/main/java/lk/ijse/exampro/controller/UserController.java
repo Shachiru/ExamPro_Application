@@ -134,21 +134,25 @@ public class UserController {
     }
 
     @DeleteMapping("/delete/{email}")
-    @PreAuthorize("hasAuthority('ADMIN') or authentication.name == #email")
-    public ResponseEntity<ResponseDTO> deleteUserByEmail(@PathVariable String email) {
+    @PreAuthorize("hasRole('ADMIN') or authentication.name == #email")
+    public ResponseEntity<ResponseDTO> deleteUser(@PathVariable String email) {
         try {
-            System.out.println("Attempting to delete user: " + email + ", Authenticated user: " + SecurityContextHolder.getContext().getAuthentication().getName());
             int res = userService.deleteUserByEmail(email);
-            if (res == VarList.OK) {
-                return ResponseEntity.ok(new ResponseDTO(VarList.OK, "User deleted successfully", null));
-            } else if (res == VarList.FORBIDDEN) {
-                return ResponseEntity.status(HttpStatus.FORBIDDEN).body(new ResponseDTO(VarList.FORBIDDEN, "Cannot delete admin users unless by self", null));
-            } else {
-                return ResponseEntity.status(HttpStatus.NOT_FOUND).body(new ResponseDTO(VarList.NOT_FOUND, "User not found", null));
+
+            switch (res) {
+                case VarList.OK:
+                    return ResponseEntity.status(HttpStatus.OK)
+                            .body(new ResponseDTO(VarList.OK, "User deleted successfully", null));
+                case VarList.NOT_FOUND:
+                    return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                            .body(new ResponseDTO(VarList.NOT_FOUND, "User not found", null));
+                default:
+                    return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                            .body(new ResponseDTO(VarList.BAD_REQUEST, "Failed to delete user", null));
             }
         } catch (Exception e) {
-            System.err.println("Error deleting user: " + e.getMessage());
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(new ResponseDTO(VarList.INTERNAL_SERVER_ERROR, e.getMessage(), null));
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(new ResponseDTO(VarList.INTERNAL_SERVER_ERROR, e.getMessage(), null));
         }
     }
 

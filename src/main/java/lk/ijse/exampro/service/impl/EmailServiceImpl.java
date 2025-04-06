@@ -39,17 +39,36 @@ public class EmailServiceImpl implements EmailService {
             logger.info("Result notification sent to: {}", to);
         } catch (MailException e) {
             logger.error("Failed to send result notification to {}: {}", to, e.getMessage(), e);
-            // Optionally rethrow or handle gracefully
+            throw new RuntimeException("Failed to send email", e);
         }
     }
 
     @Override
     public void sendSubmissionNotification(String to, String examTitle) {
-        SimpleMailMessage message = new SimpleMailMessage();
-        message.setTo(to);
-        message.setSubject("Exam Submission Confirmation: " + examTitle);
-        message.setText("Your submission for the exam '" + examTitle + "' has been received. Results will be available once grading is complete.");
-        mailSender.send(message);
+        try {
+            SimpleMailMessage message = new SimpleMailMessage();
+            message.setTo(to);
+            message.setSubject("Exam Submission Confirmation: " + examTitle);
+            message.setText("Your submission for the exam '" + examTitle + "' has been received. Results will be available once grading is complete.");
+            mailSender.send(message);
+            logger.info("Submission notification sent to: {}", to);
+        } catch (MailException e) {
+            logger.error("Failed to send submission notification to {}: {}", to, e.getMessage(), e);
+        }
+    }
+
+    @Override
+    public void sendGradingNotification(String to, String examTitle, String studentEmail) {
+        try {
+            SimpleMailMessage message = new SimpleMailMessage();
+            message.setTo(to);
+            message.setSubject("Grading Required for Exam: " + examTitle);
+            message.setText("Student " + studentEmail + " has submitted answers for '" + examTitle + "'. Please grade the short answer questions.");
+            mailSender.send(message);
+            logger.info("Grading notification sent to: {}", to);
+        } catch (MailException e) {
+            logger.error("Failed to send grading notification to {}: {}", to, e.getMessage(), e);
+        }
     }
 
 }

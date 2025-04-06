@@ -113,16 +113,26 @@ public class ExamServiceImpl implements ExamService {
             throw new IllegalArgumentException("You are not the owner of this exam");
         }
 
+        // Validate question type and answers
         if (questionDTO.getType() == null || !List.of("MCQ", "TRUE_FALSE", "SHORT_ANSWER").contains(questionDTO.getType())) {
             throw new IllegalArgumentException("Invalid question type");
         }
-        if (questionDTO.getType().equals("MCQ") && (questionDTO.getOptions() == null || questionDTO.getOptions().isEmpty())) {
-            throw new IllegalArgumentException("MCQ questions require options");
+        if ("MCQ".equals(questionDTO.getType())) {
+            if (questionDTO.getOptions() == null || questionDTO.getOptions().isEmpty()) {
+                throw new IllegalArgumentException("MCQ questions require options");
+            }
+            if (questionDTO.getCorrectAnswer() == null || !questionDTO.getOptions().contains(questionDTO.getCorrectAnswer())) {
+                throw new IllegalArgumentException("MCQ questions require a valid correct answer from the options");
+            }
+        }
+        if ("TRUE_FALSE".equals(questionDTO.getType()) && (questionDTO.getCorrectAnswer() == null || !List.of("TRUE", "FALSE").contains(questionDTO.getCorrectAnswer().toUpperCase()))) {
+            throw new IllegalArgumentException("True/False questions require a valid correct answer (TRUE or FALSE)");
         }
 
         Question question = modelMapper.map(questionDTO, Question.class);
         question.setExam(exam);
         question = questionRepository.save(question);
+        logger.info("Question added to exam {}: {}", exam.getTitle(), question.getContent());
         return modelMapper.map(question, QuestionDTO.class);
     }
 
@@ -130,11 +140,26 @@ public class ExamServiceImpl implements ExamService {
     public QuestionDTO updateQuestion(Long questionId, QuestionDTO questionDTO) {
         Question question = questionRepository.findById(questionId)
                 .orElseThrow(() -> new RuntimeException("Question not found with ID: " + questionId));
+
+        // Validate updated question
+        if ("MCQ".equals(questionDTO.getType())) {
+            if (questionDTO.getOptions() == null || questionDTO.getOptions().isEmpty()) {
+                throw new IllegalArgumentException("MCQ questions require options");
+            }
+            if (questionDTO.getCorrectAnswer() == null || !questionDTO.getOptions().contains(questionDTO.getCorrectAnswer())) {
+                throw new IllegalArgumentException("MCQ questions require a valid correct answer from the options");
+            }
+        }
+        if ("TRUE_FALSE".equals(questionDTO.getType()) && (questionDTO.getCorrectAnswer() == null || !List.of("TRUE", "FALSE").contains(questionDTO.getCorrectAnswer().toUpperCase()))) {
+            throw new IllegalArgumentException("True/False questions require a valid correct answer (TRUE or FALSE)");
+        }
+
         question.setType(questionDTO.getType());
         question.setContent(questionDTO.getContent());
         question.setCorrectAnswer(questionDTO.getCorrectAnswer());
         question.setOptions(questionDTO.getOptions());
         question = questionRepository.save(question);
+        logger.info("Question updated: {}", question.getContent());
         return modelMapper.map(question, QuestionDTO.class);
     }
 
@@ -197,24 +222,18 @@ public class ExamServiceImpl implements ExamService {
         }
         String authenticatedEmail = auth.getName();
         String studentEmail = studentResult.getStudent().getEmail();
-        logger.info("Authenticated email: {}, Student email: {}", authenticatedEmail, studentEmail);
 
         if (!authenticatedEmail.equals(studentEmail)) {
-            logger.error("Email mismatch: {} vs {}", authenticatedEmail, studentEmail);
             throw new SecurityException("You are not authorized to submit answers for this exam");
         }
 
         LocalDateTime now = LocalDateTime.now();
-        LocalDateTime startTime = studentResult.getStartTime();
-        LocalDateTime endTime = startTime.plusMinutes(studentResult.getExam().getDuration());
-
-        if (now.isBefore(startTime)) {
-            throw new IllegalStateException("Exam has not yet started for you");
-        }
+        LocalDateTime endTime = studentResult.getStartTime().plusMinutes(studentResult.getExam().getDuration());
         if (now.isAfter(endTime)) {
             throw new IllegalStateException("Exam time has expired");
         }
 
+        // Process and grade answers
         for (AnswerDTO answerDTO : answers) {
             Question question = questionRepository.findById(answerDTO.getQuestionId())
                     .orElseThrow(() -> new RuntimeException("Question not found with ID: " + answerDTO.getQuestionId()));
@@ -222,29 +241,42 @@ public class ExamServiceImpl implements ExamService {
             answer.setStudentResult(studentResult);
             answer.setQuestion(question);
             answer.setStudentAnswer(answerDTO.getStudentAnswer());
+
+            // Auto-grade MCQ and True/False questions
             if ("MCQ".equals(question.getType()) || "TRUE_FALSE".equals(question.getType())) {
-                answer.setScore(answer.getStudentAnswer().equals(question.getCorrectAnswer()) ? 1 : 0);
+                if (question.getCorrectAnswer() == null) {
+                    throw new IllegalStateException("Correct answer not set for question ID: " + question.getId());
+                }
+                answer.setScore(answerDTO.getStudentAnswer().equals(question.getCorrectAnswer()) ? 1 : 0);
             } else {
-                answer.setScore(null);
+                answer.setScore(null); // Short Answer requires manual grading
             }
             answerRepository.save(answer);
         }
 
-        int totalScore = answerRepository.findByStudentResult(studentResult).stream()
+        // Check grading status
+        List<Answer> allAnswers = answerRepository.findByStudentResult(studentResult);
+        int autoGradedScore = allAnswers.stream()
                 .filter(a -> a.getScore() != null)
                 .mapToInt(Answer::getScore)
                 .sum();
-        studentResult.setScore(totalScore);
+        studentResult.setScore(autoGradedScore);
 
         int shortAnswerCount = questionRepository.countByExamAndType(studentResult.getExam(), "SHORT_ANSWER");
         if (shortAnswerCount == 0) {
+            // No short answers, complete exam and send results
             studentResult.setIsCompleted(true);
-            emailService.sendResultNotification(studentEmail, studentResult.getExam().getTitle(), studentResult.getScore());
+            studentResultRepository.save(studentResult);
+            emailService.sendResultNotification(studentEmail, studentResult.getExam().getTitle(), autoGradedScore);
         } else {
+            // Short answers present, notify teacher to grade
             studentResult.setIsCompleted(false);
-            emailService.sendExamNotification(studentEmail, studentResult.getExam().getTitle(), studentResult.getExam().getStartTime());
+            studentResultRepository.save(studentResult);
+            Teacher teacher = teacherRepository.findByUser_Email(studentResult.getExam().getCreatedBy().getEmail())
+                    .orElseThrow(() -> new IllegalStateException("Teacher not found"));
+            emailService.sendGradingNotification(teacher.getUser().getEmail(), studentResult.getExam().getTitle(), studentEmail);
+            emailService.sendSubmissionNotification(studentEmail, studentResult.getExam().getTitle());
         }
-        studentResultRepository.save(studentResult);
     }
 
     @Override
@@ -257,24 +289,18 @@ public class ExamServiceImpl implements ExamService {
         answer.setScore(score);
         answerRepository.save(answer);
 
+        // Check if all answers are graded
         StudentResult studentResult = answer.getStudentResult();
         List<Answer> allAnswers = answerRepository.findByStudentResult(studentResult);
-        int totalScore = allAnswers.stream()
-                .filter(a -> a.getScore() != null)
-                .mapToInt(Answer::getScore)
-                .sum();
-        studentResult.setScore(totalScore);
-
         boolean allGraded = allAnswers.stream().allMatch(a -> a.getScore() != null);
+
         if (allGraded) {
+            int totalScore = allAnswers.stream().mapToInt(Answer::getScore).sum();
+            studentResult.setScore(totalScore);
             studentResult.setIsCompleted(true);
-            emailService.sendResultNotification(
-                    studentResult.getStudent().getEmail(),
-                    studentResult.getExam().getTitle(),
-                    studentResult.getScore()
-            );
+            studentResultRepository.save(studentResult);
+            emailService.sendResultNotification(studentResult.getStudent().getEmail(), studentResult.getExam().getTitle(), totalScore);
         }
-        studentResultRepository.save(studentResult);
     }
 
     @Override
@@ -282,28 +308,22 @@ public class ExamServiceImpl implements ExamService {
         StudentResult studentResult = studentResultRepository.findById(studentExamId)
                 .orElseThrow(() -> new RuntimeException("StudentExam not found with ID: " + studentExamId));
         if (!studentResult.getIsCompleted()) {
-            int totalScore = answerRepository.findByStudentResult(studentResult).stream()
+            List<Answer> allAnswers = answerRepository.findByStudentResult(studentResult);
+            int autoGradedScore = allAnswers.stream()
                     .filter(a -> a.getScore() != null)
                     .mapToInt(Answer::getScore)
                     .sum();
-            studentResult.setScore(totalScore);
+            studentResult.setScore(autoGradedScore);
             studentResult.setIsCompleted(true);
             studentResultRepository.save(studentResult);
 
-            boolean hasUngraded = answerRepository.findByStudentResult(studentResult).stream()
-                    .anyMatch(a -> a.getScore() == null);
+            boolean hasUngraded = allAnswers.stream().anyMatch(a -> a.getScore() == null);
             if (hasUngraded) {
-                emailService.sendExamNotification(
-                        studentResult.getStudent().getEmail(),
-                        studentResult.getExam().getTitle(),
-                        studentResult.getExam().getStartTime()
-                );
+                Teacher teacher = teacherRepository.findByUser_Email(studentResult.getExam().getCreatedBy().getEmail())
+                        .orElseThrow(() -> new IllegalStateException("Teacher not found"));
+                emailService.sendGradingNotification(teacher.getUser().getEmail(), studentResult.getExam().getTitle(), studentResult.getStudent().getEmail());
             } else {
-                emailService.sendResultNotification(
-                        studentResult.getStudent().getEmail(),
-                        studentResult.getExam().getTitle(),
-                        studentResult.getScore()
-                );
+                emailService.sendResultNotification(studentResult.getStudent().getEmail(), studentResult.getExam().getTitle(), autoGradedScore);
             }
             logger.info("Exam auto-submitted for studentExamId: {}", studentExamId);
         }

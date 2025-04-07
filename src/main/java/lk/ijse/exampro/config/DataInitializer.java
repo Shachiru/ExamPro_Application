@@ -26,14 +26,14 @@ public class DataInitializer {
                 System.out.println("No super admin found. Creating new super admin...");
                 UserDTO superAdminDTO = new UserDTO();
                 superAdminDTO.setEmail("shachirurashmika35@gmail.com");
-                superAdminDTO.setFullName("System Owner");
-                superAdminDTO.setUsername("shachiru"); // Adjust as needed
+                superAdminDTO.setFullName("Shachiru Rashmika");
+                superAdminDTO.setUsername("shachiru");
                 superAdminDTO.setPassword("superpassword123");
                 superAdminDTO.setRole(UserRole.SUPER_ADMIN);
                 superAdminDTO.setActive(true);
-                superAdminDTO.setDateOfBirth(LocalDate.of(1980, 1, 1));
-                superAdminDTO.setNic("123456789V");
-                superAdminDTO.setPhoneNumber("1234567890");
+                superAdminDTO.setDateOfBirth(LocalDate.of(2000, 3, 14));
+                superAdminDTO.setNic("200062132152");
+                superAdminDTO.setPhoneNumber("0773322111");
 
                 try {
                     int result = userService.saveUser(superAdminDTO);

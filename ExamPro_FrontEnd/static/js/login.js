@@ -22,7 +22,7 @@ document.addEventListener("DOMContentLoaded", function () {
                 duration: 3000,
                 gravity: "top",
                 position: "right",
-                style: { background: "#ef4444", borderRadius: "12px", boxShadow: "0 4px 15px rgba(0, 0, 0, 0.2)" }
+                style: {background: "#ef4444", borderRadius: "12px", boxShadow: "0 4px 15px rgba(0, 0, 0, 0.2)"}
             }).showToast();
             return;
         }
@@ -32,9 +32,9 @@ document.addEventListener("DOMContentLoaded", function () {
             url: "http://localhost:8080/api/v1/auth/sign_in",
             method: "POST",
             contentType: "application/json",
-            data: JSON.stringify({ email: email, password: password }),
+            data: JSON.stringify({email: email, password: password}),
             success: function (data) {
-                localStorage.setItem("token", data.data.token);
+                localStorage.setItem("jwtToken", data.data.token); // Use "jwtToken" to match dashboard
                 localStorage.setItem("role", data.data.role);
                 Toastify({
                     text: "Welcome to ExamPro! Login Successful",
@@ -52,11 +52,20 @@ document.addEventListener("DOMContentLoaded", function () {
                         color: "#fff"
                     }
                 }).showToast();
+
                 setTimeout(function () {
-                    if (data.data.role === "ADMIN") window.location.href = "admin-dashboard.html";
-                    else if (data.data.role === "TEACHER") window.location.href = "teacher-dashboard.html";
-                    else if (data.data.role === "STUDENT") window.location.href = "student-dashboard.html";
-                    else errorMessage.text("Invalid Role Assigned!").show();
+                    if (data.data.role === "SUPER_ADMIN") {
+                        window.location.href = "super-admin-dashboard.html";
+                    } else if (data.data.role === "ADMIN") {
+                        window.location.href = "admin-dashboard.html";
+                    } else if (data.data.role === "TEACHER") {
+                        window.location.href = "teacher-dashboard.html";
+                    } else if (data.data.role === "STUDENT") {
+                        window.location.href = "student-dashboard.html";
+                    } else {
+                        errorMessage.text("Invalid Role Assigned!").show();
+                        submitButton.prop("disabled", false).text("Login");
+                    }
                 }, 1000);
             },
             error: function (xhr) {
@@ -85,7 +94,7 @@ document.addEventListener("DOMContentLoaded", function () {
 
     // Google Sign-In
     var googleAuth;
-    gapi.load('auth2', function() {
+    gapi.load('auth2', function () {
         googleAuth = gapi.auth2.init({
             client_id: 'YOUR_CLIENT_ID_HERE', // Replace with your Google Client ID
             scope: 'profile email',
@@ -93,13 +102,13 @@ document.addEventListener("DOMContentLoaded", function () {
         });
     });
 
-    $('#google-sign-in').on('click', function() {
+    $('#google-sign-in').on('click', function () {
         var btn = $(this);
         var originalText = btn.text();
         btn.prop('disabled', true).text("Signing in with Google...");
 
         if (googleAuth) {
-            googleAuth.signIn().then(function(response) {
+            googleAuth.signIn().then(function (response) {
                 var profile = response.getBasicProfile();
                 var email = profile.getEmail();
                 Toastify({
@@ -120,7 +129,7 @@ document.addEventListener("DOMContentLoaded", function () {
                 }).showToast();
                 btn.prop('disabled', false).text(originalText);
                 // Add logic to handle Google token if needed
-            }, function(error) {
+            }, function (error) {
                 Toastify({
                     text: "Google Sign-In failed",
                     duration: 3000,

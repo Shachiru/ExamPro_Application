@@ -2,6 +2,7 @@ document.addEventListener("DOMContentLoaded", function () {
     // Password toggle functionality
     const togglePassword = document.getElementById('togglePassword');
     const password = document.getElementById('password');
+    const loaderContainer = document.getElementById('loaderContainer');
 
     togglePassword.addEventListener('click', function() {
         // Toggle the type attribute
@@ -12,6 +13,16 @@ document.addEventListener("DOMContentLoaded", function () {
         this.classList.toggle('fa-eye');
         this.classList.toggle('fa-eye-slash');
     });
+
+    // Function to show loader
+    function showLoader() {
+        loaderContainer.style.display = 'flex';
+    }
+
+    // Function to hide loader
+    function hideLoader() {
+        loaderContainer.style.display = 'none';
+    }
 
     $("#loginForm").on("submit", function (event) {
         event.preventDefault();
@@ -32,6 +43,8 @@ document.addEventListener("DOMContentLoaded", function () {
         }
 
         submitButton.prop("disabled", true).val("Signing in...");
+        showLoader(); // Show loader before AJAX request
+
         $.ajax({
             url: "http://localhost:8080/api/v1/auth/sign_in",
             method: "POST",
@@ -40,6 +53,8 @@ document.addEventListener("DOMContentLoaded", function () {
             success: function (data) {
                 localStorage.setItem("jwtToken", data.data.token);
                 localStorage.setItem("role", data.data.role);
+                hideLoader(); // Hide loader on success
+
                 Toastify({
                     text: "Welcome to ExamPro! Login Successful",
                     duration: 3000,
@@ -68,6 +83,7 @@ document.addEventListener("DOMContentLoaded", function () {
                 }, 1000);
             },
             error: function (xhr) {
+                hideLoader(); // Hide loader on error
                 let errorMsg = xhr.responseJSON?.message || "Invalid email or password!";
                 errorMessage.text(errorMsg).show();
                 Toastify({
@@ -99,11 +115,14 @@ document.addEventListener("DOMContentLoaded", function () {
     $('#google-sign-in').on('click', function () {
         var btn = $(this);
         btn.prop('disabled', true);
+        showLoader(); // Show loader before Google auth
 
         if (googleAuth) {
             googleAuth.signIn().then(function (response) {
                 var profile = response.getBasicProfile();
                 var email = profile.getEmail();
+                hideLoader(); // Hide loader on success
+
                 Toastify({
                     text: "Login successful via Google with email " + email,
                     duration: 3000,
@@ -117,6 +136,8 @@ document.addEventListener("DOMContentLoaded", function () {
                 }).showToast();
                 btn.prop('disabled', false);
             }, function (error) {
+                hideLoader(); // Hide loader on error
+
                 Toastify({
                     text: "Google Sign-In failed",
                     duration: 3000,

@@ -115,13 +115,22 @@ UserServiceImpl implements UserDetailsService, UserService {
     public List<UserDTO> getAllUsers(UserRole authenticatedRole) {
         List<User> users;
         if (authenticatedRole == UserRole.SUPER_ADMIN) {
-            users = userRepository.findAll();
-        } else {
+            // Super Admin can see all users except other Super Admins
             users = userRepository.findAllByRoleNot(UserRole.SUPER_ADMIN);
+        } else if (authenticatedRole == UserRole.ADMIN) {
+            // Admin can see Teachers and Students
+            users = userRepository.findAllByRoleIn(List.of(UserRole.TEACHER, UserRole.STUDENT));
+        } else {
+            throw new IllegalStateException("Invalid role for accessing users");
         }
-        return users.stream()
-                .map(user -> modelMapper.map(user, UserDTO.class))
-                .collect(Collectors.toList());
+
+        return users.stream().map(this::convertToDTO).collect(Collectors.toList());
+    }
+
+    @Override
+    public List<UserDTO> getAllAdmins() {
+        List<User> admins = userRepository.findAllByRole(UserRole.ADMIN);
+        return admins.stream().map(this::convertToDTO).collect(Collectors.toList());
     }
 
     @Override
@@ -216,5 +225,39 @@ UserServiceImpl implements UserDetailsService, UserService {
         userRepository.save(user);
         return VarList.OK;
     }
+
+    private UserDTO convertToDTO(User user) {
+        UserDTO userDTO = new UserDTO();
+        userDTO.setEmail(user.getEmail());
+        userDTO.setFullName(user.getFullName());
+        userDTO.setUsername(user.getUsername());
+        userDTO.setNic(user.getNic());
+        userDTO.setPhoneNumber(user.getPhoneNumber());
+        userDTO.setDateOfBirth(user.getDateOfBirth());
+        userDTO.setRole(user.getRole());
+        userDTO.setActive(user.isActive());
+
+        // If the user is an ADMIN, fetch the schoolName from the Admin entity
+        if (user.getRole() == UserRole.ADMIN) {
+            adminRepository.findByUser(user).ifPresent(admin -> userDTO.setSchoolName(admin.getSchoolName()));
+        }
+
+        return userDTO;
+    }
+
+    /*private User convertToEntity(UserDTO userDTO) {
+        User user = new User();
+        user.setEmail(userDTO.getEmail());
+        user.setFullName(userDTO.getFullName());
+        user.setUsername(userDTO.getUsername());
+        user.setPassword(userDTO.getPassword());
+        user.setNic(userDTO.getNic());
+        user.setPhoneNumber(userDTO.getPhoneNumber());
+        user.setDateOfBirth(userDTO.getDateOfBirth());
+        user.setRole(userDTO.getRole());
+        user.setActive(userDTO.isActive());
+        // Note: schoolName is not set here; it will be handled in the Admin entity
+        return user;
+    }*/
 
 }

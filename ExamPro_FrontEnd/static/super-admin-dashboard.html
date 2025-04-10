@@ -6,7 +6,8 @@
     <title>ExamPro - Super Admin Dashboard</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap"
+          rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/toastify-js/src/toastify.min.css">
     <link rel="stylesheet" href="css/super-admin-dashboard.css">
 </head>
@@ -16,13 +17,14 @@
     <div class="logo-section">
         <a href="#" class="d-flex align-items-center text-decoration-none">
             <i class="fas fa-graduation-cap fs-3 text-white"></i>
-            <span class="ms-2 fs-4 fw-bold text-white logo-text">Exam<span class="text-[var(--accent)]">Pro</span></span>
+            <span class="ms-2 fs-4 fw-bold text-white logo-text">Exam<span
+                    class="text-[var(--accent)]">Pro</span></span>
         </a>
         <p class="mt-2 text-white-50 small logo-text">Super Admin Portal</p>
     </div>
 
     <div class="mt-4">
-        <a href="#" class="menu-item active">
+        <a href="#" class="menu-item active" id="dashboardMenu">
             <i class="fas fa-chart-line"></i>
             <span class="menu-text">Dashboard</span>
         </a>
@@ -30,7 +32,7 @@
             <i class="fas fa-building"></i>
             <span class="menu-text">Institutions</span>
         </a>
-        <a href="#" class="menu-item" data-bs-toggle="modal" data-bs-target="#addAdminModal">
+        <a href="#" class="menu-item" id="adminsMenu">
             <i class="fas fa-user-shield"></i>
             <span class="menu-text">Admins</span>
         </a>
@@ -85,12 +87,13 @@
     </div>
 
     <!-- Dashboard Content -->
-    <div class="dashboard-content">
+    <div class="dashboard-content" id="dashboardContent">
         <div class="row mb-4">
             <div class="col-md-12">
                 <div class="section-header">
                     <h1 class="section-title fs-4">Super Admin Dashboard</h1>
-                    <button class="btn btn-primary d-flex align-items-center" data-bs-toggle="modal" data-bs-target="#addAdminModal">
+                    <button class="btn btn-primary d-flex align-items-center" data-bs-toggle="modal"
+                            data-bs-target="#addAdminModal">
                         <i class="fas fa-plus me-2"></i> Add New Admin
                     </button>
                 </div>
@@ -160,7 +163,8 @@
                 <div class="section-header">
                     <h3 class="section-title">Institution Growth</h3>
                     <div class="dropdown">
-                        <button class="btn btn-sm btn-outline-secondary dropdown-toggle" type="button" id="timeFilter" data-bs-toggle="dropdown" aria-expanded="false">
+                        <button class="btn btn-sm btn-outline-secondary dropdown-toggle" type="button" id="timeFilter"
+                                data-bs-toggle="dropdown" aria-expanded="false">
                             Last 12 months
                         </button>
                         <ul class="dropdown-menu" aria-labelledby="timeFilter">
@@ -289,19 +293,68 @@
     </div>
 </div>
 
+<!-- Admins List Content -->
+<div class="dashboard-content" id="adminsContent">
+    <div class="row mb-4">
+        <div class="col-md-12">
+            <div class="section-header">
+                <h1 class="section-title fs-4">Admins</h1>
+                <button class="btn btn-primary d-flex align-items-center" data-bs-toggle="modal"
+                        data-bs-target="#addAdminModal">
+                    <i class="fas fa-plus me-2"></i> Add New Admin
+                </button>
+            </div>
+            <p class="text-muted mb-4">List of all registered admins</p>
+        </div>
+    </div>
+
+    <div class="row mb-4">
+        <div class="col-md-12">
+            <div class="table-card">
+                <div class="table-responsive">
+                    <table class="table activity-table mb-0" id="adminsTable">
+                        <thead>
+                        <tr>
+                            <th>FULL NAME</th>
+                            <th>USERNAME</th>
+                            <th>EMAIL</th>
+                            <th>NIC</th>
+                            <th>PHONE NUMBER</th>
+                            <th>DATE OF BIRTH</th>
+                            <th>SCHOOL NAME</th>
+                            <th>STATUS</th>
+                            <th>ACTION</th>
+                        </tr>
+                        </thead>
+                        <tbody id="adminsTableBody">
+                        <!-- Admins will be populated dynamically -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+</div>
+
 <!-- Add Admin Modal -->
 <div class="modal fade" id="addAdminModal" tabindex="-1" aria-labelledby="addAdminModalLabel" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content">
             <div class="modal-header gradient-header">
                 <h5 class="modal-title" id="addAdminModalLabel">Add New Admin</h5>
-                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"
+                        aria-label="Close"></button>
             </div>
             <div class="modal-body">
                 <form id="addAdminForm">
                     <div class="mb-3">
                         <label for="adminName" class="form-label">Full Name</label>
                         <input type="text" class="form-control" id="adminName" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="adminUsername" class="form-label">Username</label>
+                        <input type="text" class="form-control" id="adminUsername" required>
                     </div>
                     <div class="mb-3">
                         <label for="adminEmail" class="form-label">Email Address</label>
@@ -318,29 +371,32 @@
                         </div>
                     </div>
                     <div class="mb-3">
-                        <label for="adminPosition" class="form-label">Position</label>
-                        <input type="text" class="form-control" id="adminPosition" required>
+                        <label for="adminNIC" class="form-label">NIC</label>
+                        <input type="text" class="form-control" id="adminNIC" required>
                     </div>
                     <div class="mb-3">
-                        <label for="adminDepartment" class="form-label">Department</label>
-                        <select class="form-select" id="adminDepartment" required>
-                            <option value="" selected disabled>Select Department</option>
-                            <option value="IT">IT Department</option>
-                            <option value="Academics">Academics</option>
-                            <option value="Exam">Examination</option>
-                            <option value="HR">Human Resources</option>
-                            <option value="Finance">Finance</option>
-                        </select>
+                        <label for="adminPhoneNumber" class="form-label">Phone Number</label>
+                        <input type="text" class="form-control" id="adminPhoneNumber" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="adminDOB" class="form-label">Date of Birth</label>
+                        <input type="date" class="form-control" id="adminDOB" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="adminSchoolName" class="form-label">School Name</label>
+                        <input type="text" class="form-control" id="adminSchoolName" required>
                     </div>
                     <div class="mb-3">
                         <label class="form-label">Status</label>
                         <div class="d-flex">
                             <div class="form-check me-3">
-                                <input class="form-check-input" type="radio" name="adminStatus" id="statusActive" value="active" checked>
+                                <input class="form-check-input" type="radio" name="adminStatus" id="statusActive"
+                                       value="active" checked>
                                 <label class="form-check-label" for="statusActive">Active</label>
                             </div>
                             <div class="form-check">
-                                <input class="form-check-input" type="radio" name="adminStatus" id="statusInactive" value="inactive">
+                                <input class="form-check-input" type="radio" name="adminStatus" id="statusInactive"
+                                       value="inactive">
                                 <label class="form-check-label" for="statusInactive">Inactive</label>
                             </div>
                         </div>
@@ -361,7 +417,8 @@
         <div class="modal-content">
             <div class="modal-header gradient-header">
                 <h5 class="modal-title" id="userProfileModalLabel">User Profile</h5>
-                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"
+                        aria-label="Close"></button>
             </div>
             <div class="modal-body">
                 <div class="text-center mb-4">

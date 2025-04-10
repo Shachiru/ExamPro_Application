@@ -163,6 +163,17 @@ public class UserController {
         }
     }
 
+    @GetMapping("/admins")
+    @PreAuthorize("hasRole('SUPER_ADMIN')")
+    public ResponseEntity<ResponseDTO> getAllAdmins() {
+        try {
+            List<UserDTO> admins = userService.getAllAdmins();
+            return ResponseEntity.ok(new ResponseDTO(VarList.OK, "Admins retrieved successfully", admins));
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(new ResponseDTO(VarList.INTERNAL_SERVER_ERROR, e.getMessage(), null));
+        }
+    }
+
     @DeleteMapping("/delete/{email}")
     @PreAuthorize("hasRole('ADMIN') or authentication.name == #email")
     public ResponseEntity<ResponseDTO> deleteUser(@PathVariable String email) {

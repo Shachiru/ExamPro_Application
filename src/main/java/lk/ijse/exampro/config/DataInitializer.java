@@ -28,7 +28,7 @@ public class DataInitializer {
                 superAdminDTO.setEmail("shachirurashmika35@gmail.com");
                 superAdminDTO.setFullName("Shachiru Rashmika");
                 superAdminDTO.setUsername("shachiru");
-                superAdminDTO.setPassword("superpassword123");
+                superAdminDTO.setPassword("123456");
                 superAdminDTO.setRole(UserRole.SUPER_ADMIN);
                 superAdminDTO.setActive(true);
                 superAdminDTO.setDateOfBirth(LocalDate.of(2000, 3, 14));

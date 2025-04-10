@@ -1,24 +1,28 @@
 document.addEventListener("DOMContentLoaded", function () {
-    // Function to check authentication
+    // Check authentication status when page loads
     function checkAuthentication() {
         const token = localStorage.getItem('jwtToken');
         const role = localStorage.getItem('role');
 
-        // Redirect to login if not authenticated or not Super Admin
+        console.log("Checking authentication - Token:", token, "Role:", role);
+
         if (!token || role !== "SUPER_ADMIN") {
-            window.location.href = '/login.html';
+            window.location.href = 'login.html';
             return false;
         }
         return true;
     }
 
+    // Exit early if authentication check fails
     if (!checkAuthentication()) return;
 
-    let userData = null; // Store user data for editing
+    // Initialize user data
+    let userData = null;
 
-    // Fetch user details on page load
+    // Fetch user profile details
     function fetchUserDetails() {
         const token = localStorage.getItem('jwtToken');
+        console.log("Fetching user details...");
         $.ajax({
             url: "http://localhost:8080/api/v1/user/profile",
             method: "GET",
@@ -28,13 +32,12 @@ document.addEventListener("DOMContentLoaded", function () {
             success: function (response) {
                 if (response.code === 200) {
                     userData = response.data;
-                    // Update user profile section
                     $("#userFullName").text(userData.fullName || "Unknown User");
                     $("#userRole").text(userData.role || "Unknown Role");
                     const initials = userData.fullName ? userData.fullName.split(" ").map(word => word.charAt(0)).join("").toUpperCase() : "??";
                     $("#userInitials").text(initials);
 
-                    // Populate modal with user details
+                    // Update modal user profile fields
                     $("#modalUserFullName").text(userData.fullName || "Unknown User");
                     $("#modalUserRole").text(userData.role || "Unknown Role");
                     $("#modalUserInitials").text(initials);
@@ -42,11 +45,6 @@ document.addEventListener("DOMContentLoaded", function () {
                     $("#modalUserPhone").text(userData.phoneNumber || "N/A");
                     $("#modalUserDOB").text(userData.dateOfBirth || "N/A");
                     $("#modalUserStatus").text(userData.isActive ? "Active" : "Inactive");
-
-                    // Populate edit form
-                    $("#editFullName").val(userData.fullName || "");
-                    $("#editPhoneNumber").val(userData.phoneNumber || "");
-                    $("#editDOB").val(userData.dateOfBirth || "");
                 } else {
                     Toastify({
                         text: "Failed to load user profile: " + response.message,
@@ -59,6 +57,7 @@ document.addEventListener("DOMContentLoaded", function () {
                 }
             },
             error: function (xhr) {
+                console.error("Error fetching user details:", xhr);
                 Toastify({
                     text: "Error loading user profile: " + (xhr.responseJSON?.message || "Unknown error"),
                     duration: 3000,
@@ -71,16 +70,16 @@ document.addEventListener("DOMContentLoaded", function () {
         });
     }
 
-    // Fetch user details immediately after authentication check
+    // Load user details when page loads
     fetchUserDetails();
 
-    // Toggle sidebar
+    // Toggle sidebar on mobile view
     document.getElementById('toggleSidebar').addEventListener('click', () => {
         const sidebar = document.getElementById('sidebar');
         sidebar.classList.toggle('show');
     });
 
-    // Logout functionality
+    // Handle logout
     document.getElementById('logout').addEventListener('click', (e) => {
         e.preventDefault();
         Toastify({
@@ -98,7 +97,143 @@ document.addEventListener("DOMContentLoaded", function () {
         }).showToast();
     });
 
-    // Admin Form Validation & Submission
+    // Fetch admin users list
+    function fetchAdmins() {
+        const token = localStorage.getItem('jwtToken');
+        $.ajax({
+            url: "http://localhost:8080/api/v1/user/admins",
+            method: "GET",
+            headers: {
+                "Authorization": `Bearer ${token}`
+            },
+            success: function (response) {
+                if (response.code === 200) {
+                    const admins = response.data;
+                    const tbody = $("#adminsTableBody");
+                    tbody.empty();
+
+                    if (admins.length === 0) {
+                        tbody.append('<tr><td colspan="9" class="text-center">No admins found</td></tr>');
+                    } else {
+                        admins.forEach(admin => {
+                            const row = `
+                                <tr>
+                                    <td>${admin.fullName || 'N/A'}</td>
+                                    <td>${admin.username || 'N/A'}</td>
+                                    <td>${admin.email || 'N/A'}</td>
+                                    <td>${admin.nic || 'N/A'}</td>
+                                    <td>${admin.phoneNumber || 'N/A'}</td>
+                                    <td>${admin.dateOfBirth || 'N/A'}</td>
+                                    <td>${admin.schoolName || 'N/A'}</td>
+                                    <td>${admin.isActive ? 'Active' : 'Inactive'}</td>
+                                    <td>
+                                        <button class="btn btn-sm btn-danger delete-admin" data-email="${admin.email}">
+                                            <i class="fas fa-trash"></i> Delete
+                                        </button>
+                                    </td>
+                                </tr>
+                            `;
+                            tbody.append(row);
+                        });
+
+                        // Set up delete admin functionality
+                        $(".delete-admin").on("click", function () {
+                            const email = $(this).data("email");
+                            if (confirm(`Are you sure you want to delete the admin with email ${email}?`)) {
+                                deleteAdmin(email);
+                            }
+                        });
+                    }
+                } else {
+                    Toastify({
+                        text: "Failed to load admins: " + response.message,
+                        duration: 3000,
+                        gravity: "top",
+                        position: "right",
+                        backgroundColor: "#dc3545",
+                        stopOnFocus: true
+                    }).showToast();
+                }
+            },
+            error: function (xhr) {
+                console.error("Error fetching admins:", xhr);
+                Toastify({
+                    text: "Error loading admins: " + (xhr.responseJSON?.message || "Unknown error"),
+                    duration: 3000,
+                    gravity: "top",
+                    position: "right",
+                    backgroundColor: "#dc3545",
+                    stopOnFocus: true
+                }).showToast();
+            }
+        });
+    }
+
+    // Delete admin function
+    function deleteAdmin(email) {
+        const token = localStorage.getItem('jwtToken');
+        $.ajax({
+            url: `http://localhost:8080/api/v1/user/delete/${email}`,
+            method: "DELETE",
+            headers: {
+                "Authorization": `Bearer ${token}`
+            },
+            success: function (response) {
+                if (response.code === 200) {
+                    Toastify({
+                        text: "Admin deleted successfully!",
+                        duration: 3000,
+                        gravity: "top",
+                        position: "right",
+                        backgroundColor: "#28a745",
+                        stopOnFocus: true
+                    }).showToast();
+                    fetchAdmins(); // Refresh the list
+                } else {
+                    Toastify({
+                        text: "Failed to delete admin: " + response.message,
+                        duration: 3000,
+                        gravity: "top",
+                        position: "right",
+                        backgroundColor: "#dc3545",
+                        stopOnFocus: true
+                    }).showToast();
+                }
+            },
+            error: function (xhr) {
+                Toastify({
+                    text: "Error deleting admin: " + (xhr.responseJSON?.message || "Unknown error"),
+                    duration: 3000,
+                    gravity: "top",
+                    position: "right",
+                    backgroundColor: "#dc3545",
+                    stopOnFocus: true
+                }).showToast();
+            }
+        });
+    }
+
+    // Toggle between Dashboard and Admins content
+    document.getElementById('dashboardMenu').addEventListener('click', (e) => {
+        e.preventDefault();
+        console.log("Dashboard menu clicked");
+        $("#dashboardContent").show();
+        $("#adminsContent").hide();
+        $(".menu-item").removeClass("active");
+        $("#dashboardMenu").addClass("active");
+    });
+
+    document.getElementById('adminsMenu').addEventListener('click', (e) => {
+        e.preventDefault();
+        console.log("Admins menu clicked");
+        $("#dashboardContent").hide();
+        $("#adminsContent").show();
+        $(".menu-item").removeClass("active");
+        $("#adminsMenu").addClass("active");
+        fetchAdmins();
+    });
+
+    // Add new admin form validation and submission
     document.getElementById('saveAdmin').addEventListener('click', () => {
         const form = document.getElementById('addAdminForm');
         if (!form.checkValidity()) {
@@ -121,16 +256,52 @@ document.addEventListener("DOMContentLoaded", function () {
             return;
         }
 
+        const nic = document.getElementById('adminNIC').value;
+        const nicRegex = /^[0-9]{9}[Vv]$/;
+        if (!nicRegex.test(nic)) {
+            Toastify({
+                text: "NIC must be in the format 123456789V",
+                duration: 3000,
+                gravity: "top",
+                position: "right",
+                backgroundColor: "#dc3545",
+                stopOnFocus: true
+            }).showToast();
+            return;
+        }
+
+        const phoneNumber = document.getElementById('adminPhoneNumber').value;
+        const phoneRegex = /^07[0-9]{8}$/; // Example: 0712345678
+        if (!phoneRegex.test(phoneNumber)) {
+            Toastify({
+                text: "Phone number must be a 10-digit number starting with 07 (e.g., 0712345678)",
+                duration: 3000,
+                gravity: "top",
+                position: "right",
+                backgroundColor: "#dc3545",
+                stopOnFocus: true
+            }).showToast();
+            return;
+        }
+
         const adminData = {
             fullName: document.getElementById('adminName').value,
+            username: document.getElementById('adminUsername').value,
             email: document.getElementById('adminEmail').value,
             password: password,
-            position: document.getElementById('adminPosition').value,
-            department: document.getElementById('adminDepartment').value,
-            active: document.querySelector('input[name="adminStatus"]:checked').value === 'active',
+            nic: document.getElementById('adminNIC').value,
+            phoneNumber: document.getElementById('adminPhoneNumber').value,
+            dateOfBirth: document.getElementById('adminDOB').value,
+            schoolName: document.getElementById('adminSchoolName').value,
+            isActive: document.querySelector('input[name="adminStatus"]:checked').value === 'active',
             role: 'ADMIN'
         };
 
+        addNewAdmin(adminData);
+    });
+
+    // Function to add a new admin
+    function addNewAdmin(adminData) {
         const token = localStorage.getItem('jwtToken');
 
         fetch('http://localhost:8080/api/v1/user/sign_up/admin', {
@@ -153,7 +324,11 @@ document.addEventListener("DOMContentLoaded", function () {
                         callback: function () {
                             const modal = bootstrap.Modal.getInstance(document.getElementById('addAdminModal'));
                             modal.hide();
-                            form.reset();
+                            document.getElementById('addAdminForm').reset();
+                            // If we're on the admins page, refresh the list
+                            if ($("#adminsContent").is(":visible")) {
+                                fetchAdmins();
+                            }
                         }
                     }).showToast();
                 } else if (response.status === 406) {
@@ -179,78 +354,61 @@ document.addEventListener("DOMContentLoaded", function () {
                     stopOnFocus: true
                 }).showToast();
             });
+    }
+
+    // Clear form when modal is closed
+    $('#addAdminModal').on('hidden.bs.modal', function () {
+        document.getElementById('addAdminForm').reset();
     });
 
-    // Profile Modal Edit Functionality
-    document.getElementById('editProfileBtn').addEventListener('click', () => {
-        $("#profileDetails").hide();
-        $("#profileEditForm").show();
-        $("#editProfileBtn").hide();
-        $("#saveProfileBtn").show();
-    });
+    // Add event listeners for other menu items (currently they only change active state)
+    const menuItems = document.querySelectorAll('.menu-item');
+    menuItems.forEach(item => {
+        if (!item.id.includes('dashboardMenu') && !item.id.includes('adminsMenu') && !item.id.includes('logout')) {
+            item.addEventListener('click', (e) => {
+                e.preventDefault();
+                $(".menu-item").removeClass("active");
+                item.classList.add("active");
 
-    document.getElementById('saveProfileBtn').addEventListener('click', () => {
-        const form = document.getElementById('editProfileForm');
-        if (!form.checkValidity()) {
-            form.reportValidity();
-            return;
-        }
-
-        const updatedUserData = {
-            fullName: $("#editFullName").val(),
-            phoneNumber: $("#editPhoneNumber").val(),
-            dateOfBirth: $("#editDOB").val(),
-            oldPassword: $("#editOldPassword").val() || null,
-            password: $("#editNewPassword").val() || null
-        };
-
-        const token = localStorage.getItem('jwtToken');
-        $.ajax({
-            url: `http://localhost:8080/api/v1/user/update?email=${userData.email}`,
-            method: "PUT",
-            headers: {
-                "Authorization": `Bearer ${token}`,
-                "Content-Type": "application/json"
-            },
-            data: JSON.stringify(updatedUserData),
-            success: function (response) {
-                if (response.code === 200) {
+                // Show message for unimplemented features
+                if ($("#dashboardContent").is(":visible")) {
                     Toastify({
-                        text: "Profile updated successfully!",
+                        text: "This feature is not implemented yet.",
                         duration: 3000,
                         gravity: "top",
                         position: "right",
-                        backgroundColor: "#28a745",
-                        stopOnFocus: true
-                    }).showToast();
-                    // Refresh user details
-                    fetchUserDetails();
-                    // Switch back to view mode
-                    $("#profileDetails").show();
-                    $("#profileEditForm").hide();
-                    $("#editProfileBtn").show();
-                    $("#saveProfileBtn").hide();
-                } else {
-                    Toastify({
-                        text: "Failed to update profile: " + response.message,
-                        duration: 3000,
-                        gravity: "top",
-                        position: "right",
-                        backgroundColor: "#dc3545",
+                        backgroundColor: "#ffc107",
                         stopOnFocus: true
                     }).showToast();
                 }
-            },
-            error: function (xhr) {
-                Toastify({
-                    text: "Error updating profile: " + (xhr.responseJSON?.message || "Unknown error"),
-                    duration: 3000,
-                    gravity: "top",
-                    position: "right",
-                    backgroundColor: "#dc3545",
-                    stopOnFocus: true
-                }).showToast();
-            }
+            });
+        }
+    });
+
+    // Initialize dropdown functionality for timeFilter
+    document.querySelectorAll('.dropdown-item').forEach(item => {
+        item.addEventListener('click', function(e) {
+            e.preventDefault();
+            const selectedText = this.textContent;
+            document.getElementById('timeFilter').textContent = selectedText;
+
+            // Remove active class from all items
+            document.querySelectorAll('.dropdown-item').forEach(el => {
+                el.classList.remove('active');
+            });
+
+            // Add active class to clicked item
+            this.classList.add('active');
+
+            // Here you would typically update the chart data based on the selected time period
+            Toastify({
+                text: `Time period changed to ${selectedText}`,
+                duration: 2000,
+                gravity: "top",
+                position: "right",
+                backgroundColor: "#4361ee",
+                stopOnFocus: true
+            }).showToast();
         });
     });
 });

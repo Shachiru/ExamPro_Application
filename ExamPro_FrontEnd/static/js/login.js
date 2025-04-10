@@ -1,12 +1,16 @@
 document.addEventListener("DOMContentLoaded", function () {
-    const togglePassword = document.querySelector('.toggle-password');
-    const passwordInput = document.getElementById('password');
+    // Password toggle functionality
+    const togglePassword = document.getElementById('togglePassword');
+    const password = document.getElementById('password');
 
-    togglePassword.addEventListener('click', function () {
-        const type = passwordInput.getAttribute('type') === 'password' ? 'text' : 'password';
-        passwordInput.setAttribute('type', type);
-        this.querySelector('i').classList.toggle('fa-eye');
-        this.querySelector('i').classList.toggle('fa-eye-slash');
+    togglePassword.addEventListener('click', function() {
+        // Toggle the type attribute
+        const type = password.getAttribute('type') === 'password' ? 'text' : 'password';
+        password.setAttribute('type', type);
+
+        // Toggle the eye icon
+        this.classList.toggle('fa-eye');
+        this.classList.toggle('fa-eye-slash');
     });
 
     $("#loginForm").on("submit", function (event) {
@@ -14,7 +18,7 @@ document.addEventListener("DOMContentLoaded", function () {
         const email = $("#email").val().trim();
         const password = $("#password").val().trim();
         const errorMessage = $("#errorMessage");
-        const submitButton = $("button[type='submit']");
+        const submitButton = $(".login-button");
 
         if (!email || !password) {
             Toastify({
@@ -27,14 +31,14 @@ document.addEventListener("DOMContentLoaded", function () {
             return;
         }
 
-        submitButton.prop("disabled", true).text("Signing in...");
+        submitButton.prop("disabled", true).val("Signing in...");
         $.ajax({
             url: "http://localhost:8080/api/v1/auth/sign_in",
             method: "POST",
             contentType: "application/json",
             data: JSON.stringify({email: email, password: password}),
             success: function (data) {
-                localStorage.setItem("jwtToken", data.data.token); // Use "jwtToken" to match dashboard
+                localStorage.setItem("jwtToken", data.data.token);
                 localStorage.setItem("role", data.data.role);
                 Toastify({
                     text: "Welcome to ExamPro! Login Successful",
@@ -44,12 +48,7 @@ document.addEventListener("DOMContentLoaded", function () {
                     style: {
                         background: "#10b981",
                         borderRadius: "12px",
-                        boxShadow: "0 4px 15px rgba(0, 0, 0, 0.2)",
-                        fontFamily: "'Poppins', sans-serif",
-                        fontSize: "1rem",
-                        fontWeight: "500",
-                        padding: "1rem 1.5rem",
-                        color: "#fff"
+                        boxShadow: "0 4px 15px rgba(0, 0, 0, 0.2)"
                     }
                 }).showToast();
 
@@ -64,7 +63,7 @@ document.addEventListener("DOMContentLoaded", function () {
                         window.location.href = "student-dashboard.html";
                     } else {
                         errorMessage.text("Invalid Role Assigned!").show();
-                        submitButton.prop("disabled", false).text("Login");
+                        submitButton.prop("disabled", false).val("Sign In");
                     }
                 }, 1000);
             },
@@ -79,15 +78,10 @@ document.addEventListener("DOMContentLoaded", function () {
                     style: {
                         background: "#ef4444",
                         borderRadius: "12px",
-                        boxShadow: "0 4px 15px rgba(0, 0, 0, 0.2)",
-                        fontFamily: "'Poppins', sans-serif",
-                        fontSize: "1rem",
-                        fontWeight: "500",
-                        padding: "1rem 1.5rem",
-                        color: "#fff"
+                        boxShadow: "0 4px 15px rgba(0, 0, 0, 0.2)"
                     }
                 }).showToast();
-                submitButton.prop("disabled", false).text("Login");
+                submitButton.prop("disabled", false).val("Sign In");
             }
         });
     });
@@ -96,7 +90,7 @@ document.addEventListener("DOMContentLoaded", function () {
     var googleAuth;
     gapi.load('auth2', function () {
         googleAuth = gapi.auth2.init({
-            client_id: 'YOUR_CLIENT_ID_HERE', // Replace with your Google Client ID
+            client_id: 'YOUR_CLIENT_ID_HERE',
             scope: 'profile email',
             cookiepolicy: 'single_host_origin'
         });
@@ -104,8 +98,7 @@ document.addEventListener("DOMContentLoaded", function () {
 
     $('#google-sign-in').on('click', function () {
         var btn = $(this);
-        var originalText = btn.text();
-        btn.prop('disabled', true).text("Signing in with Google...");
+        btn.prop('disabled', true);
 
         if (googleAuth) {
             googleAuth.signIn().then(function (response) {
@@ -119,16 +112,10 @@ document.addEventListener("DOMContentLoaded", function () {
                     style: {
                         background: "#10b981",
                         borderRadius: "12px",
-                        boxShadow: "0 4px 15px rgba(0, 0, 0, 0.2)",
-                        fontFamily: "'Poppins', sans-serif",
-                        fontSize: "1rem",
-                        fontWeight: "500",
-                        padding: "1rem 1.5rem",
-                        color: "#fff"
+                        boxShadow: "0 4px 15px rgba(0, 0, 0, 0.2)"
                     }
                 }).showToast();
-                btn.prop('disabled', false).text(originalText);
-                // Add logic to handle Google token if needed
+                btn.prop('disabled', false);
             }, function (error) {
                 Toastify({
                     text: "Google Sign-In failed",
@@ -141,21 +128,8 @@ document.addEventListener("DOMContentLoaded", function () {
                         boxShadow: "0 4px 15px rgba(0, 0, 0, 0.2)"
                     }
                 }).showToast();
-                btn.prop('disabled', false).text(originalText);
+                btn.prop('disabled', false);
             });
-        } else {
-            Toastify({
-                text: "Google Sign-In not initialized",
-                duration: 3000,
-                gravity: "top",
-                position: "right",
-                style: {
-                    background: "#ef4444",
-                    borderRadius: "12px",
-                    boxShadow: "0 4px 15px rgba(0, 0, 0, 0.2)"
-                }
-            }).showToast();
-            btn.prop('disabled', false).text(originalText);
         }
     });
 });

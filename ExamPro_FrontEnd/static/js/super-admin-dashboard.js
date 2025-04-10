@@ -1,7 +1,7 @@
 document.addEventListener("DOMContentLoaded", function () {
     // Check authentication status when page loads
     function checkAuthentication() {
-        const token = localStorage.getItem('jwtToken');
+        const token = localStorage.getItem('token'); // Changed to "token"
         const role = localStorage.getItem('role');
 
         console.log("Checking authentication - Token:", token, "Role:", role);
@@ -21,7 +21,7 @@ document.addEventListener("DOMContentLoaded", function () {
 
     // Fetch user profile details
     function fetchUserDetails() {
-        const token = localStorage.getItem('jwtToken');
+        const token = localStorage.getItem('token'); // Changed to "token"
         console.log("Fetching user details...");
         $.ajax({
             url: "http://localhost:8080/api/v1/user/profile",
@@ -90,7 +90,7 @@ document.addEventListener("DOMContentLoaded", function () {
             backgroundColor: "#4361ee",
             stopOnFocus: true,
             callback: function () {
-                localStorage.removeItem('jwtToken');
+                localStorage.removeItem('token'); // Changed to "token"
                 localStorage.removeItem('role');
                 window.location.href = 'index.html';
             }
@@ -99,7 +99,7 @@ document.addEventListener("DOMContentLoaded", function () {
 
     // Fetch admin users list
     function fetchAdmins() {
-        const token = localStorage.getItem('jwtToken');
+        const token = localStorage.getItem('token'); // Changed to "token"
         $.ajax({
             url: "http://localhost:8080/api/v1/user/admins",
             method: "GET",
@@ -171,7 +171,7 @@ document.addEventListener("DOMContentLoaded", function () {
 
     // Delete admin function
     function deleteAdmin(email) {
-        const token = localStorage.getItem('jwtToken');
+        const token = localStorage.getItem('token'); // Changed to "token"
         $.ajax({
             url: `http://localhost:8080/api/v1/user/delete/${email}`,
             method: "DELETE",
@@ -302,8 +302,7 @@ document.addEventListener("DOMContentLoaded", function () {
 
     // Function to add a new admin
     function addNewAdmin(adminData) {
-        const token = localStorage.getItem('jwtToken');
-
+        const token = localStorage.getItem('token'); // Changed to "token"
         fetch('http://localhost:8080/api/v1/user/sign_up/admin', {
             method: 'POST',
             headers: {
@@ -325,7 +324,6 @@ document.addEventListener("DOMContentLoaded", function () {
                             const modal = bootstrap.Modal.getInstance(document.getElementById('addAdminModal'));
                             modal.hide();
                             document.getElementById('addAdminForm').reset();
-                            // If we're on the admins page, refresh the list
                             if ($("#adminsContent").is(":visible")) {
                                 fetchAdmins();
                             }
@@ -370,7 +368,6 @@ document.addEventListener("DOMContentLoaded", function () {
                 $(".menu-item").removeClass("active");
                 item.classList.add("active");
 
-                // Show message for unimplemented features
                 if ($("#dashboardContent").is(":visible")) {
                     Toastify({
                         text: "This feature is not implemented yet.",
@@ -392,15 +389,12 @@ document.addEventListener("DOMContentLoaded", function () {
             const selectedText = this.textContent;
             document.getElementById('timeFilter').textContent = selectedText;
 
-            // Remove active class from all items
             document.querySelectorAll('.dropdown-item').forEach(el => {
                 el.classList.remove('active');
             });
 
-            // Add active class to clicked item
             this.classList.add('active');
 
-            // Here you would typically update the chart data based on the selected time period
             Toastify({
                 text: `Time period changed to ${selectedText}`,
                 duration: 2000,

@@ -1,25 +1,20 @@
+// login.js
 document.addEventListener("DOMContentLoaded", function () {
-    // Password toggle functionality
     const togglePassword = document.getElementById('togglePassword');
     const password = document.getElementById('password');
     const loaderContainer = document.getElementById('loaderContainer');
 
     togglePassword.addEventListener('click', function() {
-        // Toggle the type attribute
         const type = password.getAttribute('type') === 'password' ? 'text' : 'password';
         password.setAttribute('type', type);
-
-        // Toggle the eye icon
         this.classList.toggle('fa-eye');
         this.classList.toggle('fa-eye-slash');
     });
 
-    // Function to show loader
     function showLoader() {
         loaderContainer.style.display = 'flex';
     }
 
-    // Function to hide loader
     function hideLoader() {
         loaderContainer.style.display = 'none';
     }
@@ -43,7 +38,7 @@ document.addEventListener("DOMContentLoaded", function () {
         }
 
         submitButton.prop("disabled", true).val("Signing in...");
-        showLoader(); // Show loader before AJAX request
+        showLoader();
 
         $.ajax({
             url: "http://localhost:8080/api/v1/auth/sign_in",
@@ -51,10 +46,32 @@ document.addEventListener("DOMContentLoaded", function () {
             contentType: "application/json",
             data: JSON.stringify({email: email, password: password}),
             success: function (data) {
-                localStorage.setItem("jwtToken", data.data.token);
-                localStorage.setItem("role", data.data.role);
-                hideLoader(); // Hide loader on success
+                console.log("Full login response:", JSON.stringify(data, null, 2));
+                console.log("Response data:", data.data);
 
+                if (!data.data || !data.data.token) {
+                    console.error("No token in response");
+                    throw new Error("No token received from server");
+                }
+
+                const token = data.data.token;
+                console.log("Received token:", token);
+                localStorage.setItem("token", token); // Changed to "token"
+                localStorage.setItem("role", data.data.role);
+                localStorage.setItem("email", data.data.email); // Store email for profile
+
+                const storedToken = localStorage.getItem("token"); // Changed to "token"
+                console.log("Stored token from localStorage:", storedToken);
+
+                const tokenParts = token.split('.');
+                console.log("Token parts count:", tokenParts.length);
+                if (tokenParts.length !== 3) {
+                    console.error("Invalid token format:", token);
+                    localStorage.removeItem("token"); // Changed to "token"
+                    throw new Error("Received token is not a valid JWT");
+                }
+
+                hideLoader();
                 Toastify({
                     text: "Welcome to ExamPro! Login Successful",
                     duration: 3000,
@@ -68,22 +85,13 @@ document.addEventListener("DOMContentLoaded", function () {
                 }).showToast();
 
                 setTimeout(function () {
-                    if (data.data.role === "SUPER_ADMIN") {
-                        window.location.href = "super-admin-dashboard.html";
-                    } else if (data.data.role === "ADMIN") {
-                        window.location.href = "admin-dashboard.html";
-                    } else if (data.data.role === "TEACHER") {
-                        window.location.href = "teacher-dashboard.html";
-                    } else if (data.data.role === "STUDENT") {
-                        window.location.href = "student-dashboard.html";
-                    } else {
-                        errorMessage.text("Invalid Role Assigned!").show();
-                        submitButton.prop("disabled", false).val("Sign In");
-                    }
+                    redirectBasedOnRole(data.data.role, submitButton);
                 }, 1000);
             },
             error: function (xhr) {
-                hideLoader(); // Hide loader on error
+                hideLoader();
+                console.error("Login error status:", xhr.status);
+                console.error("Login error response:", xhr.responseText);
                 let errorMsg = xhr.responseJSON?.message || "Invalid email or password!";
                 errorMessage.text(errorMsg).show();
                 Toastify({
@@ -102,55 +110,18 @@ document.addEventListener("DOMContentLoaded", function () {
         });
     });
 
-    // Google Sign-In
-    var googleAuth;
-    gapi.load('auth2', function () {
-        googleAuth = gapi.auth2.init({
-            client_id: 'YOUR_CLIENT_ID_HERE',
-            scope: 'profile email',
-            cookiepolicy: 'single_host_origin'
-        });
-    });
-
-    $('#google-sign-in').on('click', function () {
-        var btn = $(this);
-        btn.prop('disabled', true);
-        showLoader(); // Show loader before Google auth
-
-        if (googleAuth) {
-            googleAuth.signIn().then(function (response) {
-                var profile = response.getBasicProfile();
-                var email = profile.getEmail();
-                hideLoader(); // Hide loader on success
-
-                Toastify({
-                    text: "Login successful via Google with email " + email,
-                    duration: 3000,
-                    gravity: "top",
-                    position: "right",
-                    style: {
-                        background: "#10b981",
-                        borderRadius: "12px",
-                        boxShadow: "0 4px 15px rgba(0, 0, 0, 0.2)"
-                    }
-                }).showToast();
-                btn.prop('disabled', false);
-            }, function (error) {
-                hideLoader(); // Hide loader on error
-
-                Toastify({
-                    text: "Google Sign-In failed",
-                    duration: 3000,
-                    gravity: "top",
-                    position: "right",
-                    style: {
-                        background: "#ef4444",
-                        borderRadius: "12px",
-                        boxShadow: "0 4px 15px rgba(0, 0, 0, 0.2)"
-                    }
-                }).showToast();
-                btn.prop('disabled', false);
-            });
+    function redirectBasedOnRole(role, button) {
+        if (role === "SUPER_ADMIN") {
+            window.location.href = "super-admin-dashboard.html";
+        } else if (role === "ADMIN") {
+            window.location.href = "admin-dashboard.html";
+        } else if (role === "TEACHER") {
+            window.location.href = "teacher-dashboard.html";
+        } else if (role === "STUDENT") {
+            window.location.href = "student-dashboard.html";
+        } else {
+            $("#errorMessage").text("Invalid Role Assigned!").show();
+            button.prop("disabled", false).val("Sign In");
         }
-    });
+    }
 });

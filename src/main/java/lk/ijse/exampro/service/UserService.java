@@ -16,4 +16,5 @@ public interface UserService {
     int updateUserProfile(String email, UserDTO userDTO);
     int deactivateUser(String email);
     UserDTO uploadProfilePicture(String email, MultipartFile file) throws IOException;
+    UserDTO deleteProfilePicture(String email) throws IOException;
 }

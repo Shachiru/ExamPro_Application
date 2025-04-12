@@ -42,10 +42,16 @@ public class CloudinaryServiceImpl implements CloudinaryService {
 
     @Override
     public void deleteImage(String publicId) throws IOException {
+        if (publicId == null || publicId.isEmpty()) {
+            throw new IOException("Public ID cannot be empty");
+        }
         try {
-            cloudinary.uploader().destroy(publicId, ObjectUtils.emptyMap());
+            Map result = cloudinary.uploader().destroy(publicId, ObjectUtils.emptyMap());
+            if (!"ok".equals(result.get("result"))) {
+                throw new IOException("Failed to delete image from Cloudinary: " + result.get("result"));
+            }
         } catch (Exception e) {
-            throw new IOException("Failed to delete image from Cloudinary", e);
+            throw new IOException("Failed to delete image from Cloudinary: " + e.getMessage(), e);
         }
     }
 }

@@ -260,4 +260,20 @@ public class UserController {
                     new ResponseDTO(VarList.BAD_REQUEST, "Failed to upload profile picture: " + e.getMessage(), null));
         }
     }
+
+    @DeleteMapping("/profile-picture")
+    @PreAuthorize("authentication.name == #email")
+    public ResponseEntity<ResponseDTO> deleteProfilePicture(@RequestParam String email) {
+        try {
+            UserDTO updatedUser = userService.deleteProfilePicture(email);
+            return ResponseEntity.status(HttpStatus.OK).body(
+                    new ResponseDTO(VarList.OK, "Profile picture deleted successfully", updatedUser));
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(
+                    new ResponseDTO(VarList.NOT_FOUND, e.getMessage(), null));
+        } catch (IOException e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(
+                    new ResponseDTO(VarList.BAD_REQUEST, "Failed to delete profile picture: " + e.getMessage(), null));
+        }
+    }
 }

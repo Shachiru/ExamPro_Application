@@ -14,6 +14,8 @@ import lk.ijse.exampro.service.UserService;
 import lk.ijse.exampro.util.VarList;
 import lk.ijse.exampro.util.enums.UserRole;
 import org.modelmapper.ModelMapper;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
@@ -33,6 +35,8 @@ import java.util.stream.Collectors;
 @Transactional
 public class
 UserServiceImpl implements UserDetailsService, UserService {
+
+    private static final Logger logger = LoggerFactory.getLogger(UserServiceImpl.class);
 
     @Autowired
     private UserRepository userRepository;
@@ -227,6 +231,15 @@ UserServiceImpl implements UserDetailsService, UserService {
             return VarList.NOT_FOUND;
         }
         User user = userOpt.get();
+        if (user.getProfilePicturePublicId() != null) {
+            try {
+                cloudinaryService.deleteImage(user.getProfilePicturePublicId());
+                user.setProfilePicture(null);
+                user.setProfilePicturePublicId(null);
+            } catch (IOException e) {
+                logger.warn("Failed to delete profile picture for email {}: {}", email, e.getMessage());
+            }
+        }
         user.setActive(false);
         userRepository.save(user);
         return VarList.OK;
@@ -251,6 +264,27 @@ UserServiceImpl implements UserDetailsService, UserService {
         user.setProfilePicture(profilePictureUrl);
         user.setProfilePicturePublicId(publicId);
         userRepository.save(user);
+
+        return convertToDTO(user);
+    }
+
+    @Override
+    public UserDTO deleteProfilePicture(String email) throws IOException {
+        logger.info("Deleting profile picture for email: {}", email);
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new IllegalArgumentException("User not found with email: " + email));
+
+        if (user.getProfilePicturePublicId() == null) {
+            logger.info("No profile picture to delete for email: {}", email);
+            throw new IOException("No profile picture found for this user");
+        }
+
+        cloudinaryService.deleteImage(user.getProfilePicturePublicId());
+
+        user.setProfilePicture(null);
+        user.setProfilePicturePublicId(null);
+        userRepository.save(user);
+        logger.info("Profile picture deleted for email: {}", email);
 
         return convertToDTO(user);
     }

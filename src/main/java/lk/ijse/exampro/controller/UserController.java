@@ -16,7 +16,9 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
+import java.io.IOException;
 import java.util.List;
 
 @RestController
@@ -238,6 +240,24 @@ public class UserController {
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(
                     new ResponseDTO(VarList.INTERNAL_SERVER_ERROR, e.getMessage(), null));
+        }
+    }
+
+    @PostMapping("/profile-picture")
+    @PreAuthorize("authentication.name == #email")
+    public ResponseEntity<ResponseDTO> uploadProfilePicture(
+            @RequestParam String email,
+            @RequestParam("file") MultipartFile file) {
+        try {
+            UserDTO updatedUser = userService.uploadProfilePicture(email, file);
+            return ResponseEntity.status(HttpStatus.OK).body(
+                    new ResponseDTO(VarList.OK, "Profile picture uploaded successfully", updatedUser));
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(
+                    new ResponseDTO(VarList.NOT_FOUND, e.getMessage(), null));
+        } catch (IOException e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(
+                    new ResponseDTO(VarList.BAD_REQUEST, "Failed to upload profile picture: " + e.getMessage(), null));
         }
     }
 }

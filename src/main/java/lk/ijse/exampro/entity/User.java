@@ -45,6 +45,9 @@ public class User {
     @Column
     private String profilePicture;
 
+    @Column
+    private String profilePicturePublicId;
+
     @CreationTimestamp
     @Column(updatable = false)
     private LocalDateTime createdAt;

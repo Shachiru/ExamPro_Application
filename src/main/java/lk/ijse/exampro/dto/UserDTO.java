@@ -21,13 +21,12 @@ public class UserDTO {
     private LocalDate dateOfBirth;
     private UserRole role;
     private String profilePicture;
+    private String profilePicturePublicId;
 
     private String schoolName;  // For Admin
     private String grade;       // For Student
     private String subject;     // For Teacher
 
     private boolean isActive;
-    public boolean isActive() { return isActive; }
-    public void setActive(boolean active) { isActive = active; }
 }
 

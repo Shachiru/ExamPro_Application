@@ -9,6 +9,7 @@ import lk.ijse.exampro.repository.AdminRepository;
 import lk.ijse.exampro.repository.StudentRepository;
 import lk.ijse.exampro.repository.TeacherRepository;
 import lk.ijse.exampro.repository.UserRepository;
+import lk.ijse.exampro.service.CloudinaryService;
 import lk.ijse.exampro.service.UserService;
 import lk.ijse.exampro.util.VarList;
 import lk.ijse.exampro.util.enums.UserRole;
@@ -22,7 +23,9 @@ import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.multipart.MultipartFile;
 
+import java.io.IOException;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -48,6 +51,9 @@ UserServiceImpl implements UserDetailsService, UserService {
 
     @Autowired
     private PasswordEncoder passwordEncoder;
+
+    @Autowired
+    private CloudinaryService cloudinaryService;
 
     @Override
     public UserDetails loadUserByUsername(String email) throws UsernameNotFoundException {
@@ -226,6 +232,29 @@ UserServiceImpl implements UserDetailsService, UserService {
         return VarList.OK;
     }
 
+    @Override
+    public UserDTO uploadProfilePicture(String email, MultipartFile file) throws IOException {
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new IllegalArgumentException("User not found with email: " + email));
+
+        // Delete old image if it exists
+        if (user.getProfilePicturePublicId() != null) {
+            cloudinaryService.deleteImage(user.getProfilePicturePublicId());
+        }
+
+        // Upload new image
+        Map uploadResult = cloudinaryService.uploadImage(file);
+        String profilePictureUrl = (String) uploadResult.get("secure_url");
+        String publicId = (String) uploadResult.get("public_id");
+
+        // Update user
+        user.setProfilePicture(profilePictureUrl);
+        user.setProfilePicturePublicId(publicId);
+        userRepository.save(user);
+
+        return convertToDTO(user);
+    }
+
     private UserDTO convertToDTO(User user) {
         UserDTO userDTO = new UserDTO();
         userDTO.setEmail(user.getEmail());
@@ -236,28 +265,18 @@ UserServiceImpl implements UserDetailsService, UserService {
         userDTO.setDateOfBirth(user.getDateOfBirth());
         userDTO.setRole(user.getRole());
         userDTO.setActive(user.isActive());
+        userDTO.setProfilePicture(user.getProfilePicture());
+        userDTO.setProfilePicturePublicId(user.getProfilePicturePublicId());
 
-        // If the user is an ADMIN, fetch the schoolName from the Admin entity
         if (user.getRole() == UserRole.ADMIN) {
             adminRepository.findByUser(user).ifPresent(admin -> userDTO.setSchoolName(admin.getSchoolName()));
+        } else if (user.getRole() == UserRole.TEACHER) {
+            teacherRepository.findByUser(user).ifPresent(teacher -> userDTO.setSubject(teacher.getSubject()));
+        } else if (user.getRole() == UserRole.STUDENT) {
+            studentRepository.findByUser(user).ifPresent(student -> userDTO.setGrade(student.getGrade()));
         }
 
         return userDTO;
     }
-
-    /*private User convertToEntity(UserDTO userDTO) {
-        User user = new User();
-        user.setEmail(userDTO.getEmail());
-        user.setFullName(userDTO.getFullName());
-        user.setUsername(userDTO.getUsername());
-        user.setPassword(userDTO.getPassword());
-        user.setNic(userDTO.getNic());
-        user.setPhoneNumber(userDTO.getPhoneNumber());
-        user.setDateOfBirth(userDTO.getDateOfBirth());
-        user.setRole(userDTO.getRole());
-        user.setActive(userDTO.isActive());
-        // Note: schoolName is not set here; it will be handled in the Admin entity
-        return user;
-    }*/
 
 }

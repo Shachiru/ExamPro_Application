@@ -2,7 +2,9 @@ package lk.ijse.exampro.service;
 
 import lk.ijse.exampro.dto.UserDTO;
 import lk.ijse.exampro.util.enums.UserRole;
+import org.springframework.web.multipart.MultipartFile;
 
+import java.io.IOException;
 import java.util.List;
 
 public interface UserService {
@@ -13,4 +15,5 @@ public interface UserService {
     int deleteUserByEmail(String email);
     int updateUserProfile(String email, UserDTO userDTO);
     int deactivateUser(String email);
+    UserDTO uploadProfilePicture(String email, MultipartFile file) throws IOException;
 }

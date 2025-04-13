@@ -1,4 +1,4 @@
-package lk.ijse.exampro.exeption;
+package lk.ijse.exampro.exception;
 
 public class ExamSubmissionException extends RuntimeException {
     public ExamSubmissionException(String message) {

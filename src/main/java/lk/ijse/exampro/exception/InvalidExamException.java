@@ -1,4 +1,4 @@
-package lk.ijse.exampro.exeption;
+package lk.ijse.exampro.exception;
 
 public class InvalidExamException extends RuntimeException {
     public InvalidExamException(String message) {

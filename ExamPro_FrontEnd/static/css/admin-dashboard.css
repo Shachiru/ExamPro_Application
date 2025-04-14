@@ -84,6 +84,7 @@ aside a:hover {
     aside {
         width: 200px;
     }
+
     main {
         margin-left: 200px;
     }
@@ -95,6 +96,7 @@ aside a:hover {
         height: auto;
         position: relative;
     }
+
     main {
         margin-left: 0;
     }

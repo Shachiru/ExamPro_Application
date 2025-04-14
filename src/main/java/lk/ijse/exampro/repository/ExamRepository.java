@@ -18,5 +18,6 @@ public interface ExamRepository extends JpaRepository<Exam, Long> {
     List<Exam> findByTitleContainingIgnoreCase(String title);
 
     List<Exam> findByCreatedByAndSubject(User createdBy, String subject);
+
     List<Exam> findBySubject(String subject);
 }

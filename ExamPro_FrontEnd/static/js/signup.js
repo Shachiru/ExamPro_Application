@@ -2,7 +2,7 @@
 const togglePasswordButtons = document.querySelectorAll('.toggle-password');
 
 togglePasswordButtons.forEach(button => {
-    button.addEventListener('click', function() {
+    button.addEventListener('click', function () {
         const passwordInput = this.previousElementSibling;
         const type = passwordInput.getAttribute('type') === 'password' ? 'text' : 'password';
         passwordInput.setAttribute('type', type);
@@ -17,14 +17,14 @@ const adminField = document.getElementById('adminField');
 const studentField = document.getElementById('studentField');
 const teacherField = document.getElementById('teacherField');
 
-roleSelect.addEventListener('change', function() {
+roleSelect.addEventListener('change', function () {
     // Hide all role-dependent fields first
     adminField.style.display = 'none';
     studentField.style.display = 'none';
     teacherField.style.display = 'none';
 
     // Show the appropriate field based on the selected role
-    switch(this.value) {
+    switch (this.value) {
         case 'ADMIN':
             adminField.style.display = 'block';
             break;
@@ -42,11 +42,11 @@ const profilePictureInput = document.getElementById('profilePicture');
 const profilePicturePreview = document.getElementById('profilePicturePreview');
 const profilePlaceholder = document.getElementById('profilePlaceholder');
 
-profilePictureInput.addEventListener('change', function() {
+profilePictureInput.addEventListener('change', function () {
     if (this.files && this.files[0]) {
         const reader = new FileReader();
 
-        reader.onload = function(e) {
+        reader.onload = function (e) {
             profilePicturePreview.style.backgroundImage = `url('${e.target.result}')`;
             profilePlaceholder.style.display = 'none';
         }
@@ -56,7 +56,7 @@ profilePictureInput.addEventListener('change', function() {
 });
 
 // Form submission
-document.getElementById("signupForm").addEventListener("submit", async function(event) {
+document.getElementById("signupForm").addEventListener("submit", async function (event) {
     event.preventDefault();
 
     const email = document.getElementById("email").value;
@@ -75,7 +75,7 @@ document.getElementById("signupForm").addEventListener("submit", async function(
     let grade = null;
     let subject = null;
 
-    switch(role) {
+    switch (role) {
         case 'ADMIN':
             schoolName = document.getElementById("schoolName").value;
             break;
@@ -129,7 +129,7 @@ document.getElementById("signupForm").addEventListener("submit", async function(
     try {
         const response = await fetch("http://localhost:8080/api/v1/user/sign_up", {
             method: "POST",
-            headers: { "Content-Type": "application/json" },
+            headers: {"Content-Type": "application/json"},
             body: JSON.stringify(userData)
         });
 

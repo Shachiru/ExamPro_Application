@@ -4,7 +4,7 @@ document.addEventListener("DOMContentLoaded", function () {
     const password = document.getElementById('password');
     const loaderContainer = document.getElementById('loaderContainer');
 
-    togglePassword.addEventListener('click', function() {
+    togglePassword.addEventListener('click', function () {
         const type = password.getAttribute('type') === 'password' ? 'text' : 'password';
         password.setAttribute('type', type);
         this.classList.toggle('fa-eye');

@@ -8,5 +8,6 @@ import java.util.Optional;
 
 public interface TeacherRepository extends JpaRepository<Teacher, Long> {
     Optional<Teacher> findByUser(User user);
+
     Optional<Teacher> findByUser_Email(String email);
 }

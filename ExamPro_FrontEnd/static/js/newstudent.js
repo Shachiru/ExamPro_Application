@@ -10,7 +10,7 @@ $(document).ready(function () {
     // Add sidebar toggle for responsive design
     $('.main-content').prepend('<button class="sidebar-toggle"><i class="fas fa-bars"></i></button>');
 
-    $('.sidebar-toggle').on('click', function() {
+    $('.sidebar-toggle').on('click', function () {
         $('.sidebar').toggleClass('show');
         $('.main-content').toggleClass('sidebar-active');
     });
@@ -23,7 +23,7 @@ $(document).ready(function () {
     });
 
     // Add event listener for cancel button
-    $('#cancel-exam').on('click', function() {
+    $('#cancel-exam').on('click', function () {
         if (confirm('Are you sure you want to cancel this exam? Your progress will not be saved.')) {
             clearInterval(timerInterval);
             resetExam();
@@ -54,9 +54,33 @@ $(document).ready(function () {
 
             // Upcoming Exams (Mock data - replace with API call to fetch exams)
             const upcomingExams = [
-                { id: 1, title: 'Physics Midterm', course: 'Physics 101', date: 'May 20, 2023', time: '10:00 AM - 12:00 PM', duration: '2 hours', status: 'Ready' },
-                { id: 2, title: 'Calculus Quiz', course: 'Mathematics 202', date: 'May 22, 2023', time: '2:00 PM - 3:00 PM', duration: '1 hour', status: 'Not Ready' },
-                { id: 3, title: 'Computer Science Lab', course: 'CS 301', date: 'May 25, 2023', time: '1:30 PM - 3:30 PM', duration: '2 hours', status: 'Ready' }
+                {
+                    id: 1,
+                    title: 'Physics Midterm',
+                    course: 'Physics 101',
+                    date: 'May 20, 2023',
+                    time: '10:00 AM - 12:00 PM',
+                    duration: '2 hours',
+                    status: 'Ready'
+                },
+                {
+                    id: 2,
+                    title: 'Calculus Quiz',
+                    course: 'Mathematics 202',
+                    date: 'May 22, 2023',
+                    time: '2:00 PM - 3:00 PM',
+                    duration: '1 hour',
+                    status: 'Not Ready'
+                },
+                {
+                    id: 3,
+                    title: 'Computer Science Lab',
+                    course: 'CS 301',
+                    date: 'May 25, 2023',
+                    time: '1:30 PM - 3:30 PM',
+                    duration: '2 hours',
+                    status: 'Ready'
+                }
             ];
 
             $('#upcoming-exams-list').empty(); // Clear existing content before adding new
@@ -89,11 +113,11 @@ $(document).ready(function () {
 
             // Recent Results (Mock data - replace with API call)
             const recentResults = [
-                { exam: 'Physics Quiz 1', course: 'Physics 101', date: 'May 5, 2023', score: '82%' },
-                { exam: 'Mathematics Homework 3', course: 'Mathematics 202', date: 'May 3, 2023', score: '88%' },
-                { exam: 'CS Project Evaluation', course: 'CS 301', date: 'Apr 28, 2023', score: '95%' },
-                { exam: 'Physics Lab Report', course: 'Physics 101', date: 'Apr 25, 2023', score: '78%' },
-                { exam: 'Mathematics Midterm', course: 'Mathematics 202', date: 'Apr 20, 2023', score: '82%' }
+                {exam: 'Physics Quiz 1', course: 'Physics 101', date: 'May 5, 2023', score: '82%'},
+                {exam: 'Mathematics Homework 3', course: 'Mathematics 202', date: 'May 3, 2023', score: '88%'},
+                {exam: 'CS Project Evaluation', course: 'CS 301', date: 'Apr 28, 2023', score: '95%'},
+                {exam: 'Physics Lab Report', course: 'Physics 101', date: 'Apr 25, 2023', score: '78%'},
+                {exam: 'Mathematics Midterm', course: 'Mathematics 202', date: 'Apr 20, 2023', score: '82%'}
             ];
 
             $('#recent-results').empty(); // Clear existing content before adding new
@@ -111,11 +135,11 @@ $(document).ready(function () {
 
             // Course Progress (Mock data - replace with API call)
             const courseProgress = [
-                { course: 'Physics 101', progress: 75, color: 'bg-blue-600' },
-                { course: 'Mathematics 202', progress: 60, color: 'bg-purple-600' },
-                { course: 'CS 301', progress: 90, color: 'bg-green-600' },
-                { course: 'English 101', progress: 45, color: 'bg-yellow-600' },
-                { course: 'History 205', progress: 30, color: 'bg-red-600' }
+                {course: 'Physics 101', progress: 75, color: 'bg-blue-600'},
+                {course: 'Mathematics 202', progress: 60, color: 'bg-purple-600'},
+                {course: 'CS 301', progress: 90, color: 'bg-green-600'},
+                {course: 'English 101', progress: 45, color: 'bg-yellow-600'},
+                {course: 'History 205', progress: 30, color: 'bg-red-600'}
             ];
 
             $('#course-progress').empty(); // Clear existing content before adding new
@@ -136,9 +160,9 @@ $(document).ready(function () {
 
             // Announcements (Mock data - replace with API call)
             const announcements = [
-                { message: 'Physics 101 exam preparation material available', time: '2 hours ago', urgent: true },
-                { message: 'Mathematics 202 homework deadline extended', time: 'Yesterday', urgent: false },
-                { message: 'CS 301 project groups have been assigned', time: '2 days ago', urgent: false }
+                {message: 'Physics 101 exam preparation material available', time: '2 hours ago', urgent: true},
+                {message: 'Mathematics 202 homework deadline extended', time: 'Yesterday', urgent: false},
+                {message: 'CS 301 project groups have been assigned', time: '2 days ago', urgent: false}
             ];
 
             $('#announcements').empty(); // Clear existing content before adding new
@@ -197,7 +221,7 @@ $(document).ready(function () {
                 const errorMsg = err.responseJSON ? err.responseJSON.message : "Network error. Please check your connection.";
                 showErrorMessage('Failed to start exam: ' + errorMsg);
             },
-            complete: function() {
+            complete: function () {
                 // Reset button state
                 $('.start-exam[data-exam-id="' + examId + '"]').prop('disabled', false).html('Prepare for Exam');
             }
@@ -276,9 +300,19 @@ $(document).ready(function () {
         setTimeout(() => {
             // Mock questions
             questions = [
-                { id: 1, content: 'What is the capital of France?', options: ['Paris', 'London', 'Berlin', 'Madrid'], correctAnswer: 'Paris' },
-                { id: 2, content: 'What is 2 + 2?', options: ['3', '4', '5', '6'], correctAnswer: '4' },
-                { id: 3, content: 'Which planet is known as the Red Planet?', options: ['Jupiter', 'Mars', 'Venus', 'Mercury'], correctAnswer: 'Mars' }
+                {
+                    id: 1,
+                    content: 'What is the capital of France?',
+                    options: ['Paris', 'London', 'Berlin', 'Madrid'],
+                    correctAnswer: 'Paris'
+                },
+                {id: 2, content: 'What is 2 + 2?', options: ['3', '4', '5', '6'], correctAnswer: '4'},
+                {
+                    id: 3,
+                    content: 'Which planet is known as the Red Planet?',
+                    options: ['Jupiter', 'Mars', 'Venus', 'Mercury'],
+                    correctAnswer: 'Mars'
+                }
             ];
 
             // Initialize answers array with nulls matching questions length
@@ -359,7 +393,7 @@ $(document).ready(function () {
     }
 
     // Submit Exam with loading feedback
-    $('#submit-exam').click(function() {
+    $('#submit-exam').click(function () {
         if (confirm("Are you sure you want to submit your exam? You cannot change your answers afterward.")) {
             submitExam();
         }
@@ -405,7 +439,7 @@ $(document).ready(function () {
             data: JSON.stringify({
                 answers: answersToSubmit
             }),
-            success: function(response) {
+            success: function (response) {
                 if (response.code === 200) {
                     alert("Exam submitted successfully!");
                     $('#examModal').modal('hide');
@@ -417,11 +451,11 @@ $(document).ready(function () {
                     alert(response.message || "There was an issue submitting your exam.");
                 }
             },
-            error: function(err) {
+            error: function (err) {
                 const errorMsg = err.responseJSON ? err.responseJSON.message : "Network error. Please check your connection.";
                 showErrorMessage('Failed to submit exam: ' + errorMsg);
             },
-            complete: function() {
+            complete: function () {
                 // Reset button states
                 $('#submit-exam').prop('disabled', false).html('Submit Exam');
                 $('#cancel-exam').prop('disabled', false);
@@ -440,12 +474,12 @@ $(document).ready(function () {
     }
 
     // Global logout button
-    $('button.btn-danger').click(function() {
+    $('button.btn-danger').click(function () {
         logout();
     });
 
     // Handle window resize
-    $(window).resize(function() {
+    $(window).resize(function () {
         if ($(window).width() > 992) {
             $('.sidebar').removeClass('show');
             $('.main-content').removeClass('sidebar-active');

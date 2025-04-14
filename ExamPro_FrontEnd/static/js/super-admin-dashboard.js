@@ -153,7 +153,7 @@ document.addEventListener('DOMContentLoaded', function () {
                         duration: 3000,
                         gravity: 'top',
                         position: 'right',
-                        style: { background: '#10b981' }
+                        style: {background: '#10b981'}
                     }).showToast();
                     $('#addAdminModal').modal('hide');
                     form.reset();
@@ -191,7 +191,7 @@ function showError(message) {
         duration: 3000,
         gravity: 'top',
         position: 'right',
-        style: { background: '#ef4444' }
+        style: {background: '#ef4444'}
     }).showToast();
 }
 

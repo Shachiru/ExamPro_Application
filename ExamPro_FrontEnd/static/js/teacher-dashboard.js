@@ -24,7 +24,7 @@ function loadTeacherData() {
     $.ajax({
         url: `${API_BASE_URL}/user/search?email=${email}`,
         method: 'GET',
-        headers: { 'Authorization': `Bearer ${token}` },
+        headers: {'Authorization': `Bearer ${token}`},
         success: function (result) {
             if (result.code === 200) {
                 const user = result.data;
@@ -53,7 +53,7 @@ function updateProfile() {
     $.ajax({
         url: `${API_BASE_URL}/user/update?email=${email}`,
         method: 'PUT',
-        headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
+        headers: {'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json'},
         data: JSON.stringify(data),
         success: function (result) {
             if (result.code === 200) {
@@ -75,7 +75,7 @@ function loadExams() {
     $.ajax({
         url: `${API_BASE_URL}/exam/list`, // Note: This endpoint is assumed; adjust if different
         method: 'GET',
-        headers: { 'Authorization': `Bearer ${token}` },
+        headers: {'Authorization': `Bearer ${token}`},
         success: function (result) {
             if (result.code === 200) {
                 const exams = result.data;
@@ -115,7 +115,7 @@ function openCreateExamModal() {
     $('#createExamModal').modal('show');
 }
 
-$('#createExamForm').on('submit', function(e) {
+$('#createExamForm').on('submit', function (e) {
     e.preventDefault(); // Prevent the default form submission
     createExam();
 });
@@ -161,7 +161,7 @@ function createExam() {
             'Content-Type': 'application/json'
         },
         data: JSON.stringify(examData),
-        success: function(response) {
+        success: function (response) {
             if (response.code === 201) { // Adjust based on your API's success code
                 alert('Exam created successfully!');
                 // Optionally, redirect to an exam list or clear the form
@@ -170,7 +170,7 @@ function createExam() {
                 alert('Failed to create exam: ' + response.message);
             }
         },
-        error: function(xhr, status, error) {
+        error: function (xhr, status, error) {
             console.error('Error:', error);
             alert('An error occurred while creating the exam.');
         }
@@ -193,17 +193,17 @@ function addQuestions(examId) {
         // Example question data; expand as needed
         text: prompt('Enter question text:'),
         options: [
-            { text: prompt('Option 1:'), isCorrect: confirm('Is this the correct answer?') },
-            { text: prompt('Option 2:'), isCorrect: false },
-            { text: prompt('Option 3:'), isCorrect: false },
-            { text: prompt('Option 4:'), isCorrect: false }
+            {text: prompt('Option 1:'), isCorrect: confirm('Is this the correct answer?')},
+            {text: prompt('Option 2:'), isCorrect: false},
+            {text: prompt('Option 3:'), isCorrect: false},
+            {text: prompt('Option 4:'), isCorrect: false}
         ]
     };
 
     $.ajax({
         url: `${API_BASE_URL}/exam/${examId}/questions`,
         method: 'POST',
-        headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
+        headers: {'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json'},
         data: JSON.stringify(questionData),
         success: function (result) {
             if (result.code === 201) {
@@ -225,7 +225,7 @@ function deleteExam(examId) {
         $.ajax({
             url: `${API_BASE_URL}/exam/delete/${examId}`, // Assumed endpoint
             method: 'DELETE',
-            headers: { 'Authorization': `Bearer ${token}` },
+            headers: {'Authorization': `Bearer ${token}`},
             success: function (result) {
                 if (result.code === 200) {
                     alert('Exam deleted successfully!');

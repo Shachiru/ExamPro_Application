@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>ExamPro - Super Admin Dashboard</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.8.1/font/bootstrap-icons.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap"
           rel="stylesheet">
@@ -14,11 +15,12 @@
 <body>
 <!-- Sidebar -->
 <div class="sidebar" id="sidebar">
+    <!-- Replace the logo section with this -->
     <div class="logo-section">
         <a href="#" class="d-flex align-items-center text-decoration-none">
             <i class="fas fa-graduation-cap fs-3 text-white"></i>
             <span class="ms-2 fs-4 fw-bold text-white logo-text">Exam<span
-                    class="text-[var(--accent)]">Pro</span></span>
+                    class="text-accent">Pro</span></span>
         </a>
         <p class="mt-2 text-white-50 small logo-text">Super Admin Portal</p>
     </div>
@@ -155,141 +157,6 @@
                 </div>
             </div>
         </div>
-
-        <!-- Charts and Tables Section -->
-        <div class="row mb-4">
-            <!-- Institution Growth Chart -->
-            <div class="col-md-8 mb-4">
-                <div class="section-header">
-                    <h3 class="section-title">Institution Growth</h3>
-                    <div class="dropdown">
-                        <button class="btn btn-sm btn-outline-secondary dropdown-toggle" type="button" id="timeFilter"
-                                data-bs-toggle="dropdown" aria-expanded="false">
-                            Last 12 months
-                        </button>
-                        <ul class="dropdown-menu" aria-labelledby="timeFilter">
-                            <li><a class="dropdown-item" href="#">Last 30 days</a></li>
-                            <li><a class="dropdown-item" href="#">Last 6 months</a></li>
-                            <li><a class="dropdown-item active" href="#">Last 12 months</a></li>
-                            <li><a class="dropdown-item" href="#">All time</a></li>
-                        </ul>
-                    </div>
-                </div>
-                <div class="chart-container">
-                    <div class="d-flex justify-content-center align-items-center h-100 text-muted">
-                        <div class="text-center">
-                            <i class="fas fa-chart-line fs-3 mb-3"></i>
-                            <p>Institution growth chart would appear here</p>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Recent Institutions -->
-            <div class="col-md-4 mb-4">
-                <div class="section-header">
-                    <h3 class="section-title">Recent Institutions</h3>
-                    <a href="#" class="btn btn-sm btn-link">View all</a>
-                </div>
-                <div class="table-card">
-                    <div class="recent-item">
-                        <div class="icon-container">
-                            <i class="fas fa-university"></i>
-                        </div>
-                        <div class="item-info">
-                            <h6>University of Technology</h6>
-                            <p>12 admins, 3,540 students</p>
-                        </div>
-                        <div class="item-date">May 12, 2023</div>
-                    </div>
-                    <div class="recent-item">
-                        <div class="icon-container">
-                            <i class="fas fa-globe-americas"></i>
-                        </div>
-                        <div class="item-info">
-                            <h6>Global Education Institute</h6>
-                            <p>8 admins, 3,120 students</p>
-                        </div>
-                        <div class="item-date">May 10, 2023</div>
-                    </div>
-                    <div class="recent-item">
-                        <div class="icon-container">
-                            <i class="fas fa-school"></i>
-                        </div>
-                        <div class="item-info">
-                            <h6>Metropolitan College</h6>
-                            <p>5 admins, 2,840 students</p>
-                        </div>
-                        <div class="item-date">May 8, 2023</div>
-                    </div>
-                    <div class="recent-item">
-                        <div class="icon-container">
-                            <i class="fas fa-award"></i>
-                        </div>
-                        <div class="item-info">
-                            <h6>Excellence Academy</h6>
-                            <p>3 admins, 1,560 students</p>
-                        </div>
-                        <div class="item-date">May 5, 2023</div>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <!-- System Activity Section -->
-        <div class="row mb-4">
-            <div class="col-md-12">
-                <div class="section-header">
-                    <h3 class="section-title">System Activity</h3>
-                </div>
-                <div class="table-card">
-                    <div class="table-responsive">
-                        <table class="table activity-table mb-0">
-                            <thead>
-                            <tr>
-                                <th>ACTIVITY</th>
-                                <th>INSTITUTION</th>
-                                <th>USER</th>
-                                <th>DATE</th>
-                            </tr>
-                            </thead>
-                            <tbody>
-                            <tr>
-                                <td>New admin added</td>
-                                <td>University of Technology</td>
-                                <td>System Admin</td>
-                                <td>May 14, 2023</td>
-                            </tr>
-                            <tr>
-                                <td>Course created</td>
-                                <td>Global Education Institute</td>
-                                <td>Admin User</td>
-                                <td>May 14, 2023</td>
-                            </tr>
-                            <tr>
-                                <td>Exam scheduled</td>
-                                <td>Metropolitan College</td>
-                                <td>Teacher User</td>
-                                <td>May 13, 2023</td>
-                            </tr>
-                            <tr>
-                                <td>Results published</td>
-                                <td>Excellence Academy</td>
-                                <td>Admin User</td>
-                                <td>May 13, 2023</td>
-                            </tr>
-                            <tr>
-                                <td>System settings updated</td>
-                                <td>University of Technology</td>
-                                <td>System Admin</td>
-                                <td>May 12, 2023</td>
-                            </tr>
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
-            </div>
-        </div>
     </div>
 </div>
 
@@ -335,77 +202,114 @@
         </div>
     </div>
 </div>
-</div>
 
-<!-- Add Admin Modal -->
+<!--Add admin Modal-->
 <div class="modal fade" id="addAdminModal" tabindex="-1" aria-labelledby="addAdminModalLabel" aria-hidden="true">
-    <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
         <div class="modal-content">
-            <div class="modal-header gradient-header">
-                <h5 class="modal-title" id="addAdminModalLabel">Add New Admin</h5>
+            <div class="modal-header bg-primary text-white">
+                <h5 class="modal-title fw-bold" id="addAdminModalLabel">
+                    <i class="bi bi-person-plus-fill me-2"></i>Add New Administrator
+                </h5>
                 <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"
                         aria-label="Close"></button>
             </div>
-            <div class="modal-body">
-                <form id="addAdminForm">
-                    <div class="mb-3">
-                        <label for="adminName" class="form-label">Full Name</label>
-                        <input type="text" class="form-control" id="adminName" required>
-                    </div>
-                    <div class="mb-3">
-                        <label for="adminUsername" class="form-label">Username</label>
-                        <input type="text" class="form-control" id="adminUsername" required>
-                    </div>
-                    <div class="mb-3">
-                        <label for="adminEmail" class="form-label">Email Address</label>
-                        <input type="email" class="form-control" id="adminEmail" required>
-                    </div>
-                    <div class="row mb-3">
-                        <div class="col">
-                            <label for="adminPassword" class="form-label">Password</label>
-                            <input type="password" class="form-control" id="adminPassword" required>
-                        </div>
-                        <div class="col">
-                            <label for="adminConfirmPassword" class="form-label">Confirm Password</label>
-                            <input type="password" class="form-control" id="adminConfirmPassword" required>
-                        </div>
-                    </div>
-                    <div class="mb-3">
-                        <label for="adminNIC" class="form-label">NIC</label>
-                        <input type="text" class="form-control" id="adminNIC" required>
-                    </div>
-                    <div class="mb-3">
-                        <label for="adminPhoneNumber" class="form-label">Phone Number</label>
-                        <input type="text" class="form-control" id="adminPhoneNumber" required>
-                    </div>
-                    <div class="mb-3">
-                        <label for="adminDOB" class="form-label">Date of Birth</label>
-                        <input type="date" class="form-control" id="adminDOB" required>
-                    </div>
-                    <div class="mb-3">
-                        <label for="adminSchoolName" class="form-label">School Name</label>
-                        <input type="text" class="form-control" id="adminSchoolName" required>
-                    </div>
-                    <div class="mb-3">
-                        <label class="form-label">Status</label>
-                        <div class="d-flex">
-                            <div class="form-check me-3">
-                                <input class="form-check-input" type="radio" name="adminStatus" id="statusActive"
-                                       value="active" checked>
-                                <label class="form-check-label" for="statusActive">Active</label>
+            <div class="modal-body p-4">
+                <form id="addAdminForm" class="needs-validation" novalidate>
+                    <!-- Personal Information Section -->
+                    <div class="mb-4">
+                        <h6 class="fw-bold text-primary mb-3">Personal Information</h6>
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <label for="adminName" class="form-label">Full Name</label>
+                                <input type="text" class="form-control" id="adminName" placeholder="Enter full name"
+                                       required>
+                                <div class="invalid-feedback">Please provide a name.</div>
                             </div>
-                            <div class="form-check">
-                                <input class="form-check-input" type="radio" name="adminStatus" id="statusInactive"
-                                       value="inactive">
-                                <label class="form-check-label" for="statusInactive">Inactive</label>
+                            <div class="col-md-6">
+                                <label for="adminNIC" class="form-label">NIC Number</label>
+                                <input type="text" class="form-control" id="adminNIC" placeholder="Enter NIC number"
+                                       required>
+                                <div class="invalid-feedback">Please provide a valid NIC number.</div>
+                            </div>
+                            <div class="col-md-6">
+                                <label for="adminDOB" class="form-label">Date of Birth</label>
+                                <input type="date" class="form-control" id="adminDOB" required>
+                                <div class="invalid-feedback">Please select a date of birth.</div>
+                            </div>
+                            <div class="col-md-6">
+                                <label for="adminPhoneNumber" class="form-label">Phone Number</label>
+                                <div class="input-group">
+                                    <span class="input-group-text"><i class="bi bi-telephone-fill"></i></span>
+                                    <input type="tel" class="form-control" id="adminPhoneNumber"
+                                           placeholder="Enter phone number" required>
+                                </div>
+                                <div class="invalid-feedback">Please provide a valid phone number.</div>
+                            </div>
+                            <div class="col-12">
+                                <label for="adminSchoolName" class="form-label">School Name</label>
+                                <input type="text" class="form-control" id="adminSchoolName"
+                                       placeholder="Enter school name" required>
+                                <div class="invalid-feedback">Please provide a school name.</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Account Information Section -->
+                    <div class="mb-3">
+                        <h6 class="fw-bold text-primary mb-3">Account Information</h6>
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <label for="adminUsername" class="form-label">Username</label>
+                                <div class="input-group">
+                                    <span class="input-group-text"><i class="bi bi-person"></i></span>
+                                    <input type="text" class="form-control" id="adminUsername"
+                                           placeholder="Create a username" required>
+                                </div>
+                                <div class="invalid-feedback">Please choose a username.</div>
+                            </div>
+                            <div class="col-md-6">
+                                <label for="adminEmail" class="form-label">Email Address</label>
+                                <div class="input-group">
+                                    <span class="input-group-text"><i class="bi bi-envelope"></i></span>
+                                    <input type="email" class="form-control" id="adminEmail"
+                                           placeholder="Enter email address" required>
+                                </div>
+                                <div class="invalid-feedback">Please provide a valid email.</div>
+                            </div>
+                            <div class="col-md-6">
+                                <label for="adminPassword" class="form-label">Password</label>
+                                <div class="input-group">
+                                    <input type="password" class="form-control" id="adminPassword"
+                                           placeholder="Create a password" required>
+                                    <button class="btn btn-outline-secondary toggle-password" type="button">
+                                        <i class="bi bi-eye"></i>
+                                    </button>
+                                </div>
+                                <div class="form-text">Password must be at least 8 characters long.</div>
+                            </div>
+                            <div class="col-md-6">
+                                <label for="adminConfirmPassword" class="form-label">Confirm Password</label>
+                                <div class="input-group">
+                                    <input type="password" class="form-control" id="adminConfirmPassword"
+                                           placeholder="Confirm password" required>
+                                    <button class="btn btn-outline-secondary toggle-password" type="button">
+                                        <i class="bi bi-eye"></i>
+                                    </button>
+                                </div>
+                                <div class="invalid-feedback">Passwords must match.</div>
                             </div>
                         </div>
                     </div>
                 </form>
             </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
-                <button type="button" class="btn btn-primary" id="saveAdmin">Add Admin</button>
+            <div class="modal-footer bg-light">
+                <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">
+                    <i class="bi bi-x-circle me-1"></i>Cancel
+                </button>
+                <button type="button" class="btn btn-primary" id="saveAdmin">
+                    <i class="bi bi-check-circle me-1"></i>Add Administrator
+                </button>
             </div>
         </div>
     </div>

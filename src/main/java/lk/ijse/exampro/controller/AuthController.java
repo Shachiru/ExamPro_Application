@@ -69,10 +69,10 @@ public class AuthController {
 
     @PostConstruct
     public void verifyPassword() {
-        userRepository.findByEmail("superadmin@example.com")
+        userRepository.findByEmail("shachirurashmika35@gmail.com")
                 .ifPresentOrElse(
                         user -> System.out.println("Super admin password match: " +
-                                passwordEncoder.matches("superpassword123", user.getPassword())),
+                                passwordEncoder.matches("123456", user.getPassword())),
                         () -> System.out.println("Super admin not found in database"));
     }
 }

@@ -15,5 +15,6 @@ public class ExamDTO {
     private String subject;
     private int duration;
     private LocalDateTime startTime;
+    private String examType;
     private String createdByEmail;
 }

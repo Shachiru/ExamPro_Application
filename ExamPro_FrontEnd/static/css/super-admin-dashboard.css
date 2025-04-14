@@ -789,3 +789,39 @@ body {
     justify-content: center;
     padding: 0;
 }
+
+/* Add these styles at the end of your CSS file to fix the dropdown menu positioning */
+.table-responsive .dropdown-menu {
+    position: fixed;
+    z-index: 1050;
+}
+
+/* Ensure the dropdown toggle button is always visible */
+.table-responsive .dropdown {
+    position: relative;
+}
+
+/* Make the dropdown menu wider and more visible */
+.dropdown-menu-end {
+    min-width: 160px;
+    border-radius: 8px;
+    box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
+}
+
+/* Exams Section Enhancements */
+#examsContent .table-card {
+    padding: 20px;
+    text-align: center;
+}
+
+/* Modal Input Styling */
+#createExamModal .form-select {
+    border-radius: 0.375rem;
+    padding: 0.625rem 0.875rem;
+    border: 1px solid #ced4da;
+}
+
+#createExamModal .form-select:focus {
+    box-shadow: 0 0 0 0.25rem rgba(67, 97, 238, 0.15);
+    border-color: #4361ee;
+}

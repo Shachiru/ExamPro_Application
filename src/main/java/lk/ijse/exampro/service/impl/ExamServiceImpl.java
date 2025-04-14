@@ -14,6 +14,7 @@ import lk.ijse.exampro.service.EmailService;
 import lk.ijse.exampro.service.ExamService;
 import lk.ijse.exampro.util.enums.UserRole;
 import org.modelmapper.ModelMapper;
+import org.modelmapper.TypeMap;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -64,15 +65,27 @@ public class ExamServiceImpl implements ExamService {
 
     private final ObjectMapper objectMapper = new ObjectMapper();
 
+    public ExamServiceImpl(ModelMapper modelMapper) {
+        this.modelMapper = modelMapper;
+        // Configure ModelMapper for Exam to ExamDTO
+        TypeMap<Exam, ExamDTO> examToExamDTO = modelMapper.createTypeMap(Exam.class, ExamDTO.class);
+        examToExamDTO.addMappings(mapper -> {
+            mapper.map(src -> src.getCreatedBy().getEmail(), ExamDTO::setCreatedByEmail);
+        });
+    }
+
+    @Override
+    public List<ExamDTO> getAllExams() {
+        List<Exam> exams = examRepository.findAll();
+        return exams.stream()
+                .map(exam -> modelMapper.map(exam, ExamDTO.class))
+                .collect(Collectors.toList());
+    }
+
     @Override
     public ExamDTO createExam(ExamDTO examDTO) {
         User user = userRepository.findByEmail(examDTO.getCreatedByEmail())
                 .orElseThrow(() -> new IllegalArgumentException("User not found with email: " + examDTO.getCreatedByEmail()));
-        if (user.getRole() != UserRole.TEACHER) {
-            throw new IllegalArgumentException("Only teachers can create exams");
-        }
-        Teacher teacher = teacherRepository.findByUser_Email(user.getEmail())
-                .orElseThrow(() -> new IllegalArgumentException("Teacher not found for user: " + user.getEmail()));
 
         if (examDTO.getStartTime().isBefore(LocalDateTime.now())) {
             throw new IllegalArgumentException("Start time must be in the future");
@@ -83,9 +96,22 @@ public class ExamServiceImpl implements ExamService {
 
         Exam exam = modelMapper.map(examDTO, Exam.class);
         exam.setCreatedBy(user);
-        exam.setSubject(examDTO.getSubject() != null ? examDTO.getSubject() : teacher.getSubject());
+
+        if (user.getRole() == UserRole.TEACHER) {
+            Teacher teacher = teacherRepository.findByUser_Email(user.getEmail())
+                    .orElseThrow(() -> new IllegalArgumentException("Teacher not found for user: " + user.getEmail()));
+            exam.setSubject(examDTO.getSubject() != null ? examDTO.getSubject() : teacher.getSubject());
+        } else if (user.getRole() == UserRole.SUPER_ADMIN) {
+            if (examDTO.getSubject() == null) {
+                throw new IllegalArgumentException("Subject is required for Super Admin created exams");
+            }
+            exam.setSubject(examDTO.getSubject());
+        } else {
+            throw new IllegalArgumentException("Only teachers and super admins can create exams");
+        }
+
         exam = examRepository.save(exam);
-        logger.info("Exam created: {} by {}", exam.getTitle(), teacher.getUser().getEmail());
+        logger.info("Exam created: {} by {}", exam.getTitle(), user.getEmail());
 
         List<Student> students = studentRepository.findAll();
         for (Student student : students) {
@@ -95,6 +121,60 @@ public class ExamServiceImpl implements ExamService {
                 logger.error("Failed to notify {}: {}", student.getUser().getEmail(), e.getMessage());
             }
         }
+        return modelMapper.map(exam, ExamDTO.class);
+    }
+
+    @Override
+    public void deleteExam(Long examId) {
+        Exam exam = examRepository.findById(examId)
+                .orElseThrow(() -> new RuntimeException("Exam not found with ID: " + examId));
+        List<StudentResult> studentResults = studentResultRepository.findByExam(exam);
+        if (!studentResults.isEmpty()) {
+            // Delete associated answers for each student result
+            for (StudentResult studentResult : studentResults) {
+                List<Answer> answers = answerRepository.findByStudentResult(studentResult);
+                if (!answers.isEmpty()) {
+                    answerRepository.deleteAll(answers);
+                }
+            }
+            studentResultRepository.deleteAll(studentResults);
+        }
+        List<Question> questions = questionRepository.findByExam(exam);
+        if (!questions.isEmpty()) {
+            questionRepository.deleteAll(questions);
+        }
+        examRepository.delete(exam);
+        logger.info("Exam deleted with ID: {}", examId);
+    }
+
+    @Override
+    public ExamDTO updateExam(Long examId, ExamDTO examDTO) {
+        Exam exam = examRepository.findById(examId)
+                .orElseThrow(() -> new RuntimeException("Exam not found with ID: " + examId));
+
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        User currentUser = userRepository.findByEmail(auth.getName())
+                .orElseThrow(() -> new SecurityException("Authenticated user not found: " + auth.getName()));
+
+        if (!exam.getCreatedBy().getId().equals(currentUser.getId())) {
+            throw new SecurityException("You are not authorized to update this exam");
+        }
+
+        if (examDTO.getStartTime().isBefore(LocalDateTime.now())) {
+            throw new IllegalArgumentException("Start time must be in the future");
+        }
+        if (examDTO.getDuration() <= 0) {
+            throw new IllegalArgumentException("Duration must be positive");
+        }
+
+        exam.setTitle(examDTO.getTitle());
+        exam.setSubject(examDTO.getSubject());
+        exam.setStartTime(examDTO.getStartTime());
+        exam.setDuration(examDTO.getDuration());
+        exam.setExamType(examDTO.getExamType());
+
+        exam = examRepository.save(exam);
+        logger.info("Exam updated: {} by {}", exam.getTitle(), currentUser.getEmail());
         return modelMapper.map(exam, ExamDTO.class);
     }
 

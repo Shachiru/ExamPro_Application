@@ -28,6 +28,8 @@ public class Exam {
     @Column(nullable = false)
     private LocalDateTime startTime;
 
+    private String examType;
+
     @ManyToOne
     @JoinColumn(name = "teacher_id", nullable = false)
     private User createdBy;

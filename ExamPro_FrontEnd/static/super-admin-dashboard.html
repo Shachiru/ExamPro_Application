@@ -232,6 +232,159 @@
         </div>
     </div>
 
+    <!-- Exams List Content -->
+    <!--<div class="dashboard-content" id="examsContent" style="display: none;">
+        <div class="row mb-4">
+            <div class="col-md-12">
+                <div class="section-header">
+                    <h1 class="section-title fs-4">Exam Management</h1>
+                    <button class="btn btn-primary d-flex align-items-center" data-bs-toggle="modal"
+                            data-bs-target="#createExamModal">
+                        <i class="fas fa-plus me-2"></i> Create New Exam
+                    </button>
+                </div>
+                <p class="text-muted mb-4">Manage all exams across institutions</p>
+            </div>
+        </div>
+        &lt;!&ndash; Placeholder for exams table (to be implemented later) &ndash;&gt;
+        <div class="row mb-4">
+            <div class="col-md-12">
+                <div class="table-card">
+                    <p class="text-center text-muted">Exams list will be displayed here.</p>
+                </div>
+            </div>
+        </div>
+    </div>-->
+
+    <!-- Exams List Content -->
+    <div class="dashboard-content" id="examsContent" style="display: none;">
+        <div class="row mb-4">
+            <div class="col-md-12">
+                <div class="section-header">
+                    <h1 class="section-title fs-4">Exam Management</h1>
+                    <button class="btn btn-primary d-flex align-items-center" data-bs-toggle="modal" data-bs-target="#createExamModal">
+                        <i class="fas fa-plus me-2"></i> Create New Exam
+                    </button>
+                </div>
+                <p class="text-muted mb-4">Manage all exams across institutions</p>
+            </div>
+        </div>
+
+        <div class="row mb-4">
+            <div class="col-md-12">
+                <div class="admins-header">
+                    <div class="search-admin">
+                        <i class="fas fa-search"></i>
+                        <input type="text" class="form-control" id="searchExam" placeholder="Search exams...">
+                    </div>
+                    <div class="filter-buttons">
+                        <button class="filter-btn active" data-filter="all">All</button>
+                        <button class="filter-btn" data-filter="upcoming">Upcoming</button>
+                        <button class="filter-btn" data-filter="past">Past</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="row mb-4">
+            <div class="col-md-12">
+                <div class="table-card">
+                    <div class="table-responsive">
+                        <table class="table activity-table mb-0" id="examsTable">
+                            <thead>
+                            <tr>
+                                <th>EXAM TITLE</th>
+                                <th>SUBJECT</th>
+                                <th>START TIME</th>
+                                <th>DURATION</th>
+                                <th>TYPE</th>
+                                <th>CREATED BY</th>
+                                <th>STATUS</th>
+                                <th>ACTIONS</th>
+                            </tr>
+                            </thead>
+                            <tbody id="examsTableBody">
+                            <!-- Exams will be populated dynamically -->
+                            </tbody>
+                        </table>
+                    </div>
+                    <div class="table-pagination">
+                        <div class="page-info">
+                            Showing <span id="examShowingStart">1</span> to <span id="examShowingEnd">10</span> of <span id="totalExams">0</span> exams
+                        </div>
+                        <div class="pagination-controls">
+                            <button class="btn btn-outline-secondary" id="examPrevPage" disabled>
+                                <i class="fas fa-chevron-left"></i>
+                            </button>
+                            <button class="btn btn-outline-secondary" id="examNextPage" disabled>
+                                <i class="fas fa-chevron-right"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Create Exam Modal -->
+    <div class="modal fade" id="createExamModal" tabindex="-1" aria-labelledby="createExamModalLabel"
+         aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered modal-lg">
+            <div class="modal-content">
+                <div class="modal-header bg-primary text-white">
+                    <h5 class="modal-title fw-bold" id="createExamModalLabel">
+                        <i class="bi bi-file-earmark-plus-fill me-2"></i>Create New Exam
+                    </h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"
+                            aria-label="Close"></button>
+                </div>
+                <div class="modal-body p-4">
+                    <form id="createExamForm" class="needs-validation" novalidate>
+                        <div class="mb-3">
+                            <label for="examTitle" class="form-label">Exam Title</label>
+                            <input type="text" class="form-control" id="examTitle" placeholder="Enter exam title"
+                                   required>
+                            <div class="invalid-feedback">Please provide an exam title.</div>
+                        </div>
+                        <div class="mb-3">
+                            <label for="examSubject" class="form-label">Subject</label>
+                            <input type="text" class="form-control" id="examSubject" placeholder="Enter subject"
+                                   required>
+                            <div class="invalid-feedback">Please provide a subject.</div>
+                        </div>
+                        <div class="mb-3">
+                            <label for="examStartTime" class="form-label">Start Time</label>
+                            <input type="datetime-local" class="form-control" id="examStartTime" required>
+                            <div class="invalid-feedback">Please select a start time.</div>
+                        </div>
+                        <div class="mb-3">
+                            <label for="examDuration" class="form-label">Duration (minutes)</label>
+                            <input type="number" class="form-control" id="examDuration" min="1" required>
+                            <div class="invalid-feedback">Please provide a valid duration (greater than 0).</div>
+                        </div>
+                        <div class="mb-3">
+                            <label for="examType" class="form-label">Exam Type</label>
+                            <select class="form-select" id="examType" required>
+                                <option value="">Select exam type</option>
+                                <option value="MCQ">MCQ</option>
+                                <option value="ESSAY">Essay</option>
+                            </select>
+                            <div class="invalid-feedback">Please select an exam type.</div>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer bg-light">
+                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">
+                        <i class="bi bi-x-circle me-1"></i>Cancel
+                    </button>
+                    <button type="button" class="btn btn-primary" id="saveExam">
+                        <i class="bi bi-check-circle me-1"></i>Create Exam
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!--Add admin Modal-->
     <div class="modal fade" id="addAdminModal" tabindex="-1" aria-labelledby="addAdminModalLabel" aria-hidden="true">
         <div class="modal-dialog modal-dialog-centered modal-lg">

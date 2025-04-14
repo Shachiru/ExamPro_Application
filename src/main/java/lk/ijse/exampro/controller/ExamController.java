@@ -25,8 +25,34 @@ public class ExamController {
     @Autowired
     private ExamService examService;
 
+    @GetMapping("/all")
+    @PreAuthorize("hasRole('SUPER_ADMIN')")
+    public ResponseEntity<ResponseDTO> getAllExams() {
+        try {
+            List<ExamDTO> exams = examService.getAllExams();
+            return ResponseEntity.ok(new ResponseDTO(VarList.OK, "Exams retrieved successfully", exams));
+        } catch (Exception e) {
+            logger.error("Error retrieving exams: {}", e.getMessage(), e);
+            return ResponseEntity.status(VarList.INTERNAL_SERVER_ERROR)
+                    .body(new ResponseDTO(VarList.INTERNAL_SERVER_ERROR, e.getMessage(), null));
+        }
+    }
+
+    @DeleteMapping("/{examId}")
+    @PreAuthorize("hasRole('SUPER_ADMIN')")
+    public ResponseEntity<ResponseDTO> deleteExam(@PathVariable Long examId) {
+        try {
+            examService.deleteExam(examId);
+            return ResponseEntity.ok(new ResponseDTO(VarList.OK, "Exam deleted successfully", null));
+        } catch (Exception e) {
+            logger.error("Error deleting exam with ID {}: {}", examId, e.getMessage(), e);
+            return ResponseEntity.status(VarList.INTERNAL_SERVER_ERROR)
+                    .body(new ResponseDTO(VarList.INTERNAL_SERVER_ERROR, e.getMessage(), null));
+        }
+    }
+
     @PostMapping("/create")
-    @PreAuthorize("hasRole('TEACHER')")
+    @PreAuthorize("hasAnyRole('TEACHER', 'SUPER_ADMIN')")
     public ResponseEntity<ResponseDTO> createExam(@RequestBody ExamDTO examDTO) {
         try {
             ExamDTO createdExam = examService.createExam(examDTO);

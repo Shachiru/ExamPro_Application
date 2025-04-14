@@ -31,4 +31,10 @@ public interface ExamService {
     ExamDTO getExam(Long examId);
 
     List<StudentResultDTO> getStudentsBySubject(String subject);
+
+    List<ExamDTO> getAllExams();
+
+    void deleteExam(Long examId);
+
+    ExamDTO updateExam(Long examId, ExamDTO examDTO);
 }

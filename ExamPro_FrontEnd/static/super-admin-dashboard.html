@@ -158,193 +158,257 @@
             </div>
         </div>
     </div>
-</div>
 
-<!-- Admins List Content -->
-<div class="dashboard-content" id="adminsContent">
-    <div class="row mb-4">
-        <div class="col-md-12">
-            <div class="section-header">
-                <h1 class="section-title fs-4">Admins</h1>
-                <button class="btn btn-primary d-flex align-items-center" data-bs-toggle="modal"
-                        data-bs-target="#addAdminModal">
-                    <i class="fas fa-plus me-2"></i> Add New Admin
-                </button>
+    <!-- Admins List Content - REPLACED WITH ENHANCED VERSION -->
+    <div class="dashboard-content" id="adminsContent" style="display: none;">
+        <div class="row mb-4">
+            <div class="col-md-12">
+                <div class="section-header">
+                    <h1 class="section-title fs-4">Administrators Management</h1>
+                    <button class="btn btn-primary d-flex align-items-center" data-bs-toggle="modal"
+                            data-bs-target="#addAdminModal">
+                        <i class="fas fa-plus me-2"></i> Add New Admin
+                    </button>
+                </div>
+                <p class="text-muted mb-4">Manage all registered administrators across institutions</p>
             </div>
-            <p class="text-muted mb-4">List of all registered admins</p>
         </div>
-    </div>
 
-    <div class="row mb-4">
-        <div class="col-md-12">
-            <div class="table-card">
-                <div class="table-responsive">
-                    <table class="table activity-table mb-0" id="adminsTable">
-                        <thead>
-                        <tr>
-                            <th>FULL NAME</th>
-                            <th>USERNAME</th>
-                            <th>EMAIL</th>
-                            <th>NIC</th>
-                            <th>PHONE NUMBER</th>
-                            <th>DATE OF BIRTH</th>
-                            <th>SCHOOL NAME</th>
-                            <th>STATUS</th>
-                            <th>ACTION</th>
-                        </tr>
-                        </thead>
-                        <tbody id="adminsTableBody">
-                        <!-- Admins will be populated dynamically -->
-                        </tbody>
-                    </table>
+        <div class="row mb-4">
+            <div class="col-md-12">
+                <div class="admins-header">
+                    <div class="search-admin">
+                        <i class="fas fa-search"></i>
+                        <input type="text" class="form-control" id="searchAdmin" placeholder="Search administrators...">
+                    </div>
+                    <div class="filter-buttons">
+                        <button class="filter-btn active" data-filter="all">All</button>
+                        <button class="filter-btn" data-filter="active">Active</button>
+                        <button class="filter-btn" data-filter="inactive">Inactive</button>
+                    </div>
                 </div>
             </div>
         </div>
-    </div>
-</div>
 
-<!--Add admin Modal-->
-<div class="modal fade" id="addAdminModal" tabindex="-1" aria-labelledby="addAdminModalLabel" aria-hidden="true">
-    <div class="modal-dialog modal-dialog-centered modal-lg">
-        <div class="modal-content">
-            <div class="modal-header bg-primary text-white">
-                <h5 class="modal-title fw-bold" id="addAdminModalLabel">
-                    <i class="bi bi-person-plus-fill me-2"></i>Add New Administrator
-                </h5>
-                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"
-                        aria-label="Close"></button>
-            </div>
-            <div class="modal-body p-4">
-                <form id="addAdminForm" class="needs-validation" novalidate>
-                    <!-- Personal Information Section -->
-                    <div class="mb-4">
-                        <h6 class="fw-bold text-primary mb-3">Personal Information</h6>
-                        <div class="row g-3">
-                            <div class="col-md-6">
-                                <label for="adminName" class="form-label">Full Name</label>
-                                <input type="text" class="form-control" id="adminName" placeholder="Enter full name"
-                                       required>
-                                <div class="invalid-feedback">Please provide a name.</div>
-                            </div>
-                            <div class="col-md-6">
-                                <label for="adminNIC" class="form-label">NIC Number</label>
-                                <input type="text" class="form-control" id="adminNIC" placeholder="Enter NIC number"
-                                       required>
-                                <div class="invalid-feedback">Please provide a valid NIC number.</div>
-                            </div>
-                            <div class="col-md-6">
-                                <label for="adminDOB" class="form-label">Date of Birth</label>
-                                <input type="date" class="form-control" id="adminDOB" required>
-                                <div class="invalid-feedback">Please select a date of birth.</div>
-                            </div>
-                            <div class="col-md-6">
-                                <label for="adminPhoneNumber" class="form-label">Phone Number</label>
-                                <div class="input-group">
-                                    <span class="input-group-text"><i class="bi bi-telephone-fill"></i></span>
-                                    <input type="tel" class="form-control" id="adminPhoneNumber"
-                                           placeholder="Enter phone number" required>
-                                </div>
-                                <div class="invalid-feedback">Please provide a valid phone number.</div>
-                            </div>
-                            <div class="col-12">
-                                <label for="adminSchoolName" class="form-label">School Name</label>
-                                <input type="text" class="form-control" id="adminSchoolName"
-                                       placeholder="Enter school name" required>
-                                <div class="invalid-feedback">Please provide a school name.</div>
-                            </div>
+        <div class="row mb-4">
+            <div class="col-md-12">
+                <div class="table-card">
+                    <div class="table-responsive">
+                        <table class="table activity-table mb-0" id="adminsTable">
+                            <thead>
+                            <tr>
+                                <th>ADMINISTRATOR</th>
+                                <th>USERNAME</th>
+                                <th>EMAIL</th>
+                                <th>NIC</th>
+                                <th>PHONE</th>
+                                <th>DOB</th>
+                                <th>SCHOOL</th>
+                                <th>STATUS</th>
+                                <th>ACTIONS</th>
+                            </tr>
+                            </thead>
+                            <tbody id="adminsTableBody">
+                            <!-- Admins will be populated dynamically -->
+                            </tbody>
+                        </table>
+                    </div>
+                    <div class="table-pagination">
+                        <div class="page-info">
+                            Showing <span id="showingStart">1</span> to <span id="showingEnd">10</span> of <span
+                                id="totalAdmins">0</span> administrators
+                        </div>
+                        <div class="pagination-controls">
+                            <button class="btn btn-outline-secondary" id="prevPage" disabled>
+                                <i class="fas fa-chevron-left"></i>
+                            </button>
+                            <button class="btn btn-outline-secondary" id="nextPage" disabled>
+                                <i class="fas fa-chevron-right"></i>
+                            </button>
                         </div>
                     </div>
+                </div>
+            </div>
+        </div>
+    </div>
 
-                    <!-- Account Information Section -->
-                    <div class="mb-3">
-                        <h6 class="fw-bold text-primary mb-3">Account Information</h6>
-                        <div class="row g-3">
-                            <div class="col-md-6">
-                                <label for="adminUsername" class="form-label">Username</label>
-                                <div class="input-group">
-                                    <span class="input-group-text"><i class="bi bi-person"></i></span>
-                                    <input type="text" class="form-control" id="adminUsername"
-                                           placeholder="Create a username" required>
+    <!--Add admin Modal-->
+    <div class="modal fade" id="addAdminModal" tabindex="-1" aria-labelledby="addAdminModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered modal-lg">
+            <div class="modal-content">
+                <div class="modal-header bg-primary text-white">
+                    <h5 class="modal-title fw-bold" id="addAdminModalLabel">
+                        <i class="bi bi-person-plus-fill me-2"></i>Add New Administrator
+                    </h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"
+                            aria-label="Close"></button>
+                </div>
+                <div class="modal-body p-4">
+                    <form id="addAdminForm" class="needs-validation" novalidate>
+                        <!-- Personal Information Section -->
+                        <div class="mb-4">
+                            <h6 class="fw-bold text-primary mb-3">Personal Information</h6>
+                            <div class="row g-3">
+                                <div class="col-md-6">
+                                    <label for="adminName" class="form-label">Full Name</label>
+                                    <input type="text" class="form-control" id="adminName" placeholder="Enter full name"
+                                           required>
+                                    <div class="invalid-feedback">Please provide a name.</div>
                                 </div>
-                                <div class="invalid-feedback">Please choose a username.</div>
-                            </div>
-                            <div class="col-md-6">
-                                <label for="adminEmail" class="form-label">Email Address</label>
-                                <div class="input-group">
-                                    <span class="input-group-text"><i class="bi bi-envelope"></i></span>
-                                    <input type="email" class="form-control" id="adminEmail"
-                                           placeholder="Enter email address" required>
+                                <div class="col-md-6">
+                                    <label for="adminNIC" class="form-label">NIC Number</label>
+                                    <input type="text" class="form-control" id="adminNIC" placeholder="Enter NIC number"
+                                           required>
+                                    <div class="invalid-feedback">Please provide a valid NIC number.</div>
                                 </div>
-                                <div class="invalid-feedback">Please provide a valid email.</div>
-                            </div>
-                            <div class="col-md-6">
-                                <label for="adminPassword" class="form-label">Password</label>
-                                <div class="input-group">
-                                    <input type="password" class="form-control" id="adminPassword"
-                                           placeholder="Create a password" required>
-                                    <button class="btn btn-outline-secondary toggle-password" type="button">
-                                        <i class="bi bi-eye"></i>
-                                    </button>
+                                <div class="col-md-6">
+                                    <label for="adminDOB" class="form-label">Date of Birth</label>
+                                    <input type="date" class="form-control" id="adminDOB" required>
+                                    <div class="invalid-feedback">Please select a date of birth.</div>
                                 </div>
-                                <div class="form-text">Password must be at least 8 characters long.</div>
-                            </div>
-                            <div class="col-md-6">
-                                <label for="adminConfirmPassword" class="form-label">Confirm Password</label>
-                                <div class="input-group">
-                                    <input type="password" class="form-control" id="adminConfirmPassword"
-                                           placeholder="Confirm password" required>
-                                    <button class="btn btn-outline-secondary toggle-password" type="button">
-                                        <i class="bi bi-eye"></i>
-                                    </button>
+                                <div class="col-md-6">
+                                    <label for="adminPhoneNumber" class="form-label">Phone Number</label>
+                                    <div class="input-group">
+                                        <span class="input-group-text"><i class="bi bi-telephone-fill"></i></span>
+                                        <input type="tel" class="form-control" id="adminPhoneNumber"
+                                               placeholder="Enter phone number" required>
+                                    </div>
+                                    <div class="invalid-feedback">Please provide a valid phone number.</div>
                                 </div>
-                                <div class="invalid-feedback">Passwords must match.</div>
+                                <div class="col-12">
+                                    <label for="adminSchoolName" class="form-label">School Name</label>
+                                    <input type="text" class="form-control" id="adminSchoolName"
+                                           placeholder="Enter school name" required>
+                                    <div class="invalid-feedback">Please provide a school name.</div>
+                                </div>
                             </div>
                         </div>
+
+                        <!-- Account Information Section -->
+                        <div class="mb-3">
+                            <h6 class="fw-bold text-primary mb-3">Account Information</h6>
+                            <div class="row g-3">
+                                <div class="col-md-6">
+                                    <label for="adminUsername" class="form-label">Username</label>
+                                    <div class="input-group">
+                                        <span class="input-group-text"><i class="bi bi-person"></i></span>
+                                        <input type="text" class="form-control" id="adminUsername"
+                                               placeholder="Create a username" required>
+                                    </div>
+                                    <div class="invalid-feedback">Please choose a username.</div>
+                                </div>
+                                <div class="col-md-6">
+                                    <label for="adminEmail" class="form-label">Email Address</label>
+                                    <div class="input-group">
+                                        <span class="input-group-text"><i class="bi bi-envelope"></i></span>
+                                        <input type="email" class="form-control" id="adminEmail"
+                                               placeholder="Enter email address" required>
+                                    </div>
+                                    <div class="invalid-feedback">Please provide a valid email.</div>
+                                </div>
+                                <div class="col-md-6">
+                                    <label for="adminPassword" class="form-label">Password</label>
+                                    <div class="input-group">
+                                        <input type="password" class="form-control" id="adminPassword"
+                                               placeholder="Create a password" required>
+                                        <button class="btn btn-outline-secondary toggle-password" type="button">
+                                            <i class="bi bi-eye"></i>
+                                        </button>
+                                    </div>
+                                    <div class="form-text">Password must be at least 8 characters long.</div>
+                                </div>
+                                <div class="col-md-6">
+                                    <label for="adminConfirmPassword" class="form-label">Confirm Password</label>
+                                    <div class="input-group">
+                                        <input type="password" class="form-control" id="adminConfirmPassword"
+                                               placeholder="Confirm password" required>
+                                        <button class="btn btn-outline-secondary toggle-password" type="button">
+                                            <i class="bi bi-eye"></i>
+                                        </button>
+                                    </div>
+                                    <div class="invalid-feedback">Passwords must match.</div>
+                                </div>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer bg-light">
+                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">
+                        <i class="bi bi-x-circle me-1"></i>Cancel
+                    </button>
+                    <button type="button" class="btn btn-primary" id="saveAdmin">
+                        <i class="bi bi-check-circle me-1"></i>Add Administrator
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- User Profile Modal -->
+    <div class="modal fade" id="userProfileModal" tabindex="-1" aria-labelledby="userProfileModalLabel"
+         aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header gradient-header">
+                    <h5 class="modal-title" id="userProfileModalLabel">User Profile</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"
+                            aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="text-center mb-4">
+                        <div class="avatar avatar-lg mx-auto mb-3" id="modalUserInitials">?</div>
+                        <h5 id="modalUserFullName">Loading...</h5>
+                        <p class="text-muted mb-0" id="modalUserRole">Loading...</p>
                     </div>
-                </form>
+                    <div class="profile-details">
+                        <p><strong>Email:</strong> <span id="modalUserEmail">Loading...</span></p>
+                        <p><strong>Phone Number:</strong> <span id="modalUserPhone">Loading...</span></p>
+                        <p><strong>Date of Birth:</strong> <span id="modalUserDOB">Loading...</span></p>
+                        <p><strong>Status:</strong> <span id="modalUserStatus">Loading...</span></p>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Close</button>
+                </div>
             </div>
-            <div class="modal-footer bg-light">
-                <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">
-                    <i class="bi bi-x-circle me-1"></i>Cancel
-                </button>
-                <button type="button" class="btn btn-primary" id="saveAdmin">
-                    <i class="bi bi-check-circle me-1"></i>Add Administrator
-                </button>
+        </div>
+    </div>
+
+    <!-- Admin Details Modal - ADDED FROM ENHANCED VERSION -->
+    <div class="modal fade" id="adminDetailsModal" tabindex="-1" aria-labelledby="adminDetailsModalLabel"
+         aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header gradient-header">
+                    <h5 class="modal-title" id="adminDetailsModalLabel">Administrator Details</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"
+                            aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="text-center mb-4">
+                        <div class="avatar avatar-lg mx-auto mb-3" id="detailsAdminInitials">?</div>
+                        <h5 id="detailsAdminName">Loading...</h5>
+                        <p class="text-muted mb-0" id="detailsAdminSchool">Loading...</p>
+                    </div>
+                    <div class="admin-details">
+                        <p><strong>Username:</strong> <span id="detailsAdminUsername">Loading...</span></p>
+                        <p><strong>Email:</strong> <span id="detailsAdminEmail">Loading...</span></p>
+                        <p><strong>NIC:</strong> <span id="detailsAdminNIC">Loading...</span></p>
+                        <p><strong>Phone Number:</strong> <span id="detailsAdminPhone">Loading...</span></p>
+                        <p><strong>Date of Birth:</strong> <span id="detailsAdminDOB">Loading...</span></p>
+                        <p><strong>Status:</strong> <span id="detailsAdminStatus">Loading...</span></p>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Close</button>
+                    <button type="button" class="btn btn-primary" id="editSelectedAdmin">Edit Details</button>
+                </div>
             </div>
         </div>
     </div>
 </div>
 
-<!-- User Profile Modal -->
-<div class="modal fade" id="userProfileModal" tabindex="-1" aria-labelledby="userProfileModalLabel" aria-hidden="true">
-    <div class="modal-dialog modal-dialog-centered">
-        <div class="modal-content">
-            <div class="modal-header gradient-header">
-                <h5 class="modal-title" id="userProfileModalLabel">User Profile</h5>
-                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"
-                        aria-label="Close"></button>
-            </div>
-            <div class="modal-body">
-                <div class="text-center mb-4">
-                    <div class="avatar avatar-lg mx-auto mb-3" id="modalUserInitials">?</div>
-                    <h5 id="modalUserFullName">Loading...</h5>
-                    <p class="text-muted mb-0" id="modalUserRole">Loading...</p>
-                </div>
-                <div class="profile-details">
-                    <p><strong>Email:</strong> <span id="modalUserEmail">Loading...</span></p>
-                    <p><strong>Phone Number:</strong> <span id="modalUserPhone">Loading...</span></p>
-                    <p><strong>Date of Birth:</strong> <span id="modalUserDOB">Loading...</span></p>
-                    <p><strong>Status:</strong> <span id="modalUserStatus">Loading...</span></p>
-                </div>
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Close</button>
-            </div>
-        </div>
-    </div>
-</div>
 
-<!-- Scripts -->
 <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/toastify-js"></script>

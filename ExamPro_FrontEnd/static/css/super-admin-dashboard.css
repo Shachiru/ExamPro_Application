@@ -825,3 +825,92 @@ body {
     box-shadow: 0 0 0 0.25rem rgba(67, 97, 238, 0.15);
     border-color: #4361ee;
 }
+
+/* Update Exam Modal Styling */
+#updateExamModal .modal-header {
+    background: linear-gradient(135deg, #4361ee, #3a0ca3);
+    color: white;
+    border-bottom: none;
+    padding: 1.25rem 1.5rem;
+}
+
+#updateExamModal .modal-title {
+    font-weight: 600;
+    font-size: 1.25rem;
+    display: flex;
+    align-items: center;
+}
+
+#updateExamModal .modal-body {
+    padding: 2rem;
+    background-color: #f8f9fa;
+}
+
+#updateExamModal .modal-footer {
+    background-color: #f0f2f5;
+    border-top: 1px solid #e9ecef;
+    padding: 1rem 1.5rem;
+}
+
+#updateExamModal .modal-content {
+    border: none;
+    border-radius: 0.5rem;
+    box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
+    overflow: hidden;
+}
+
+#updateExamModal .form-label {
+    font-weight: 500;
+    color: #495057;
+    margin-bottom: 0.5rem;
+}
+
+#updateExamModal .form-control,
+#updateExamModal .form-select {
+    border-radius: 0.375rem;
+    padding: 0.625rem 0.875rem;
+    border: 1px solid #ced4da;
+    transition: all 0.2s ease-in-out;
+}
+
+#updateExamModal .form-control:focus,
+#updateExamModal .form-select:focus {
+    box-shadow: 0 0 0 0.25rem rgba(67, 97, 238, 0.15);
+    border-color: #4361ee;
+}
+
+#updateExamModal .form-control::placeholder {
+    color: #adb5bd;
+    font-size: 0.875rem;
+}
+
+#updateExamModal .invalid-feedback {
+    color: #dc3545;
+    font-size: 0.875rem;
+    margin-top: 0.25rem;
+}
+
+#updateExamModal .btn-primary {
+    background: linear-gradient(135deg, #4361ee, #3a0ca3);
+    border: none;
+    padding: 0.625rem 1.25rem;
+    font-weight: 500;
+    transition: all 0.2s ease;
+}
+
+#updateExamModal .btn-primary:hover {
+    box-shadow: 0 0.25rem 0.5rem rgba(67, 97, 238, 0.3);
+    transform: translateY(-1px);
+}
+
+#updateExamModal .btn-outline-secondary {
+    border-color: #ced4da;
+    color: #495057;
+    padding: 0.625rem 1.25rem;
+    font-weight: 500;
+}
+
+#updateExamModal .btn-outline-secondary:hover {
+    background-color: #e9ecef;
+    color: #212529;
+}

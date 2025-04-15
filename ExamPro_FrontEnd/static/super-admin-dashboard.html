@@ -233,36 +233,13 @@
     </div>
 
     <!-- Exams List Content -->
-    <!--<div class="dashboard-content" id="examsContent" style="display: none;">
+    <div class="dashboard-content" id="examsContent" style="display: none;">
         <div class="row mb-4">
             <div class="col-md-12">
                 <div class="section-header">
                     <h1 class="section-title fs-4">Exam Management</h1>
                     <button class="btn btn-primary d-flex align-items-center" data-bs-toggle="modal"
                             data-bs-target="#createExamModal">
-                        <i class="fas fa-plus me-2"></i> Create New Exam
-                    </button>
-                </div>
-                <p class="text-muted mb-4">Manage all exams across institutions</p>
-            </div>
-        </div>
-        &lt;!&ndash; Placeholder for exams table (to be implemented later) &ndash;&gt;
-        <div class="row mb-4">
-            <div class="col-md-12">
-                <div class="table-card">
-                    <p class="text-center text-muted">Exams list will be displayed here.</p>
-                </div>
-            </div>
-        </div>
-    </div>-->
-
-    <!-- Exams List Content -->
-    <div class="dashboard-content" id="examsContent" style="display: none;">
-        <div class="row mb-4">
-            <div class="col-md-12">
-                <div class="section-header">
-                    <h1 class="section-title fs-4">Exam Management</h1>
-                    <button class="btn btn-primary d-flex align-items-center" data-bs-toggle="modal" data-bs-target="#createExamModal">
                         <i class="fas fa-plus me-2"></i> Create New Exam
                     </button>
                 </div>
@@ -310,7 +287,8 @@
                     </div>
                     <div class="table-pagination">
                         <div class="page-info">
-                            Showing <span id="examShowingStart">1</span> to <span id="examShowingEnd">10</span> of <span id="totalExams">0</span> exams
+                            Showing <span id="examShowingStart">1</span> to <span id="examShowingEnd">10</span> of <span
+                                id="totalExams">0</span> exams
                         </div>
                         <div class="pagination-controls">
                             <button class="btn btn-outline-secondary" id="examPrevPage" disabled>
@@ -379,6 +357,66 @@
                     </button>
                     <button type="button" class="btn btn-primary" id="saveExam">
                         <i class="bi bi-check-circle me-1"></i>Create Exam
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Update Exam Modal -->
+    <div class="modal fade" id="updateExamModal" tabindex="-1" aria-labelledby="updateExamModalLabel"
+         aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered modal-lg">
+            <div class="modal-content">
+                <div class="modal-header bg-primary text-white">
+                    <h5 class="modal-title fw-bold" id="updateExamModalLabel">
+                        <i class="bi bi-pencil-square me-2"></i>Update Exam
+                    </h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"
+                            aria-label="Close"></button>
+                </div>
+                <div class="modal-body p-4">
+                    <form id="updateExamForm" class="needs-validation" novalidate>
+                        <input type="hidden" id="updateExamId">
+                        <div class="mb-3">
+                            <label for="updateExamTitle" class="form-label">Exam Title</label>
+                            <input type="text" class="form-control" id="updateExamTitle" placeholder="Enter exam title"
+                                   required>
+                            <div class="invalid-feedback">Please provide an exam title.</div>
+                        </div>
+                        <div class="mb-3">
+                            <label for="updateExamSubject" class="form-label">Subject</label>
+                            <input type="text" class="form-control" id="updateExamSubject" placeholder="Enter subject"
+                                   required>
+                            <div class="invalid-feedback">Please provide a subject.</div>
+                        </div>
+                        <div class="mb-3">
+                            <label for="updateExamStartTime" class="form-label">Start Time</label>
+                            <input type="datetime-local" class="form-control" id="updateExamStartTime" required>
+                            <div class="invalid-feedback">Please select a start time.</div>
+                        </div>
+                        <div class="mb-3">
+                            <label for="updateExamDuration" class="form-label">Duration (minutes)</label>
+                            <input type="number" class="form-control" id="updateExamDuration" min="1" required>
+                            <div class="invalid-feedback">Please provide a valid duration (greater than 0).</div>
+                        </div>
+                        <div class="mb-3">
+                            <label for="updateExamType" class="form-label">Exam Type</label>
+                            <select class="form-select" id="updateExamType" required>
+                                <option value="">Select exam type</option>
+                                <option value="MCQ">MCQ</option>
+                                <option value="ESSAY">Essay</option>
+                            </select>
+                            <div class="invalid-feedback">Please select an exam type.</div>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer bg-light">
+                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">
+                        <i class="bi bi-x-circle me-1"></i>Cancel
+                    </button>
+                    <button type="button" class="btn btn-primary" id="updateExamBtn">
+                        <i class="bi bi-check-circle me-1"></i>Update Exam
                     </button>
                 </div>
             </div>

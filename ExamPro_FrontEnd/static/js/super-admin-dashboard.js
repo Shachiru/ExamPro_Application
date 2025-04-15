@@ -50,6 +50,9 @@ document.addEventListener("DOMContentLoaded", () => {
             $("#userInitials").text(initials);
             $("#modalUserInitials").text(initials);
 
+            // Store email for exam creation/updates
+            localStorage.setItem("email", user.email);
+
             // Hide loading and show content
             $("#loading").hide();
             $("#content").show();
@@ -153,7 +156,7 @@ document.addEventListener("DOMContentLoaded", () => {
                     $("#createExamModal").modal("hide");
                     form.reset();
                     form.classList.remove("was-validated");
-                    loadExams(); // Refresh the exams list
+                    loadExams();
                 } else {
                     showError(response.message || "Error creating exam");
                 }
@@ -170,9 +173,92 @@ document.addEventListener("DOMContentLoaded", () => {
         });
     });
 
-    // Reset the form when the modal is closed
+    // Handle exam update
+    $("#updateExamBtn").on("click", function () {
+        const form = $("#updateExamForm")[0];
+        if (!form.checkValidity()) {
+            form.classList.add("was-validated");
+            return;
+        }
+
+        const examId = $("#updateExamId").val();
+        const title = $("#updateExamTitle").val().trim();
+        const subject = $("#updateExamSubject").val().trim();
+        const startTime = $("#updateExamStartTime").val();
+        const duration = parseInt($("#updateExamDuration").val());
+        const examType = $("#updateExamType").val();
+        const createdByEmail = localStorage.getItem("email");
+
+        // Client-side validation
+        const now = new Date();
+        const selectedStartTime = new Date(startTime);
+        if (selectedStartTime <= now) {
+            showError("Start time must be in the future.");
+            return;
+        }
+        if (duration <= 0) {
+            showError("Duration must be greater than 0 minutes.");
+            return;
+        }
+
+        const examData = {
+            title,
+            subject,
+            startTime,
+            duration,
+            examType,
+            createdByEmail,
+        };
+
+        const token = localStorage.getItem("token");
+        if (!token) {
+            showError("You are not logged in. Please log in again.");
+            redirectToLogin();
+            return;
+        }
+
+        $.ajax({
+            url: `http://localhost:8080/api/v1/exam/${examId}`,
+            method: "PUT",
+            contentType: "application/json",
+            headers: {
+                Authorization: "Bearer " + token,
+            },
+            data: JSON.stringify(examData),
+            success: function (response) {
+                if (response.code === 200) {
+                    showSuccess("Exam updated successfully!");
+                    $("#updateExamModal").modal("hide");
+                    form.reset();
+                    form.classList.remove("was-validated");
+                    loadExams();
+                } else {
+                    showError(response.message || "Error updating exam");
+                }
+            },
+            error: function (xhr) {
+                if (xhr.status === 401 || xhr.status === 403) {
+                    showError("Unauthorized. Please log in again.");
+                    localStorage.removeItem("token");
+                    redirectToLogin();
+                } else if (xhr.status === 400) {
+                    showError("Invalid input: " + (xhr.responseJSON?.message || "Check your inputs"));
+                } else {
+                    showError("Error updating exam: " + (xhr.responseJSON?.message || "Unknown error"));
+                }
+            },
+        });
+    });
+
+    // Reset forms when modals are closed
     $("#createExamModal").on("hidden.bs.modal", () => {
         const form = document.getElementById("createExamForm");
+        form.reset();
+        form.classList.remove("was-validated");
+    });
+
+    $("#updateExamModal").on("hidden.bs.modal", () => {
+        const form = document.getElementById("updateExamForm");
         form.reset();
         form.classList.remove("was-validated");
     });
@@ -180,6 +266,7 @@ document.addEventListener("DOMContentLoaded", () => {
     $("#logout").on("click", (e) => {
         e.preventDefault();
         localStorage.removeItem("token");
+        localStorage.removeItem("email");
         window.location.href = "login.html";
     });
 
@@ -188,7 +275,7 @@ document.addEventListener("DOMContentLoaded", () => {
         $("#sidebar").toggleClass("show");
     });
 
-    // Add Admin functionality (unchanged, included for completeness)
+    // Add Admin functionality (unchanged)
     const form = document.getElementById("addAdminForm");
     const saveAdminBtn = document.getElementById("saveAdmin");
 
@@ -310,7 +397,7 @@ function loadDashboard() {
     $("#dashboardContent").show();
 }
 
-// Admin table functions (unchanged, included for context)
+// Admin table functions (unchanged)
 let currentPage = 1;
 const itemsPerPage = 10;
 let totalItems = 0;
@@ -379,44 +466,44 @@ function displayAdmins() {
             : '<span class="badge bg-danger rounded-pill">Inactive</span>';
 
         const row = `
-            <tr>
-                <td>
-                    <div class="d-flex align-items-center">
-                        <div class="avatar avatar-sm me-2">${getInitials(admin.fullName)}</div>
-                        <div>${admin.fullName}</div>
-                    </div>
-                </td>
-                <td>${admin.username}</td>
-                <td>${admin.email}</td>
-                <td>${admin.nic || "N/A"}</td>
-                <td>${admin.phoneNumber || "N/A"}</td>
-                <td>${formattedDate}</td>
-                <td>${admin.schoolName || "N/A"}</td>
-                <td>${statusBadge}</td>
-                <td>
-                    <div class="dropdown">
-                        <button class="btn btn-sm btn-icon" type="button" data-bs-toggle="dropdown" aria-expanded="false">
-                            <i class="fas fa-ellipsis-v"></i>
-                        </button>
-                        <ul class="dropdown-menu dropdown-menu-end">
-                            <li><a class="dropdown-item" href="#" onclick="editAdmin(${admin.id}); return false;">
-                                <i class="fas fa-edit me-2 text-primary"></i>Edit
-                            </a></li>
-                            <li><a class="dropdown-item" href="#" onclick="viewAdminDetails(${admin.id}); return false;">
-                                <i class="fas fa-eye me-2 text-info"></i>View Details
-                            </a></li>
-                            <li><hr class="dropdown-divider"></li>
-                            <li><a class="dropdown-item ${admin.active ? "" : "text-success"}" href="#" onclick="toggleAdminStatus(${admin.id}, ${!admin.active}); return false;">
-                                <i class="fas ${admin.active ? "fa-ban text-warning" : "fa-check-circle text-success"} me-2"></i>
-                                ${admin.active ? "Deactivate" : "Activate"}
-                            </a></li>
-                            <li><a class="dropdown-item text-danger" href="#" onclick="deleteAdmin(${admin.id}); return false;">
-                                <i class="fas fa-trash-alt me-2"></i>Delete
-                            </a></li>
-                        </ul>
-                    </div>
-                </td>
-            </tr>`;
+      <tr>
+        <td>
+          <div class="d-flex align-items-center">
+            <div class="avatar avatar-sm me-2">${getInitials(admin.fullName)}</div>
+            <div>${admin.fullName}</div>
+          </div>
+        </td>
+        <td>${admin.username}</td>
+        <td>${admin.email}</td>
+        <td>${admin.nic || "N/A"}</td>
+        <td>${admin.phoneNumber || "N/A"}</td>
+        <td>${formattedDate}</td>
+        <td>${admin.schoolName || "N/A"}</td>
+        <td>${statusBadge}</td>
+        <td>
+          <div class="dropdown">
+            <button class="btn btn-sm btn-icon" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+              <i class="fas fa-ellipsis-v"></i>
+            </button>
+            <ul class="dropdown-menu dropdown-menu-end">
+              <li><a class="dropdown-item" href="#" onclick="editAdmin(${admin.id}); return false;">
+                <i class="fas fa-edit me-2 text-primary"></i>Edit
+              </a></li>
+              <li><a class="dropdown-item" href="#" onclick="viewAdminDetails(${admin.id}); return false;">
+                <i class="fas fa-eye me-2 text-info"></i>View Details
+              </a></li>
+              <li><hr class="dropdown-divider"></li>
+              <li><a class="dropdown-item ${admin.active ? "" : "text-success"}" href="#" onclick="toggleAdminStatus(${admin.id}, ${!admin.active}); return false;">
+                <i class="fas ${admin.active ? "fa-ban text-warning" : "fa-check-circle text-success"} me-2"></i>
+                ${admin.active ? "Deactivate" : "Activate"}
+              </a></li>
+              <li><a class="dropdown-item text-danger" href="#" onclick="deleteAdmin(${admin.id}); return false;">
+                <i class="fas fa-trash-alt me-2"></i>Delete
+              </a></li>
+            </ul>
+          </div>
+        </td>
+      </tr>`;
         tableBody.append(row);
     }
 }
@@ -516,78 +603,6 @@ function deleteAdmin(adminId) {
     }
 }
 
-function initDropdownFix() {
-    $(document).on("show.bs.dropdown", ".table-responsive .dropdown", function (e) {
-        const $toggleBtn = $(e.target);
-        const $dropdown = $(this).find(".dropdown-menu");
-        const togglePos = $toggleBtn.offset();
-        $dropdown.css({
-            top: togglePos.top + $toggleBtn.outerHeight() + "px",
-            left: togglePos.left - $dropdown.outerWidth() + $toggleBtn.outerWidth() + "px",
-        });
-    });
-}
-
-function initAdminTableFeatures() {
-    $("#editSelectedAdmin").click(function () {
-        const adminIdForEdit = $(this).data("admin-id");
-        $("#adminDetailsModal").modal("hide");
-        editAdmin(adminIdForEdit);
-    });
-
-    $("#searchAdmin").on("input", function () {
-        const searchTerm = $(this).val().toLowerCase();
-        filteredAdmins = allAdmins.filter((admin) => {
-            return (
-                admin.fullName.toLowerCase().includes(searchTerm) ||
-                admin.username.toLowerCase().includes(searchTerm) ||
-                admin.email.toLowerCase().includes(searchTerm) ||
-                (admin.schoolName && admin.schoolName.toLowerCase().includes(searchTerm)) ||
-                (admin.nic && admin.nic.toLowerCase().includes(searchTerm)) ||
-                (admin.phoneNumber && admin.phoneNumber.toLowerCase().includes(searchTerm))
-            );
-        });
-        currentPage = 1;
-        updatePaginationInfo();
-        displayAdmins();
-    });
-
-    $(".filter-btn").click(function () {
-        const filter = $(this).data("filter");
-        $(".filter-btn").removeClass("active");
-        $(this).addClass("active");
-
-        if (filter === "all") {
-            filteredAdmins = [...allAdmins];
-        } else if (filter === "active") {
-            filteredAdmins = allAdmins.filter((admin) => admin.active);
-        } else if (filter === "inactive") {
-            filteredAdmins = allAdmins.filter((admin) => !admin.active);
-        }
-
-        currentPage = 1;
-        updatePaginationInfo();
-        displayAdmins();
-    });
-
-    $("#prevPage").click(() => {
-        if (currentPage > 1) {
-            currentPage--;
-            displayAdmins();
-        }
-    });
-
-    $("#nextPage").click(() => {
-        const totalPages = Math.ceil(filteredAdmins.length / itemsPerPage);
-        if (currentPage < totalPages) {
-            currentPage++;
-            displayAdmins();
-        }
-    });
-
-    initDropdownFix();
-}
-
 // Exam table functions
 let examCurrentPage = 1;
 const examItemsPerPage = 10;
@@ -668,31 +683,88 @@ function displayExams() {
         }
 
         const row = `
-            <tr>
-                <td>${exam.title}</td>
-                <td>${exam.subject}</td>
-                <td>${startTime}</td>
-                <td>${exam.duration} mins</td>
-                <td>${exam.examType || "N/A"}</td>
-                <td>${exam.createdByEmail}</td>
-                <td>${statusBadge}</td>
-                <td>
-                    <div class="dropdown">
-                        <button class="btn btn-sm btn-icon" type="button" data-bs-toggle="dropdown" aria-expanded="false">
-                            <i class="fas fa-ellipsis-v"></i>
-                        </button>
-                        <ul class="dropdown-menu dropdown-menu-end">
-                            <li><a class="dropdown-item" href="#" onclick="viewExamDetails(${exam.id}); return false;">
-                                <i class="fas fa-eye me-2 text-info"></i>View Details
-                            </a></li>
-                            <li><a class="dropdown-item text-danger" href="#" onclick="deleteExam(${exam.id}); return false;">
-                                <i class="fas fa-trash-alt me-2"></i>Delete
-                            </a></li>
-                        </ul>
-                    </div>
-                </td>
-            </tr>`;
+      <tr>
+        <td>${exam.title}</td>
+        <td>${exam.subject}</td>
+        <td>${startTime}</td>
+        <td>${exam.duration} mins</td>
+        <td>${exam.examType || "N/A"}</td>
+        <td>${exam.createdByEmail}</td>
+        <td>${statusBadge}</td>
+        <td>
+          <div class="dropdown">
+            <button class="btn btn-sm btn-icon" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+              <i class="fas fa-ellipsis-v"></i>
+            </button>
+            <ul class="dropdown-menu dropdown-menu-end">
+              <li><a class="dropdown-item" href="#" onclick="editExam(${exam.id}); return false;">
+                <i class="fas fa-edit me-2 text-primary"></i>Edit
+              </a></li>
+              <li><a class="dropdown-item" href="#" onclick="viewExamDetails(${exam.id}); return false;">
+                <i class="fas fa-eye me-2 text-info"></i>View Details
+              </a></li>
+              <li><hr class="dropdown-divider"></li>
+              <li><a class="dropdown-item text-danger" href="#" onclick="deleteExam(${exam.id}); return false;">
+                <i class="fas fa-trash-alt me-2"></i>Delete
+              </a></li>
+            </ul>
+          </div>
+        </td>
+      </tr>`;
         tableBody.append(row);
+    }
+}
+
+function editExam(examId) {
+    const exam = allExams.find((e) => e.id === examId);
+    if (!exam) {
+        showError("Exam not found");
+        return;
+    }
+
+    // Prefill the update modal form
+    $("#updateExamId").val(exam.id);
+    $("#updateExamTitle").val(exam.title);
+    $("#updateExamSubject").val(exam.subject);
+    // Format startTime for datetime-local (YYYY-MM-DDTHH:MM)
+    const startTime = new Date(exam.startTime).toISOString().slice(0, 16);
+    $("#updateExamStartTime").val(startTime);
+    $("#updateExamDuration").val(exam.duration);
+    $("#updateExamType").val(exam.examType);
+
+    $("#updateExamModal").modal("show");
+}
+
+function viewExamDetails(examId) {
+    console.log("Viewing exam details for ID:", examId);
+}
+
+function deleteExam(examId) {
+    const token = localStorage.getItem("token");
+
+    if (confirm("Are you sure you want to delete this exam? This action cannot be undone.")) {
+        $.ajax({
+            url: `http://localhost:8080/api/v1/exam/${examId}`,
+            method: "DELETE",
+            headers: {
+                Authorization: "Bearer " + token,
+            },
+            success: (response) => {
+                if (response.code === 200) {
+                    showSuccess("Exam deleted successfully");
+                    loadExams();
+                } else {
+                    showError("Failed to delete exam: " + response.message);
+                }
+            },
+            error: (xhr) => {
+                if (xhr.status === 403) {
+                    showError("Unauthorized: You cannot delete this exam");
+                } else {
+                    showError("Error deleting exam: " + (xhr.responseJSON?.message || "Unknown error"));
+                }
+            },
+        });
     }
 }
 
@@ -760,31 +832,74 @@ function initExamTableFeatures() {
     initDropdownFix();
 }
 
-function viewExamDetails(examId) {
-    console.log("Viewing exam details for ID:", examId);
+function initDropdownFix() {
+    $(document).on("show.bs.dropdown", ".table-responsive .dropdown", function (e) {
+        const $toggleBtn = $(e.target);
+        const $dropdown = $(this).find(".dropdown-menu");
+        const togglePos = $toggleBtn.offset();
+        $dropdown.css({
+            top: togglePos.top + $toggleBtn.outerHeight() + "px",
+            left: togglePos.left - $dropdown.outerWidth() + $toggleBtn.outerWidth() + "px",
+        });
+    });
 }
 
-function deleteExam(examId) {
-    const token = localStorage.getItem("token");
+function initAdminTableFeatures() {
+    $("#editSelectedAdmin").click(function () {
+        const adminIdForEdit = $(this).data("admin-id");
+        $("#adminDetailsModal").modal("hide");
+        editAdmin(adminIdForEdit);
+    });
 
-    if (confirm("Are you sure you want to delete this exam? This action cannot be undone.")) {
-        $.ajax({
-            url: `http://localhost:8080/api/v1/exam/${examId}`,
-            method: "DELETE",
-            headers: {
-                Authorization: "Bearer " + token,
-            },
-            success: (response) => {
-                if (response.code === 200) {
-                    showSuccess("Exam deleted successfully");
-                    loadExams();
-                } else {
-                    showError("Failed to delete exam: " + response.message);
-                }
-            },
-            error: (xhr) => {
-                showError("Error deleting exam: " + (xhr.responseJSON?.message || "Unknown error"));
-            },
+    $("#searchAdmin").on("input", function () {
+        const searchTerm = $(this).val().toLowerCase();
+        filteredAdmins = allAdmins.filter((admin) => {
+            return (
+                admin.fullName.toLowerCase().includes(searchTerm) ||
+                admin.username.toLowerCase().includes(searchTerm) ||
+                admin.email.toLowerCase().includes(searchTerm) ||
+                (admin.schoolName && admin.schoolName.toLowerCase().includes(searchTerm)) ||
+                (admin.nic && admin.nic.toLowerCase().includes(searchTerm)) ||
+                (admin.phoneNumber && admin.phoneNumber.toLowerCase().includes(searchTerm))
+            );
         });
-    }
+        currentPage = 1;
+        updatePaginationInfo();
+        displayAdmins();
+    });
+
+    $(".filter-btn").click(function () {
+        const filter = $(this).data("filter");
+        $(".filter-btn").removeClass("active");
+        $(this).addClass("active");
+
+        if (filter === "all") {
+            filteredAdmins = [...allAdmins];
+        } else if (filter === "active") {
+            filteredAdmins = allAdmins.filter((admin) => admin.active);
+        } else if (filter === "inactive") {
+            filteredAdmins = allAdmins.filter((admin) => !admin.active);
+        }
+
+        currentPage = 1;
+        updatePaginationInfo();
+        displayAdmins();
+    });
+
+    $("#prevPage").click(() => {
+        if (currentPage > 1) {
+            currentPage--;
+            displayAdmins();
+        }
+    });
+
+    $("#nextPage").click(() => {
+        const totalPages = Math.ceil(filteredAdmins.length / itemsPerPage);
+        if (currentPage < totalPages) {
+            currentPage++;
+            displayAdmins();
+        }
+    });
+
+    initDropdownFix();
 }

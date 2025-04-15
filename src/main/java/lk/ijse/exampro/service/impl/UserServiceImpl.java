@@ -89,7 +89,7 @@ UserServiceImpl implements UserDetailsService, UserService {
         }
         User user = modelMapper.map(userDTO, User.class);
         user.setPassword(passwordEncoder.encode(userDTO.getPassword()));
-        user.setActive(true); // Set user as active by default
+        user.setActive(true);
 
         try {
             System.out.println("Saving user: " + user.getEmail());
@@ -97,10 +97,9 @@ UserServiceImpl implements UserDetailsService, UserService {
             System.out.println("User saved successfully: " + user.getEmail());
         } catch (Exception e) {
             System.err.println("Error saving user: " + e.getMessage());
-            throw e; // Re-throw to rollback transaction and log in DataInitializer
+            throw e;
         }
 
-        // Create role-specific entity based on the user's role
         switch (user.getRole()) {
             case ADMIN:
                 Admin admin = new Admin();
@@ -121,7 +120,6 @@ UserServiceImpl implements UserDetailsService, UserService {
                 studentRepository.save(student);
                 break;
             case SUPER_ADMIN:
-                // No additional entity needed for SUPER_ADMIN
                 break;
         }
         return VarList.CREATED;
@@ -252,7 +250,6 @@ UserServiceImpl implements UserDetailsService, UserService {
             return VarList.NOT_FOUND;
         }
         User user = userOpt.get();
-        // Delete related role-specific record
         switch (user.getRole()) {
             case ADMIN:
                 adminRepository.findByUser_Email(email)
@@ -267,10 +264,8 @@ UserServiceImpl implements UserDetailsService, UserService {
                         .ifPresent(studentRepository::delete);
                 break;
             case SUPER_ADMIN:
-                // No role-specific table for SUPER_ADMIN
                 break;
         }
-        // Delete Cloudinary profile picture if exists
         if (user.getProfilePicturePublicId() != null) {
             try {
                 cloudinaryService.deleteImage(user.getProfilePicturePublicId());
@@ -278,7 +273,6 @@ UserServiceImpl implements UserDetailsService, UserService {
                 logger.warn("Failed to delete profile picture for email {}: {}", email, e.getMessage());
             }
         }
-        // Delete the user
         userRepository.delete(user);
         return VarList.OK;
     }
@@ -288,17 +282,14 @@ UserServiceImpl implements UserDetailsService, UserService {
         User user = userRepository.findByEmail(email)
                 .orElseThrow(() -> new IllegalArgumentException("User not found with email: " + email));
 
-        // Delete old image if it exists
         if (user.getProfilePicturePublicId() != null) {
             cloudinaryService.deleteImage(user.getProfilePicturePublicId());
         }
 
-        // Upload new image
         Map uploadResult = cloudinaryService.uploadImage(file);
         String profilePictureUrl = (String) uploadResult.get("secure_url");
         String publicId = (String) uploadResult.get("public_id");
 
-        // Update user
         user.setProfilePicture(profilePictureUrl);
         user.setProfilePicturePublicId(publicId);
         userRepository.save(user);

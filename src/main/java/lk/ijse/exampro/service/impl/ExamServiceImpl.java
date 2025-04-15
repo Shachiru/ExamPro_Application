@@ -87,28 +87,24 @@ public class ExamServiceImpl implements ExamService {
         User user = userRepository.findByEmail(examDTO.getCreatedByEmail())
                 .orElseThrow(() -> new IllegalArgumentException("User not found with email: " + examDTO.getCreatedByEmail()));
 
+        // Restrict exam creation to SUPER_ADMIN and ADMIN
+        if (user.getRole() != UserRole.SUPER_ADMIN && user.getRole() != UserRole.ADMIN) {
+            throw new IllegalArgumentException("Only super admins and admins can create exams");
+        }
+
         if (examDTO.getStartTime().isBefore(LocalDateTime.now())) {
             throw new IllegalArgumentException("Start time must be in the future");
         }
         if (examDTO.getDuration() <= 0) {
             throw new IllegalArgumentException("Duration must be positive");
         }
+        if (examDTO.getSubject() == null) {
+            throw new IllegalArgumentException("Subject is required for exam creation");
+        }
 
         Exam exam = modelMapper.map(examDTO, Exam.class);
         exam.setCreatedBy(user);
-
-        if (user.getRole() == UserRole.TEACHER) {
-            Teacher teacher = teacherRepository.findByUser_Email(user.getEmail())
-                    .orElseThrow(() -> new IllegalArgumentException("Teacher not found for user: " + user.getEmail()));
-            exam.setSubject(examDTO.getSubject() != null ? examDTO.getSubject() : teacher.getSubject());
-        } else if (user.getRole() == UserRole.SUPER_ADMIN) {
-            if (examDTO.getSubject() == null) {
-                throw new IllegalArgumentException("Subject is required for Super Admin created exams");
-            }
-            exam.setSubject(examDTO.getSubject());
-        } else {
-            throw new IllegalArgumentException("Only teachers and super admins can create exams");
-        }
+        exam.setSubject(examDTO.getSubject());
 
         exam = examRepository.save(exam);
         logger.info("Exam created: {} by {}", exam.getTitle(), user.getEmail());
@@ -128,9 +124,17 @@ public class ExamServiceImpl implements ExamService {
     public void deleteExam(Long examId) {
         Exam exam = examRepository.findById(examId)
                 .orElseThrow(() -> new RuntimeException("Exam not found with ID: " + examId));
+
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        User currentUser = userRepository.findByEmail(auth.getName())
+                .orElseThrow(() -> new SecurityException("Authenticated user not found: " + auth.getName()));
+
+        if (!exam.getCreatedBy().getId().equals(currentUser.getId())) {
+            throw new SecurityException("You are not authorized to delete this exam");
+        }
+
         List<StudentResult> studentResults = studentResultRepository.findByExam(exam);
         if (!studentResults.isEmpty()) {
-            // Delete associated answers for each student result
             for (StudentResult studentResult : studentResults) {
                 List<Answer> answers = answerRepository.findByStudentResult(studentResult);
                 if (!answers.isEmpty()) {
@@ -186,11 +190,16 @@ public class ExamServiceImpl implements ExamService {
         User currentUser = userRepository.findByEmail(auth.getName())
                 .orElseThrow(() -> new SecurityException("Authenticated user not found: " + auth.getName()));
 
+        // Restrict adding questions to TEACHER role
         if (currentUser.getRole() != UserRole.TEACHER) {
             throw new IllegalArgumentException("Only teachers can add questions");
         }
-        if (!exam.getCreatedBy().getId().equals(currentUser.getId())) {
-            throw new IllegalArgumentException("You are not the owner of this exam");
+
+        // Ensure teacher’s subject matches exam’s subject
+        Teacher teacher = teacherRepository.findByUser_Email(currentUser.getEmail())
+                .orElseThrow(() -> new IllegalArgumentException("Teacher profile not found for user: " + currentUser.getEmail()));
+        if (!teacher.getSubject().equals(exam.getSubject())) {
+            throw new IllegalArgumentException("You can only add questions to exams in your subject: " + teacher.getSubject());
         }
 
         // Validate question type and answers
@@ -221,7 +230,20 @@ public class ExamServiceImpl implements ExamService {
         Question question = questionRepository.findById(questionId)
                 .orElseThrow(() -> new RuntimeException("Question not found with ID: " + questionId));
 
-        // Validate updated question
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        User currentUser = userRepository.findByEmail(auth.getName())
+                .orElseThrow(() -> new SecurityException("Authenticated user not found: " + auth.getName()));
+
+        if (currentUser.getRole() != UserRole.TEACHER) {
+            throw new IllegalArgumentException("Only teachers can update questions");
+        }
+
+        Teacher teacher = teacherRepository.findByUser_Email(currentUser.getEmail())
+                .orElseThrow(() -> new IllegalArgumentException("Teacher profile not found for user: " + currentUser.getEmail()));
+        if (!teacher.getSubject().equals(question.getExam().getSubject())) {
+            throw new IllegalArgumentException("You can only update questions for exams in your subject: " + teacher.getSubject());
+        }
+
         if ("MCQ".equals(questionDTO.getType())) {
             if (questionDTO.getOptions() == null || questionDTO.getOptions().isEmpty()) {
                 throw new IllegalArgumentException("MCQ questions require options");
@@ -248,6 +270,21 @@ public class ExamServiceImpl implements ExamService {
         if (!questionRepository.existsById(questionId)) {
             throw new RuntimeException("Question not found with ID: " + questionId);
         }
+        Question question = questionRepository.findById(questionId).orElseThrow();
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        User currentUser = userRepository.findByEmail(auth.getName())
+                .orElseThrow(() -> new SecurityException("Authenticated user not found: " + auth.getName()));
+
+        if (currentUser.getRole() != UserRole.TEACHER) {
+            throw new IllegalArgumentException("Only teachers can delete questions");
+        }
+
+        Teacher teacher = teacherRepository.findByUser_Email(currentUser.getEmail())
+                .orElseThrow(() -> new IllegalArgumentException("Teacher profile not found for user: " + currentUser.getEmail()));
+        if (!teacher.getSubject().equals(question.getExam().getSubject())) {
+            throw new IllegalArgumentException("You can only delete questions for exams in your subject: " + teacher.getSubject());
+        }
+
         questionRepository.deleteById(questionId);
         logger.info("Question deleted with ID: {}", questionId);
     }
@@ -313,7 +350,6 @@ public class ExamServiceImpl implements ExamService {
             throw new IllegalStateException("Exam time has expired");
         }
 
-        // Process and grade answers
         for (AnswerDTO answerDTO : answers) {
             Question question = questionRepository.findById(answerDTO.getQuestionId())
                     .orElseThrow(() -> new RuntimeException("Question not found with ID: " + answerDTO.getQuestionId()));
@@ -322,19 +358,17 @@ public class ExamServiceImpl implements ExamService {
             answer.setQuestion(question);
             answer.setStudentAnswer(answerDTO.getStudentAnswer());
 
-            // Auto-grade MCQ and True/False questions
             if ("MCQ".equals(question.getType()) || "TRUE_FALSE".equals(question.getType())) {
                 if (question.getCorrectAnswer() == null) {
                     throw new IllegalStateException("Correct answer not set for question ID: " + question.getId());
                 }
                 answer.setScore(answerDTO.getStudentAnswer().equals(question.getCorrectAnswer()) ? 1 : 0);
             } else {
-                answer.setScore(null); // Short Answer requires manual grading
+                answer.setScore(null);
             }
             answerRepository.save(answer);
         }
 
-        // Check grading status
         List<Answer> allAnswers = answerRepository.findByStudentResult(studentResult);
         int autoGradedScore = allAnswers.stream()
                 .filter(a -> a.getScore() != null)
@@ -344,12 +378,10 @@ public class ExamServiceImpl implements ExamService {
 
         int shortAnswerCount = questionRepository.countByExamAndType(studentResult.getExam(), "SHORT_ANSWER");
         if (shortAnswerCount == 0) {
-            // No short answers, complete exam and send results
             studentResult.setIsCompleted(true);
             studentResultRepository.save(studentResult);
             emailService.sendResultNotification(studentEmail, studentResult.getExam().getTitle(), autoGradedScore);
         } else {
-            // Short answers present, notify teacher to grade
             studentResult.setIsCompleted(false);
             studentResultRepository.save(studentResult);
             Teacher teacher = teacherRepository.findByUser_Email(studentResult.getExam().getCreatedBy().getEmail())

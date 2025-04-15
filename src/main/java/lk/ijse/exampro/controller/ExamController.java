@@ -38,12 +38,29 @@ public class ExamController {
         }
     }
 
+    @PostMapping("/create")
+    @PreAuthorize("hasAnyRole('ADMIN', 'SUPER_ADMIN')")
+    public ResponseEntity<ResponseDTO> createExam(@RequestBody ExamDTO examDTO) {
+        try {
+            ExamDTO createdExam = examService.createExam(examDTO);
+            return ResponseEntity.status(VarList.CREATED)
+                    .body(new ResponseDTO(VarList.CREATED, "Exam created successfully", createdExam));
+        } catch (Exception e) {
+            return ResponseEntity.status(VarList.INTERNAL_SERVER_ERROR)
+                    .body(new ResponseDTO(VarList.INTERNAL_SERVER_ERROR, e.getMessage(), null));
+        }
+    }
+
     @DeleteMapping("/{examId}")
-    @PreAuthorize("hasRole('SUPER_ADMIN')")
+    @PreAuthorize("hasAnyRole('ADMIN', 'SUPER_ADMIN')")
     public ResponseEntity<ResponseDTO> deleteExam(@PathVariable Long examId) {
         try {
             examService.deleteExam(examId);
             return ResponseEntity.ok(new ResponseDTO(VarList.OK, "Exam deleted successfully", null));
+        } catch (SecurityException e) {
+            logger.warn("Unauthorized deletion attempt: {}", e.getMessage());
+            return ResponseEntity.status(VarList.FORBIDDEN)
+                    .body(new ResponseDTO(VarList.FORBIDDEN, e.getMessage(), null));
         } catch (Exception e) {
             logger.error("Error deleting exam with ID {}: {}", examId, e.getMessage(), e);
             return ResponseEntity.status(VarList.INTERNAL_SERVER_ERROR)
@@ -51,14 +68,18 @@ public class ExamController {
         }
     }
 
-    @PostMapping("/create")
-    @PreAuthorize("hasAnyRole('TEACHER', 'SUPER_ADMIN')")
-    public ResponseEntity<ResponseDTO> createExam(@RequestBody ExamDTO examDTO) {
+    @PutMapping("/{examId}")
+    @PreAuthorize("hasAnyRole('ADMIN', 'SUPER_ADMIN')")
+    public ResponseEntity<ResponseDTO> updateExam(@PathVariable Long examId, @RequestBody ExamDTO examDTO) {
         try {
-            ExamDTO createdExam = examService.createExam(examDTO);
-            return ResponseEntity.status(VarList.CREATED)
-                    .body(new ResponseDTO(VarList.CREATED, "Exam created successfully", createdExam));
+            ExamDTO updatedExam = examService.updateExam(examId, examDTO);
+            return ResponseEntity.ok(new ResponseDTO(VarList.OK, "Exam updated successfully", updatedExam));
+        } catch (SecurityException e) {
+            logger.warn("Unauthorized update attempt: {}", e.getMessage());
+            return ResponseEntity.status(VarList.FORBIDDEN)
+                    .body(new ResponseDTO(VarList.FORBIDDEN, e.getMessage(), null));
         } catch (Exception e) {
+            logger.error("Error updating exam with ID {}: {}", examId, e.getMessage(), e);
             return ResponseEntity.status(VarList.INTERNAL_SERVER_ERROR)
                     .body(new ResponseDTO(VarList.INTERNAL_SERVER_ERROR, e.getMessage(), null));
         }

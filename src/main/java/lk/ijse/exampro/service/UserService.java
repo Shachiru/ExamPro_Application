@@ -16,8 +16,6 @@ public interface UserService {
 
     UserDTO searchUser(String username);
 
-    int deleteUserByEmail(String email);
-
     int updateUserProfile(String email, UserDTO userDTO);
 
     int deactivateUser(String email);

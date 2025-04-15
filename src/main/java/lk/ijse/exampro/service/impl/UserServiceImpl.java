@@ -207,30 +207,6 @@ UserServiceImpl implements UserDetailsService, UserService {
     }
 
     @Override
-    public int deleteUserByEmail(String email) {
-        User user = userRepository.findByEmail(email).orElse(null);
-        if (user == null) {
-            return VarList.NOT_FOUND;
-        }
-        switch (user.getRole()) {
-            case ADMIN:
-                adminRepository.findByUser_Email(email)
-                        .ifPresent(adminRepository::delete);
-                break;
-            case TEACHER:
-                teacherRepository.findByUser_Email(email)
-                        .ifPresent(teacherRepository::delete);
-                break;
-            case STUDENT:
-                studentRepository.findByUser_Email(email)
-                        .ifPresent(studentRepository::delete);
-                break;
-        }
-        userRepository.delete(user);
-        return VarList.OK;
-    }
-
-    @Override
     public int deactivateUser(String email) {
         Optional<User> userOpt = userRepository.findByEmail(email);
         if (userOpt.isEmpty()) {

@@ -18,7 +18,6 @@ import org.modelmapper.TypeMap;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
@@ -28,6 +27,7 @@ import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.List;
 import java.util.Optional;
+import java.util.UUID;
 import java.util.stream.Collectors;
 
 @Service
@@ -58,6 +58,9 @@ public class ExamServiceImpl implements ExamService {
     private UserRepository userRepository;
 
     @Autowired
+    private AdminRepository adminRepository;
+
+    @Autowired
     private ModelMapper modelMapper;
 
     @Autowired
@@ -67,27 +70,23 @@ public class ExamServiceImpl implements ExamService {
 
     public ExamServiceImpl(ModelMapper modelMapper) {
         this.modelMapper = modelMapper;
-        // Configure ModelMapper for Exam to ExamDTO
         TypeMap<Exam, ExamDTO> examToExamDTO = modelMapper.createTypeMap(Exam.class, ExamDTO.class);
         examToExamDTO.addMappings(mapper -> {
             mapper.map(src -> src.getCreatedBy().getEmail(), ExamDTO::setCreatedByEmail);
+            mapper.map(Exam::getSchoolName, ExamDTO::setSchoolName);
+        });
+        TypeMap<ExamDTO, Exam> examDTOToExam = modelMapper.createTypeMap(ExamDTO.class, Exam.class);
+        examDTOToExam.addMappings(mapper -> {
+            mapper.map(ExamDTO::getSchoolName, Exam::setSchoolName);
         });
     }
 
     @Override
-    public List<ExamDTO> getAllExams() {
-        List<Exam> exams = examRepository.findAll();
-        return exams.stream()
-                .map(exam -> modelMapper.map(exam, ExamDTO.class))
-                .collect(Collectors.toList());
-    }
-
-    @Override
     public ExamDTO createExam(ExamDTO examDTO) {
-        User user = userRepository.findByEmail(examDTO.getCreatedByEmail())
-                .orElseThrow(() -> new IllegalArgumentException("User not found with email: " + examDTO.getCreatedByEmail()));
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        User user = userRepository.findByEmail(auth.getName())
+                .orElseThrow(() -> new IllegalArgumentException("Authenticated user not found: " + auth.getName()));
 
-        // Restrict exam creation to SUPER_ADMIN and ADMIN
         if (user.getRole() != UserRole.SUPER_ADMIN && user.getRole() != UserRole.ADMIN) {
             throw new IllegalArgumentException("Only super admins and admins can create exams");
         }
@@ -106,10 +105,26 @@ public class ExamServiceImpl implements ExamService {
         exam.setCreatedBy(user);
         exam.setSubject(examDTO.getSubject());
 
+        if (user.getRole() == UserRole.ADMIN) {
+            Admin admin = adminRepository.findByUser(user)
+                    .orElseThrow(() -> new IllegalArgumentException("Admin profile not found for user: " + user.getEmail()));
+            exam.setSchoolName(admin.getSchoolName());
+        }
+        if (user.getRole() == UserRole.SUPER_ADMIN && examDTO.getSchoolName() != null) {
+            exam.setSchoolName(examDTO.getSchoolName());
+        }
+
         exam = examRepository.save(exam);
         logger.info("Exam created: {} by {}", exam.getTitle(), user.getEmail());
 
-        List<Student> students = studentRepository.findAll();
+        List<Student> students;
+        if (user.getRole() == UserRole.ADMIN) {
+            Admin admin = adminRepository.findByUser(user)
+                    .orElseThrow(() -> new IllegalArgumentException("Admin profile not found for user: " + user.getEmail()));
+            students = studentRepository.findBySchoolName(admin.getSchoolName());
+        } else {
+            students = studentRepository.findAll();
+        }
         for (Student student : students) {
             try {
                 emailService.sendExamNotification(student.getUser().getEmail(), exam.getTitle(), exam.getStartTime());
@@ -117,6 +132,70 @@ public class ExamServiceImpl implements ExamService {
                 logger.error("Failed to notify {}: {}", student.getUser().getEmail(), e.getMessage());
             }
         }
+        return modelMapper.map(exam, ExamDTO.class);
+    }
+
+    @Override
+    public List<ExamDTO> getAllExams() {
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        User user = userRepository.findByEmail(auth.getName())
+                .orElseThrow(() -> new IllegalArgumentException("Authenticated user not found: " + auth.getName()));
+
+        List<Exam> exams;
+        if (user.getRole() == UserRole.ADMIN) {
+            Admin admin = adminRepository.findByUser(user)
+                    .orElseThrow(() -> new IllegalArgumentException("Admin profile not found for user: " + user.getEmail()));
+            exams = examRepository.findBySchoolName(admin.getSchoolName());
+        } else if (user.getRole() == UserRole.SUPER_ADMIN) {
+            exams = examRepository.findAll();
+        } else {
+            throw new SecurityException("Only super admins and admins can retrieve exams");
+        }
+        return exams.stream()
+                .map(exam -> modelMapper.map(exam, ExamDTO.class))
+                .collect(Collectors.toList());
+    }
+
+    @Override
+    public ExamDTO updateExam(Long examId, ExamDTO examDTO) {
+        Exam exam = examRepository.findById(examId)
+                .orElseThrow(() -> new RuntimeException("Exam not found with ID: " + examId));
+
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        User currentUser = userRepository.findByEmail(auth.getName())
+                .orElseThrow(() -> new SecurityException("Authenticated user not found: " + auth.getName()));
+
+        if (!exam.getCreatedBy().getId().equals(currentUser.getId())) {
+            throw new SecurityException("You are not authorized to update this exam");
+        }
+
+        if (examDTO.getStartTime().isBefore(LocalDateTime.now())) {
+            throw new IllegalArgumentException("Start time must be in the future");
+        }
+        if (examDTO.getDuration() <= 0) {
+            throw new IllegalArgumentException("Duration must be positive");
+        }
+        if (examDTO.getSubject() == null) {
+            throw new IllegalArgumentException("Subject is required");
+        }
+
+        exam.setTitle(examDTO.getTitle());
+        exam.setSubject(examDTO.getSubject());
+        exam.setStartTime(examDTO.getStartTime());
+        exam.setDuration(examDTO.getDuration());
+        exam.setExamType(examDTO.getExamType());
+
+        if (currentUser.getRole() == UserRole.ADMIN) {
+            Admin admin = adminRepository.findByUser(currentUser)
+                    .orElseThrow(() -> new IllegalArgumentException("Admin profile not found for user: " + currentUser.getEmail()));
+            exam.setSchoolName(admin.getSchoolName());
+        }
+        if (currentUser.getRole() == UserRole.SUPER_ADMIN) {
+            exam.setSchoolName(examDTO.getSchoolName());
+        }
+
+        exam = examRepository.save(exam);
+        logger.info("Exam updated: {} by {}", exam.getTitle(), currentUser.getEmail());
         return modelMapper.map(exam, ExamDTO.class);
     }
 
@@ -152,37 +231,6 @@ public class ExamServiceImpl implements ExamService {
     }
 
     @Override
-    public ExamDTO updateExam(Long examId, ExamDTO examDTO) {
-        Exam exam = examRepository.findById(examId)
-                .orElseThrow(() -> new RuntimeException("Exam not found with ID: " + examId));
-
-        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
-        User currentUser = userRepository.findByEmail(auth.getName())
-                .orElseThrow(() -> new SecurityException("Authenticated user not found: " + auth.getName()));
-
-        if (!exam.getCreatedBy().getId().equals(currentUser.getId())) {
-            throw new SecurityException("You are not authorized to update this exam");
-        }
-
-        if (examDTO.getStartTime().isBefore(LocalDateTime.now())) {
-            throw new IllegalArgumentException("Start time must be in the future");
-        }
-        if (examDTO.getDuration() <= 0) {
-            throw new IllegalArgumentException("Duration must be positive");
-        }
-
-        exam.setTitle(examDTO.getTitle());
-        exam.setSubject(examDTO.getSubject());
-        exam.setStartTime(examDTO.getStartTime());
-        exam.setDuration(examDTO.getDuration());
-        exam.setExamType(examDTO.getExamType());
-
-        exam = examRepository.save(exam);
-        logger.info("Exam updated: {} by {}", exam.getTitle(), currentUser.getEmail());
-        return modelMapper.map(exam, ExamDTO.class);
-    }
-
-    @Override
     public QuestionDTO addQuestionToExam(Long examId, QuestionDTO questionDTO) {
         Exam exam = examRepository.findById(examId)
                 .orElseThrow(() -> new RuntimeException("Exam not found with ID: " + examId));
@@ -190,19 +238,16 @@ public class ExamServiceImpl implements ExamService {
         User currentUser = userRepository.findByEmail(auth.getName())
                 .orElseThrow(() -> new SecurityException("Authenticated user not found: " + auth.getName()));
 
-        // Restrict adding questions to TEACHER role
         if (currentUser.getRole() != UserRole.TEACHER) {
             throw new IllegalArgumentException("Only teachers can add questions");
         }
 
-        // Ensure teacher’s subject matches exam’s subject
         Teacher teacher = teacherRepository.findByUser_Email(currentUser.getEmail())
                 .orElseThrow(() -> new IllegalArgumentException("Teacher profile not found for user: " + currentUser.getEmail()));
         if (!teacher.getSubject().equals(exam.getSubject())) {
             throw new IllegalArgumentException("You can only add questions to exams in your subject: " + teacher.getSubject());
         }
 
-        // Validate question type and answers
         if (questionDTO.getType() == null || !List.of("MCQ", "TRUE_FALSE", "SHORT_ANSWER").contains(questionDTO.getType())) {
             throw new IllegalArgumentException("Invalid question type");
         }
@@ -303,21 +348,23 @@ public class ExamServiceImpl implements ExamService {
     public StudentResultDTO startExam(Long examId, String studentEmail) {
         Exam exam = examRepository.findById(examId)
                 .orElseThrow(() -> new EntityNotFoundException("Exam not found with ID: " + examId));
-        User student = userRepository.findByEmail(studentEmail)
+        User studentUser = userRepository.findByEmail(studentEmail)
                 .orElseThrow(() -> new EntityNotFoundException("Student not found with email: " + studentEmail));
+        Student student = studentRepository.findByUser_Email(studentEmail)
+                .orElseThrow(() -> new EntityNotFoundException("Student profile not found for email: " + studentEmail));
 
         logger.info("Current time: {}, Exam start time: {}", LocalDateTime.now(), exam.getStartTime());
         if (LocalDateTime.now().isBefore(exam.getStartTime())) {
             throw new ExamNotStartedException("Exam has not started yet");
         }
 
-        Optional<StudentResult> existingAttempt = studentResultRepository.findByStudentAndExam(student, exam);
+        Optional<StudentResult> existingAttempt = studentResultRepository.findByStudentAndExam(studentUser, exam);
         if (existingAttempt.isPresent()) {
             throw new ExamSubmissionException("You have already started this exam");
         }
 
         StudentResult studentResult = new StudentResult();
-        studentResult.setStudent(student);
+        studentResult.setStudent(studentUser);
         studentResult.setExam(exam);
         studentResult.setIsCompleted(false);
         studentResult.setStartTime(LocalDateTime.now());
@@ -326,7 +373,6 @@ public class ExamServiceImpl implements ExamService {
         return modelMapper.map(studentResult, StudentResultDTO.class);
     }
 
-    @PreAuthorize("hasRole('STUDENT')")
     @Override
     public void submitAnswers(Long studentExamId, List<AnswerDTO> answers) {
         StudentResult studentResult = studentResultRepository.findById(studentExamId)
@@ -401,7 +447,6 @@ public class ExamServiceImpl implements ExamService {
         answer.setScore(score);
         answerRepository.save(answer);
 
-        // Check if all answers are graded
         StudentResult studentResult = answer.getStudentResult();
         List<Answer> allAnswers = answerRepository.findByStudentResult(studentResult);
         boolean allGraded = allAnswers.stream().allMatch(a -> a.getScore() != null);

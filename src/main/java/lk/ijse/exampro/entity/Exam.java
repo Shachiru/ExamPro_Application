@@ -30,7 +30,9 @@ public class Exam {
 
     private String examType;
 
+    private String schoolName;
+
     @ManyToOne
-    @JoinColumn(name = "teacher_id", nullable = false)
+    @JoinColumn(name = "created_by", nullable = false)
     private User createdBy;
 }

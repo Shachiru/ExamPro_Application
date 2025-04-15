@@ -15,6 +15,8 @@ public class Teacher {
 
     private String subject;
 
+    private String schoolName;
+
     @OneToOne
     @JoinColumn(name = "user_id", nullable = false, unique = true)
     private User user;

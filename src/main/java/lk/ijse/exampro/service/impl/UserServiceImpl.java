@@ -1,14 +1,8 @@
 package lk.ijse.exampro.service.impl;
 
 import lk.ijse.exampro.dto.UserDTO;
-import lk.ijse.exampro.entity.Admin;
-import lk.ijse.exampro.entity.Student;
-import lk.ijse.exampro.entity.Teacher;
-import lk.ijse.exampro.entity.User;
-import lk.ijse.exampro.repository.AdminRepository;
-import lk.ijse.exampro.repository.StudentRepository;
-import lk.ijse.exampro.repository.TeacherRepository;
-import lk.ijse.exampro.repository.UserRepository;
+import lk.ijse.exampro.entity.*;
+import lk.ijse.exampro.repository.*;
 import lk.ijse.exampro.service.CloudinaryService;
 import lk.ijse.exampro.service.UserService;
 import lk.ijse.exampro.util.VarList;
@@ -17,9 +11,13 @@ import org.modelmapper.ModelMapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Lazy;
+import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.DisabledException;
+import org.springframework.security.core.Authentication;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
@@ -60,6 +58,16 @@ UserServiceImpl implements UserDetailsService, UserService {
     @Autowired
     private CloudinaryService cloudinaryService;
 
+    @Autowired
+    private StudentResultRepository studentResultRepository;
+
+    @Autowired
+    private AnswerRepository answerRepository;
+
+    @Autowired
+    @Lazy
+    private AuthenticationManager authenticationManager;
+
     @Override
     public UserDetails loadUserByUsername(String email) throws UsernameNotFoundException {
         User user = userRepository.findByEmail(email)
@@ -84,61 +92,105 @@ UserServiceImpl implements UserDetailsService, UserService {
     @Override
     public int saveUser(UserDTO userDTO) {
         if (userRepository.existsByEmail(userDTO.getEmail())) {
-            System.out.println("Email already exists: " + userDTO.getEmail());
-            return VarList.NOT_ACCEPTABLE; // Email already in use
+            return VarList.NOT_ACCEPTABLE;
         }
         User user = modelMapper.map(userDTO, User.class);
         user.setPassword(passwordEncoder.encode(userDTO.getPassword()));
         user.setActive(true);
 
-        try {
-            System.out.println("Saving user: " + user.getEmail());
-            userRepository.save(user);
-            System.out.println("User saved successfully: " + user.getEmail());
-        } catch (Exception e) {
-            System.err.println("Error saving user: " + e.getMessage());
-            throw e;
+        userRepository.save(user);
+
+        String schoolName = null;
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        boolean isSuperAdmin = auth != null && auth.getAuthorities().stream()
+                .anyMatch(a -> a.getAuthority().equals("ROLE_SUPER_ADMIN"));
+
+        if (userDTO.getRole() != UserRole.SUPER_ADMIN) {
+            if (isSuperAdmin) {
+                if (userDTO.getSchoolName() == null || userDTO.getSchoolName().isEmpty()) {
+                    logger.warn("schoolName is required for Super Admin registration of {}", userDTO.getRole());
+                    return VarList.BAD_REQUEST;
+                }
+                schoolName = userDTO.getSchoolName();
+            } else if (auth != null && auth.getAuthorities().stream()
+                    .anyMatch(a -> a.getAuthority().equals("ROLE_ADMIN"))) {
+                User adminUser = userRepository.findByEmail(auth.getName()).orElse(null);
+                if (adminUser != null) {
+                    Admin admin = adminRepository.findByUser(adminUser).orElse(null);
+                    schoolName = admin != null ? admin.getSchoolName() : null;
+                }
+                if (schoolName == null) {
+                    logger.warn("Admin has no associated schoolName for email: {}", auth.getName());
+                    return VarList.BAD_REQUEST;
+                }
+            }
         }
 
         switch (user.getRole()) {
             case ADMIN:
                 Admin admin = new Admin();
                 admin.setUser(user);
-                admin.setSchoolName(userDTO.getSchoolName());
+                admin.setSchoolName(schoolName != null ? schoolName : userDTO.getSchoolName());
                 adminRepository.save(admin);
                 break;
             case TEACHER:
                 Teacher teacher = new Teacher();
                 teacher.setUser(user);
                 teacher.setSubject(userDTO.getSubject());
+                teacher.setSchoolName(schoolName);
+                if (teacher.getSchoolName() == null) {
+                    logger.error("Failed to set schoolName for teacher: {}", userDTO.getEmail());
+                    return VarList.BAD_REQUEST;
+                }
                 teacherRepository.save(teacher);
                 break;
             case STUDENT:
                 Student student = new Student();
                 student.setUser(user);
                 student.setGrade(userDTO.getGrade());
+                student.setSchoolName(schoolName != null ? schoolName : userDTO.getSchoolName());
                 studentRepository.save(student);
                 break;
             case SUPER_ADMIN:
                 break;
         }
+        logger.info("User {} registered with schoolName: {}", userDTO.getEmail(), schoolName);
         return VarList.CREATED;
+    }
+
+    public List<UserDTO> getTeachersForInstitution(String schoolName) {
+        List<Teacher> teachers = teacherRepository.findBySchoolName(schoolName);
+        return teachers.stream()
+                .map(teacher -> convertToDTO(teacher.getUser()))
+                .collect(Collectors.toList());
+    }
+
+    public List<UserDTO> getStudentsForInstitution(String schoolName) {
+        List<Student> students = studentRepository.findBySchoolName(schoolName);
+        return students.stream()
+                .map(student -> convertToDTO(student.getUser()))
+                .collect(Collectors.toList());
     }
 
     @Override
     public List<UserDTO> getAllUsers(UserRole authenticatedRole) {
-        List<User> users;
         if (authenticatedRole == UserRole.SUPER_ADMIN) {
-            // Super Admin can see all users except other Super Admins
-            users = userRepository.findAllByRoleNot(UserRole.SUPER_ADMIN);
+            return userRepository.findAllByRoleNot(UserRole.SUPER_ADMIN)
+                    .stream().map(this::convertToDTO).collect(Collectors.toList());
         } else if (authenticatedRole == UserRole.ADMIN) {
-            // Admin can see Teachers and Students
-            users = userRepository.findAllByRoleIn(List.of(UserRole.TEACHER, UserRole.STUDENT));
+            Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+            User adminUser = userRepository.findByEmail(auth.getName()).orElseThrow();
+            Admin admin = adminRepository.findByUser(adminUser).orElseThrow();
+            String schoolName = admin.getSchoolName();
+
+            List<UserDTO> teachers = getTeachersForInstitution(schoolName);
+            List<UserDTO> students = getStudentsForInstitution(schoolName);
+            List<UserDTO> combined = new ArrayList<>(teachers);
+            combined.addAll(students);
+            return combined;
         } else {
             throw new IllegalStateException("Invalid role for accessing users");
         }
-
-        return users.stream().map(this::convertToDTO).collect(Collectors.toList());
     }
 
     @Override
@@ -250,6 +302,20 @@ UserServiceImpl implements UserDetailsService, UserService {
             return VarList.NOT_FOUND;
         }
         User user = userOpt.get();
+
+        if (user.getRole() == UserRole.STUDENT) {
+            List<StudentResult> studentResults = studentResultRepository.findByStudent(user);
+            if (!studentResults.isEmpty()) {
+                for (StudentResult studentResult : studentResults) {
+                    List<Answer> answers = answerRepository.findByStudentResult(studentResult);
+                    if (!answers.isEmpty()) {
+                        answerRepository.deleteAll(answers);
+                    }
+                }
+                studentResultRepository.deleteAll(studentResults);
+            }
+        }
+
         switch (user.getRole()) {
             case ADMIN:
                 adminRepository.findByUser_Email(email)
@@ -266,6 +332,8 @@ UserServiceImpl implements UserDetailsService, UserService {
             case SUPER_ADMIN:
                 break;
         }
+
+        // Delete profile picture if exists
         if (user.getProfilePicturePublicId() != null) {
             try {
                 cloudinaryService.deleteImage(user.getProfilePicturePublicId());
@@ -273,6 +341,8 @@ UserServiceImpl implements UserDetailsService, UserService {
                 logger.warn("Failed to delete profile picture for email {}: {}", email, e.getMessage());
             }
         }
+
+        // Delete the user
         userRepository.delete(user);
         return VarList.OK;
     }

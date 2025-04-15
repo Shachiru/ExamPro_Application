@@ -83,12 +83,12 @@ public class UserController {
     }
 
     @PostMapping(value = "/sign_up/teacher")
-    @PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize("hasAnyRole('ADMIN', 'SUPER_ADMIN')")
     public ResponseEntity<ResponseDTO> registerTeacher(@RequestBody @Valid UserDTO userDTO) {
         try {
             if (userDTO.getRole() != UserRole.TEACHER) {
                 return ResponseEntity.status(HttpStatus.FORBIDDEN).body(
-                        new ResponseDTO(VarList.FORBIDDEN, "Only teachers can be registered by admins", null));
+                        new ResponseDTO(VarList.FORBIDDEN, "Only teachers can be registered by admins or super admins", null));
             }
             int res = userService.saveUser(userDTO);
             switch (res) {
@@ -98,8 +98,11 @@ public class UserController {
                     authDTO.setEmail(userDTO.getEmail());
                     authDTO.setToken(token);
                     authDTO.setRole(String.valueOf(userDTO.getRole()));
+                    boolean isSuperAdmin = SecurityContextHolder.getContext().getAuthentication()
+                            .getAuthorities().stream().anyMatch(a -> a.getAuthority().equals("ROLE_SUPER_ADMIN"));
+                    String registeredBy = isSuperAdmin ? "super admin" : "admin";
                     return ResponseEntity.status(HttpStatus.CREATED).body(
-                            new ResponseDTO(VarList.CREATED, "Teacher registered successfully by admin", authDTO));
+                            new ResponseDTO(VarList.CREATED, "Teacher registered successfully by " + registeredBy, authDTO));
                 case VarList.NOT_ACCEPTABLE:
                     return ResponseEntity.status(HttpStatus.NOT_ACCEPTABLE).body(
                             new ResponseDTO(VarList.NOT_ACCEPTABLE, "Email already used", null));
@@ -315,6 +318,64 @@ public class UserController {
         } catch (IOException e) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(
                     new ResponseDTO(VarList.BAD_REQUEST, "Failed to delete profile picture: " + e.getMessage(), null));
+        }
+    }
+
+    @GetMapping("/teachers")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<ResponseDTO> getTeachersForAdmin(Authentication authentication) {
+        String adminEmail = authentication.getName();
+        UserDTO admin = userService.searchUser(adminEmail);
+        if (admin == null || admin.getRole() != UserRole.ADMIN) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).body(
+                    new ResponseDTO(VarList.FORBIDDEN, "Admin access required", null));
+        }
+        List<UserDTO> teachers = userService.getTeachersForInstitution(admin.getSchoolName());
+        return ResponseEntity.ok(new ResponseDTO(VarList.OK, "Teachers retrieved successfully", teachers));
+    }
+
+    @GetMapping("/students")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<ResponseDTO> getStudentsForAdmin(Authentication authentication) {
+        String adminEmail = authentication.getName();
+        UserDTO admin = userService.searchUser(adminEmail);
+        if (admin == null || admin.getRole() != UserRole.ADMIN) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).body(
+                    new ResponseDTO(VarList.FORBIDDEN, "Admin access required", null));
+        }
+        List<UserDTO> students = userService.getStudentsForInstitution(admin.getSchoolName());
+        return ResponseEntity.ok(new ResponseDTO(VarList.OK, "Students retrieved successfully", students));
+    }
+
+    @DeleteMapping("/teachers/{email}")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<ResponseDTO> deleteTeacher(@PathVariable String email) {
+        try {
+            UserDTO user = userService.searchUser(email);
+            if (user == null) {
+                return ResponseEntity.status(HttpStatus.NOT_FOUND).body(
+                        new ResponseDTO(VarList.NOT_FOUND, "Teacher not found", null));
+            }
+            if (user.getRole() != UserRole.TEACHER) {
+                return ResponseEntity.status(HttpStatus.FORBIDDEN).body(
+                        new ResponseDTO(VarList.FORBIDDEN, "Only teachers can be deleted by admins", null));
+            }
+            // Verify institution
+            String adminEmail = SecurityContextHolder.getContext().getAuthentication().getName();
+            UserDTO admin = userService.searchUser(adminEmail);
+            if (!admin.getSchoolName().equals(user.getSchoolName())) {
+                return ResponseEntity.status(HttpStatus.FORBIDDEN).body(
+                        new ResponseDTO(VarList.FORBIDDEN, "Cannot delete teacher from another institution", null));
+            }
+            int res = userService.deleteUser(email);
+            if (res == VarList.OK) {
+                return ResponseEntity.ok(new ResponseDTO(VarList.OK, "Teacher deleted successfully", null));
+            }
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(
+                    new ResponseDTO(VarList.NOT_FOUND, "Teacher not found", null));
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(
+                    new ResponseDTO(VarList.INTERNAL_SERVER_ERROR, e.getMessage(), null));
         }
     }
 }

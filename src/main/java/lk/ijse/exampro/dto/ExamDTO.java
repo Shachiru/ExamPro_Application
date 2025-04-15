@@ -17,4 +17,5 @@ public class ExamDTO {
     private LocalDateTime startTime;
     private String examType;
     private String createdByEmail;
+    private String schoolName;
 }

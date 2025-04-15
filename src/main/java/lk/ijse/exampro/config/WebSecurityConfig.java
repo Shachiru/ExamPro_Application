@@ -1,14 +1,13 @@
 package lk.ijse.exampro.config;
 
 import jakarta.servlet.http.HttpServletResponse;
-import lk.ijse.exampro.service.impl.UserServiceImpl;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.http.HttpMethod;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.DisabledException;
-import org.springframework.security.config.annotation.authentication.builders.AuthenticationManagerBuilder;
 import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
@@ -30,15 +29,18 @@ import java.util.Arrays;
 public class WebSecurityConfig {
 
     @Autowired
-    private UserServiceImpl userService;
-
-    @Autowired
+    @Lazy
     private JwtFilter jwtFilter;
 
     @Bean
     public AuthenticationManager authenticationManager(AuthenticationConfiguration authenticationConfiguration)
             throws Exception {
         return authenticationConfiguration.getAuthenticationManager();
+    }
+
+    @Bean
+    public PasswordEncoder passwordEncoder() {
+        return new BCryptPasswordEncoder();
     }
 
     @Bean
@@ -52,7 +54,7 @@ public class WebSecurityConfig {
                         .requestMatchers("/api/v1/admin/**").hasRole("ADMIN")
                         .requestMatchers("/api/v1/teacher/**").hasRole("TEACHER")
                         .requestMatchers("/api/v1/student/**").hasRole("STUDENT")
-                        .requestMatchers(HttpMethod.DELETE, "/api/v1/user/delete/**").hasRole("SUPER_ADMIN") // Updated
+                        .requestMatchers(HttpMethod.DELETE, "/api/v1/user/delete/**").hasRole("SUPER_ADMIN")
                         .requestMatchers("/api/v1/user/**").authenticated()
                         .anyRequest().authenticated()
                 )
@@ -63,7 +65,7 @@ public class WebSecurityConfig {
                             String message = "Authentication failed";
                             if (authException instanceof DisabledException) {
                                 message = "Account is deactivated";
-                                response.setStatus(HttpServletResponse.SC_FORBIDDEN); // 403 for deactivated accounts
+                                response.setStatus(HttpServletResponse.SC_FORBIDDEN);
                             }
                             response.getWriter().write(
                                     "{\"code\": " + response.getStatus() + ", \"message\": \"" + message + "\", \"data\": null}"

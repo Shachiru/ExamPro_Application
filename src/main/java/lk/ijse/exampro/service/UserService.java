@@ -27,4 +27,8 @@ public interface UserService {
     UserDTO deleteProfilePicture(String email) throws IOException;
 
     int deleteUser(String email);
+
+    List<UserDTO> getTeachersForInstitution(String schoolName);
+
+    List<UserDTO> getStudentsForInstitution(String schoolName);
 }

@@ -1,6 +1,9 @@
 package lk.ijse.exampro.controller;
 
+import jakarta.persistence.EntityNotFoundException;
 import lk.ijse.exampro.dto.*;
+import lk.ijse.exampro.exception.ExamNotStartedException;
+import lk.ijse.exampro.exception.ExamSubmissionException;
 import lk.ijse.exampro.service.ExamService;
 import lk.ijse.exampro.util.VarList;
 import org.slf4j.Logger;
@@ -26,11 +29,19 @@ public class ExamController {
     private ExamService examService;
 
     @GetMapping("/all")
-    @PreAuthorize("hasRole('SUPER_ADMIN')")
+    @PreAuthorize("hasAnyRole('ADMIN', 'SUPER_ADMIN')")
     public ResponseEntity<ResponseDTO> getAllExams() {
         try {
             List<ExamDTO> exams = examService.getAllExams();
             return ResponseEntity.ok(new ResponseDTO(VarList.OK, "Exams retrieved successfully", exams));
+        } catch (IllegalArgumentException e) {
+            logger.warn("Invalid request: {}", e.getMessage());
+            return ResponseEntity.status(VarList.BAD_REQUEST)
+                    .body(new ResponseDTO(VarList.BAD_REQUEST, e.getMessage(), null));
+        } catch (SecurityException e) {
+            logger.warn("Unauthorized access: {}", e.getMessage());
+            return ResponseEntity.status(VarList.FORBIDDEN)
+                    .body(new ResponseDTO(VarList.FORBIDDEN, e.getMessage(), null));
         } catch (Exception e) {
             logger.error("Error retrieving exams: {}", e.getMessage(), e);
             return ResponseEntity.status(VarList.INTERNAL_SERVER_ERROR)
@@ -45,7 +56,12 @@ public class ExamController {
             ExamDTO createdExam = examService.createExam(examDTO);
             return ResponseEntity.status(VarList.CREATED)
                     .body(new ResponseDTO(VarList.CREATED, "Exam created successfully", createdExam));
+        } catch (IllegalArgumentException e) {
+            logger.warn("Invalid exam data: {}", e.getMessage());
+            return ResponseEntity.status(VarList.BAD_REQUEST)
+                    .body(new ResponseDTO(VarList.BAD_REQUEST, e.getMessage(), null));
         } catch (Exception e) {
+            logger.error("Error creating exam: {}", e.getMessage(), e);
             return ResponseEntity.status(VarList.INTERNAL_SERVER_ERROR)
                     .body(new ResponseDTO(VarList.INTERNAL_SERVER_ERROR, e.getMessage(), null));
         }
@@ -61,6 +77,10 @@ public class ExamController {
             logger.warn("Unauthorized deletion attempt: {}", e.getMessage());
             return ResponseEntity.status(VarList.FORBIDDEN)
                     .body(new ResponseDTO(VarList.FORBIDDEN, e.getMessage(), null));
+        } catch (RuntimeException e) {
+            logger.warn("Exam not found: {}", e.getMessage());
+            return ResponseEntity.status(VarList.NOT_FOUND)
+                    .body(new ResponseDTO(VarList.NOT_FOUND, e.getMessage(), null));
         } catch (Exception e) {
             logger.error("Error deleting exam with ID {}: {}", examId, e.getMessage(), e);
             return ResponseEntity.status(VarList.INTERNAL_SERVER_ERROR)
@@ -78,6 +98,14 @@ public class ExamController {
             logger.warn("Unauthorized update attempt: {}", e.getMessage());
             return ResponseEntity.status(VarList.FORBIDDEN)
                     .body(new ResponseDTO(VarList.FORBIDDEN, e.getMessage(), null));
+        } catch (IllegalArgumentException e) {
+            logger.warn("Invalid exam data: {}", e.getMessage());
+            return ResponseEntity.status(VarList.BAD_REQUEST)
+                    .body(new ResponseDTO(VarList.BAD_REQUEST, e.getMessage(), null));
+        } catch (RuntimeException e) {
+            logger.warn("Exam not found: {}", e.getMessage());
+            return ResponseEntity.status(VarList.NOT_FOUND)
+                    .body(new ResponseDTO(VarList.NOT_FOUND, e.getMessage(), null));
         } catch (Exception e) {
             logger.error("Error updating exam with ID {}: {}", examId, e.getMessage(), e);
             return ResponseEntity.status(VarList.INTERNAL_SERVER_ERROR)
@@ -95,7 +123,12 @@ public class ExamController {
             QuestionDTO createdQuestion = examService.addQuestionToExam(examId, questionDTO);
             return ResponseEntity.status(VarList.CREATED)
                     .body(new ResponseDTO(VarList.CREATED, "Question added successfully", createdQuestion));
+        } catch (IllegalArgumentException e) {
+            logger.warn("Invalid question data: {}", e.getMessage());
+            return ResponseEntity.status(VarList.BAD_REQUEST)
+                    .body(new ResponseDTO(VarList.BAD_REQUEST, e.getMessage(), null));
         } catch (Exception e) {
+            logger.error("Error adding question to exam {}: {}", examId, e.getMessage(), e);
             return ResponseEntity.status(VarList.INTERNAL_SERVER_ERROR)
                     .body(new ResponseDTO(VarList.INTERNAL_SERVER_ERROR, e.getMessage(), null));
         }
@@ -137,11 +170,20 @@ public class ExamController {
     public ResponseEntity<ResponseDTO> startExam(@PathVariable Long examId) {
         try {
             Authentication auth = SecurityContextHolder.getContext().getAuthentication();
-            String studentEmail = auth.getName(); // Email from JWT
+            String studentEmail = auth.getName();
             StudentResultDTO result = examService.startExam(examId, studentEmail);
             return ResponseEntity.status(VarList.CREATED)
                     .body(new ResponseDTO(VarList.CREATED, "Exam started successfully", result));
+        } catch (ExamNotStartedException | ExamSubmissionException e) {
+            logger.warn("Invalid exam start: {}", e.getMessage());
+            return ResponseEntity.status(VarList.BAD_REQUEST)
+                    .body(new ResponseDTO(VarList.BAD_REQUEST, e.getMessage(), null));
+        } catch (EntityNotFoundException e) {
+            logger.warn("Resource not found: {}", e.getMessage());
+            return ResponseEntity.status(VarList.NOT_FOUND)
+                    .body(new ResponseDTO(VarList.NOT_FOUND, e.getMessage(), null));
         } catch (Exception e) {
+            logger.error("Error starting exam: {}", e.getMessage(), e);
             return ResponseEntity.status(VarList.INTERNAL_SERVER_ERROR)
                     .body(new ResponseDTO(VarList.INTERNAL_SERVER_ERROR, e.getMessage(), null));
         }
@@ -153,7 +195,12 @@ public class ExamController {
         try {
             long secondsRemaining = examService.getRemainingTimeForStudent(studentExamId);
             return ResponseEntity.ok(new ResponseDTO(VarList.OK, "Time remaining", secondsRemaining));
+        } catch (RuntimeException e) {
+            logger.warn("Student exam not found: {}", e.getMessage());
+            return ResponseEntity.status(VarList.NOT_FOUND)
+                    .body(new ResponseDTO(VarList.NOT_FOUND, e.getMessage(), null));
         } catch (Exception e) {
+            logger.error("Error retrieving time: {}", e.getMessage(), e);
             return ResponseEntity.status(VarList.INTERNAL_SERVER_ERROR)
                     .body(new ResponseDTO(VarList.INTERNAL_SERVER_ERROR, e.getMessage(), null));
         }
@@ -165,7 +212,16 @@ public class ExamController {
         try {
             examService.gradeShortAnswer(answerId, score);
             return ResponseEntity.ok(new ResponseDTO(VarList.OK, "Answer graded successfully", null));
+        } catch (IllegalArgumentException e) {
+            logger.warn("Invalid grading data: {}", e.getMessage());
+            return ResponseEntity.status(VarList.BAD_REQUEST)
+                    .body(new ResponseDTO(VarList.BAD_REQUEST, e.getMessage(), null));
+        } catch (RuntimeException e) {
+            logger.warn("Answer not found: {}", e.getMessage());
+            return ResponseEntity.status(VarList.NOT_FOUND)
+                    .body(new ResponseDTO(VarList.NOT_FOUND, e.getMessage(), null));
         } catch (Exception e) {
+            logger.error("Error grading answer: {}", e.getMessage(), e);
             return ResponseEntity.status(VarList.INTERNAL_SERVER_ERROR)
                     .body(new ResponseDTO(VarList.INTERNAL_SERVER_ERROR, e.getMessage(), null));
         }
@@ -181,8 +237,12 @@ public class ExamController {
             logger.warn("Unauthorized access: {}", e.getMessage());
             return ResponseEntity.status(VarList.FORBIDDEN)
                     .body(new ResponseDTO(VarList.FORBIDDEN, e.getMessage(), null));
+        } catch (IllegalStateException e) {
+            logger.warn("Invalid request: {}", e.getMessage());
+            return ResponseEntity.status(VarList.BAD_REQUEST)
+                    .body(new ResponseDTO(VarList.BAD_REQUEST, e.getMessage(), null));
         } catch (Exception e) {
-            logger.error("Error retrieving students: {}", e.getMessage());
+            logger.error("Error retrieving students: {}", e.getMessage(), e);
             return ResponseEntity.status(VarList.INTERNAL_SERVER_ERROR)
                     .body(new ResponseDTO(VarList.INTERNAL_SERVER_ERROR, e.getMessage(), null));
         }

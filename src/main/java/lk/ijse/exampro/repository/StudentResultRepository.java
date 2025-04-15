@@ -16,4 +16,6 @@ public interface StudentResultRepository extends JpaRepository<StudentResult, Lo
     List<StudentResult> findByExamIn(List<Exam> exams);
 
     List<StudentResult> findByExam(Exam exam);
+
+    List<StudentResult> findByStudent(User student);
 }

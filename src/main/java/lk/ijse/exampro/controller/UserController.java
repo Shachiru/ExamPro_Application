@@ -39,7 +39,7 @@ public class UserController {
 
     @GetMapping("/profile")
     public ResponseEntity<ResponseDTO> getUserProfile(Authentication authentication) {
-        String email = authentication.getName(); // Extract email from the authenticated user
+        String email = authentication.getName();
         UserDTO userDTO = userService.searchUser(email);
         if (userDTO == null) {
             return new ResponseEntity<>(new ResponseDTO(
@@ -90,9 +90,7 @@ public class UserController {
                 return ResponseEntity.status(HttpStatus.FORBIDDEN).body(
                         new ResponseDTO(VarList.FORBIDDEN, "Only teachers can be registered by admins", null));
             }
-
             int res = userService.saveUser(userDTO);
-
             switch (res) {
                 case VarList.CREATED:
                     String token = jwtUtil.generateToken(userDTO);
@@ -125,9 +123,7 @@ public class UserController {
                 return ResponseEntity.status(HttpStatus.FORBIDDEN).body(
                         new ResponseDTO(VarList.FORBIDDEN, "Only students can register themselves", null));
             }
-
             int res = userService.saveUser(userDTO);
-
             switch (res) {
                 case VarList.CREATED:
                     String token = jwtUtil.generateToken(userDTO);
@@ -161,7 +157,8 @@ public class UserController {
             List<UserDTO> users = userService.getAllUsers(authenticatedRole);
             return ResponseEntity.ok(new ResponseDTO(VarList.OK, "Users retrieved successfully", users));
         } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(new ResponseDTO(VarList.INTERNAL_SERVER_ERROR, e.getMessage(), null));
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(
+                    new ResponseDTO(VarList.INTERNAL_SERVER_ERROR, e.getMessage(), null));
         }
     }
 
@@ -172,26 +169,30 @@ public class UserController {
             List<UserDTO> admins = userService.getAllAdmins();
             return ResponseEntity.ok(new ResponseDTO(VarList.OK, "Admins retrieved successfully", admins));
         } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(new ResponseDTO(VarList.INTERNAL_SERVER_ERROR, e.getMessage(), null));
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(
+                    new ResponseDTO(VarList.INTERNAL_SERVER_ERROR, e.getMessage(), null));
         }
     }
 
     @DeleteMapping("/delete/{email}")
-    @PreAuthorize("hasRole('ADMIN') or authentication.name == #email")
-    public ResponseEntity<ResponseDTO> deleteUser(@PathVariable String email) {
+    @PreAuthorize("hasRole('SUPER_ADMIN')")
+    public ResponseEntity<ResponseDTO> deleteAdmin(@PathVariable String email) {
         try {
-            int res = userService.deleteUserByEmail(email);
-
-            switch (res) {
-                case VarList.OK:
-                    return ResponseEntity.status(HttpStatus.OK).body(
-                            new ResponseDTO(VarList.OK, "User deleted successfully", null));
-                case VarList.NOT_FOUND:
-                    return ResponseEntity.status(HttpStatus.NOT_FOUND).body(
-                            new ResponseDTO(VarList.NOT_FOUND, "User not found", null));
-                default:
-                    return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(
-                            new ResponseDTO(VarList.BAD_REQUEST, "Failed to delete user", null));
+            UserDTO user = userService.searchUser(email);
+            if (user == null) {
+                return ResponseEntity.status(HttpStatus.NOT_FOUND).body(
+                        new ResponseDTO(VarList.NOT_FOUND, "User not found", null));
+            }
+            if (user.getRole() == UserRole.SUPER_ADMIN) {
+                return ResponseEntity.status(HttpStatus.FORBIDDEN).body(
+                        new ResponseDTO(VarList.FORBIDDEN, "Cannot delete a Super Admin", null));
+            }
+            int res = userService.deleteUser(email);
+            if (res == VarList.OK) {
+                return ResponseEntity.ok(new ResponseDTO(VarList.OK, "Admin deleted successfully", null));
+            } else {
+                return ResponseEntity.status(HttpStatus.NOT_FOUND).body(
+                        new ResponseDTO(VarList.NOT_FOUND, "User not found", null));
             }
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(
@@ -204,7 +205,6 @@ public class UserController {
     public ResponseEntity<ResponseDTO> updateUserProfile(@RequestParam String email, @RequestBody @Valid UserDTO userDTO) {
         try {
             int res = userService.updateUserProfile(email, userDTO);
-
             switch (res) {
                 case VarList.OK:
                     UserDTO updatedUser = userService.searchUser(email);
@@ -226,23 +226,6 @@ public class UserController {
         }
     }
 
-    @PutMapping("/deactivate")
-    @PreAuthorize("authentication.name == #email and hasRole('ADMIN')")
-    public ResponseEntity<ResponseDTO> deactivateUser(@RequestParam String email) {
-        try {
-            int res = userService.deactivateUser(email);
-            if (res == VarList.OK) {
-                return ResponseEntity.ok(new ResponseDTO(VarList.OK, "Profile deactivated successfully", null));
-            } else {
-                return ResponseEntity.status(HttpStatus.NOT_FOUND).body(
-                        new ResponseDTO(VarList.NOT_FOUND, "User not found", null));
-            }
-        } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(
-                    new ResponseDTO(VarList.INTERNAL_SERVER_ERROR, e.getMessage(), null));
-        }
-    }
-
     @PutMapping("/deactivate/{email}")
     @PreAuthorize("hasRole('SUPER_ADMIN')")
     public ResponseEntity<ResponseDTO> deactivateUserBySuperAdmin(@PathVariable String email) {
@@ -256,7 +239,6 @@ public class UserController {
                 return ResponseEntity.status(HttpStatus.FORBIDDEN).body(
                         new ResponseDTO(VarList.FORBIDDEN, "Cannot deactivate another Super Admin", null));
             }
-
             int res = userService.deactivateUser(email);
             if (res == VarList.OK) {
                 return ResponseEntity.ok(new ResponseDTO(VarList.OK, "User deactivated successfully by Super Admin", null));
@@ -274,18 +256,15 @@ public class UserController {
     @PreAuthorize("hasRole('SUPER_ADMIN')")
     public ResponseEntity<ResponseDTO> activateUserBySuperAdmin(@PathVariable String email) {
         try {
-            // Check if the user exists
             UserDTO user = userService.searchUser(email);
             if (user == null) {
                 return ResponseEntity.status(HttpStatus.NOT_FOUND).body(
                         new ResponseDTO(VarList.NOT_FOUND, "User not found", null));
             }
-            // Prevent activating another Super Admin (optional, since Super Admins shouldn't be deactivated)
             if (user.getRole() == UserRole.SUPER_ADMIN) {
                 return ResponseEntity.status(HttpStatus.FORBIDDEN).body(
                         new ResponseDTO(VarList.FORBIDDEN, "Cannot activate a Super Admin", null));
             }
-
             int res = userService.activateUser(email);
             if (res == VarList.OK) {
                 return ResponseEntity.ok(new ResponseDTO(VarList.OK, "User activated successfully by Super Admin", null));

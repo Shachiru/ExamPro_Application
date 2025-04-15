@@ -465,46 +465,90 @@ function displayAdmins() {
             ? '<span class="badge bg-success rounded-pill">Active</span>'
             : '<span class="badge bg-danger rounded-pill">Inactive</span>';
 
-        const row = `
-      <tr>
-        <td>
-          <div class="d-flex align-items-center">
-            <div class="avatar avatar-sm me-2">${getInitials(admin.fullName)}</div>
-            <div>${admin.fullName}</div>
-          </div>
-        </td>
-        <td>${admin.username}</td>
-        <td>${admin.email}</td>
-        <td>${admin.nic || "N/A"}</td>
-        <td>${admin.phoneNumber || "N/A"}</td>
-        <td>${formattedDate}</td>
-        <td>${admin.schoolName || "N/A"}</td>
-        <td>${statusBadge}</td>
-        <td>
-          <div class="dropdown">
-            <button class="btn btn-sm btn-icon" type="button" data-bs-toggle="dropdown" aria-expanded="false">
-              <i class="fas fa-ellipsis-v"></i>
-            </button>
-            <ul class="dropdown-menu dropdown-menu-end">
-              <li><a class="dropdown-item" href="#" onclick="editAdmin(${admin.id}); return false;">
-                <i class="fas fa-edit me-2 text-primary"></i>Edit
-              </a></li>
-              <li><a class="dropdown-item" href="#" onclick="viewAdminDetails(${admin.id}); return false;">
-                <i class="fas fa-eye me-2 text-info"></i>View Details
-              </a></li>
-              <li><hr class="dropdown-divider"></li>
-              <li><a class="dropdown-item ${admin.active ? "" : "text-success"}" href="#" onclick="toggleAdminStatus(${admin.id}, ${!admin.active}); return false;">
+        // Disable toggle status and delete for super admins
+        const toggleStatusItem = admin.role === "SUPER_ADMIN"
+            ? `<li><a class="dropdown-item disabled" href="#" aria-disabled="true">
+                <i class="fas fa-ban text-muted me-2"></i>Cannot deactivate Super Admin
+            </a></li>`
+            : `<li><a class="dropdown-item ${admin.active ? "" : "text-success"}" href="#" onclick="toggleAdminStatus('${admin.email}', ${!admin.active}); return false;">
                 <i class="fas ${admin.active ? "fa-ban text-warning" : "fa-check-circle text-success"} me-2"></i>
                 ${admin.active ? "Deactivate" : "Activate"}
-              </a></li>
-              <li><a class="dropdown-item text-danger" href="#" onclick="deleteAdmin(${admin.id}); return false;">
+            </a></li>`;
+
+        const deleteItem = admin.role === "SUPER_ADMIN"
+            ? `<li><a class="dropdown-item disabled" href="#" aria-disabled="true">
+                <i class="fas fa-trash-alt text-muted me-2"></i>Cannot delete Super Admin
+            </a></li>`
+            : `<li><a class="dropdown-item text-danger" href="#" onclick="deleteAdmin('${admin.email}'); return false;">
                 <i class="fas fa-trash-alt me-2"></i>Delete
-              </a></li>
-            </ul>
-          </div>
-        </td>
-      </tr>`;
+            </a></li>`;
+
+        const row = `
+            <tr>
+                <td>
+                    <div class="d-flex align-items-center">
+                        <div class="avatar avatar-sm me-2">${getInitials(admin.fullName)}</div>
+                        <div>${admin.fullName}</div>
+                    </div>
+                </td>
+                <td>${admin.username}</td>
+                <td>${admin.email}</td>
+                <td>${admin.nic || "N/A"}</td>
+                <td>${admin.phoneNumber || "N/A"}</td>
+                <td>${formattedDate}</td>
+                <td>${admin.schoolName || "N/A"}</td>
+                <td>${statusBadge}</td>
+                <td>
+                    <div class="dropdown">
+                        <button class="btn btn-sm btn-icon" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+                            <i class="fas fa-ellipsis-v"></i>
+                        </button>
+                        <ul class="dropdown-menu dropdown-menu-end">
+                            <li><a class="dropdown-item" href="#" onclick="editAdmin('${admin.email}'); return false;">
+                                <i class="fas fa-edit me-2 text-primary"></i>Edit
+                            </a></li>
+                            <li><a class="dropdown-item" href="#" onclick="viewAdminDetails('${admin.email}'); return false;">
+                                <i class="fas fa-eye me-2 text-info"></i>View Details
+                            </a></li>
+                            <li><hr class="dropdown-divider"></li>
+                            ${toggleStatusItem}
+                            ${deleteItem}
+                        </ul>
+                    </div>
+                </td>
+            </tr>`;
         tableBody.append(row);
+    }
+}
+
+function deleteAdmin(email) {
+    const token = localStorage.getItem("token");
+
+    if (confirm("Are you sure you want to delete this administrator? This action cannot be undone.")) {
+        $.ajax({
+            url: `http://localhost:8080/api/v1/user/delete/${email}`,
+            method: "DELETE",
+            headers: {
+                Authorization: "Bearer " + token,
+            },
+            success: (response) => {
+                if (response.code === 200) {
+                    showSuccess("Administrator deleted successfully");
+                    loadAllAdmins();
+                } else {
+                    showError("Failed to delete administrator: " + response.message);
+                }
+            },
+            error: (xhr) => {
+                if (xhr.status === 403) {
+                    showError("Forbidden: You cannot delete this administrator.");
+                } else if (xhr.status === 404) {
+                    showError("Administrator not found.");
+                } else {
+                    showError("Error deleting administrator: " + (xhr.responseJSON?.message || "Unknown error"));
+                }
+            },
+        });
     }
 }
 
@@ -525,8 +569,8 @@ function getInitials(name) {
         .substring(0, 2);
 }
 
-function viewAdminDetails(adminId) {
-    const admin = allAdmins.find((a) => a.id === adminId);
+function viewAdminDetails(email) {
+    const admin = allAdmins.find((a) => a.email === email);
     if (!admin) return;
 
     const formattedDate = admin.dateOfBirth ? new Date(admin.dateOfBirth).toLocaleDateString() : "N/A";
@@ -542,7 +586,7 @@ function viewAdminDetails(adminId) {
         ? '<span class="badge bg-success rounded-pill">Active</span>'
         : '<span class="badge bg-danger rounded-pill">Inactive</span>';
     $("#detailsAdminStatus").html(statusText);
-    $("#editSelectedAdmin").data("admin-id", adminId);
+    $("#editSelectedAdmin").data("admin-email", email); // Updated to use email
     $("#adminDetailsModal").modal("show");
 }
 
@@ -550,54 +594,34 @@ function editAdmin(adminId) {
     console.log("Editing admin with ID:", adminId);
 }
 
-function toggleAdminStatus(adminId, setActive) {
+function toggleAdminStatus(email, setActive) {
     const token = localStorage.getItem("token");
     const action = setActive ? "activate" : "deactivate";
+    const endpoint = setActive ? `/api/v1/user/activate/${email}` : `/api/v1/user/deactivate/${email}`;
 
     if (confirm(`Are you sure you want to ${action} this administrator?`)) {
         $.ajax({
-            url: `http://localhost:8080/api/v1/user/admin/${adminId}/status`,
+            url: `http://localhost:8080${endpoint}`,
             method: "PUT",
             headers: {
                 Authorization: "Bearer " + token,
-                "Content-Type": "application/json",
             },
-            data: JSON.stringify({ active: setActive }),
             success: (response) => {
                 if (response.code === 200) {
-                    showSuccess(`Administrator ${setActive ? "activated" : "deactivated"} successfully`);
+                    showSuccess(`Administrator ${action}d successfully`);
                     loadAllAdmins();
                 } else {
                     showError("Failed to update status: " + response.message);
                 }
             },
             error: (xhr) => {
-                showError("Error updating status: " + (xhr.responseJSON?.message || "Unknown error"));
-            },
-        });
-    }
-}
-
-function deleteAdmin(adminId) {
-    const token = localStorage.getItem("token");
-
-    if (confirm("Are you sure you want to delete this administrator? This action cannot be undone.")) {
-        $.ajax({
-            url: `http://localhost:8080/api/v1/user/admin/${adminId}`,
-            method: "DELETE",
-            headers: {
-                Authorization: "Bearer " + token,
-            },
-            success: (response) => {
-                if (response.code === 200) {
-                    showSuccess("Administrator deleted successfully");
-                    loadAllAdmins();
+                if (xhr.status === 403) {
+                    showError("Forbidden: You do not have permission to perform this action.");
+                } else if (xhr.status === 404) {
+                    showError("User not found.");
                 } else {
-                    showError("Failed to delete administrator: " + response.message);
+                    showError("Error updating status: " + (xhr.responseJSON?.message || "Unknown error"));
                 }
-            },
-            error: (xhr) => {
-                showError("Error deleting administrator: " + (xhr.responseJSON?.message || "Unknown error"));
             },
         });
     }
@@ -846,11 +870,12 @@ function initDropdownFix() {
 
 function initAdminTableFeatures() {
     $("#editSelectedAdmin").click(function () {
-        const adminIdForEdit = $(this).data("admin-id");
+        const adminEmail = $(this).data("admin-email"); // Updated to use email
         $("#adminDetailsModal").modal("hide");
-        editAdmin(adminIdForEdit);
+        editAdmin(adminEmail);
     });
 
+    // Rest of the function remains unchanged
     $("#searchAdmin").on("input", function () {
         const searchTerm = $(this).val().toLowerCase();
         filteredAdmins = allAdmins.filter((admin) => {

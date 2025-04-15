@@ -27,4 +27,6 @@ public interface UserService {
     UserDTO uploadProfilePicture(String email, MultipartFile file) throws IOException;
 
     UserDTO deleteProfilePicture(String email) throws IOException;
+
+    int deleteUser(String email);
 }

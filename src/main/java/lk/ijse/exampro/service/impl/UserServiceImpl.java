@@ -270,6 +270,44 @@ UserServiceImpl implements UserDetailsService, UserService {
     }
 
     @Override
+    public int deleteUser(String email) {
+        Optional<User> userOpt = userRepository.findByEmail(email);
+        if (userOpt.isEmpty()) {
+            return VarList.NOT_FOUND;
+        }
+        User user = userOpt.get();
+        // Delete related role-specific record
+        switch (user.getRole()) {
+            case ADMIN:
+                adminRepository.findByUser_Email(email)
+                        .ifPresent(adminRepository::delete);
+                break;
+            case TEACHER:
+                teacherRepository.findByUser_Email(email)
+                        .ifPresent(teacherRepository::delete);
+                break;
+            case STUDENT:
+                studentRepository.findByUser_Email(email)
+                        .ifPresent(studentRepository::delete);
+                break;
+            case SUPER_ADMIN:
+                // No role-specific table for SUPER_ADMIN
+                break;
+        }
+        // Delete Cloudinary profile picture if exists
+        if (user.getProfilePicturePublicId() != null) {
+            try {
+                cloudinaryService.deleteImage(user.getProfilePicturePublicId());
+            } catch (IOException e) {
+                logger.warn("Failed to delete profile picture for email {}: {}", email, e.getMessage());
+            }
+        }
+        // Delete the user
+        userRepository.delete(user);
+        return VarList.OK;
+    }
+
+    @Override
     public UserDTO uploadProfilePicture(String email, MultipartFile file) throws IOException {
         User user = userRepository.findByEmail(email)
                 .orElseThrow(() -> new IllegalArgumentException("User not found with email: " + email));

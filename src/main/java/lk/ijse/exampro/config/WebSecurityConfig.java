@@ -7,6 +7,7 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
 import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.authentication.DisabledException;
 import org.springframework.security.config.annotation.authentication.builders.AuthenticationManagerBuilder;
 import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
@@ -60,9 +61,16 @@ public class WebSecurityConfig {
                 )
                 .exceptionHandling(ex -> ex
                         .authenticationEntryPoint((request, response, authException) -> {
-                            response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
                             response.setContentType("application/json");
-                            response.getWriter().write("{\"code\": 401, \"message\": \"Authentication failed\", \"data\": null}");
+                            response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+                            String message = "Authentication failed";
+                            if (authException instanceof DisabledException) {
+                                message = "Account is deactivated";
+                                response.setStatus(HttpServletResponse.SC_FORBIDDEN); // 403 for deactivated accounts
+                            }
+                            response.getWriter().write(
+                                    "{\"code\": " + response.getStatus() + ", \"message\": \"" + message + "\", \"data\": null}"
+                            );
                         })
                 )
                 .sessionManagement(sess -> sess.sessionCreationPolicy(SessionCreationPolicy.STATELESS))

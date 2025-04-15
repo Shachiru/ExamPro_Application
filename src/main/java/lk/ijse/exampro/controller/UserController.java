@@ -243,6 +243,68 @@ public class UserController {
         }
     }
 
+    @PutMapping("/deactivate/{email}")
+    @PreAuthorize("hasRole('SUPER_ADMIN')")
+    public ResponseEntity<ResponseDTO> deactivateUserBySuperAdmin(@PathVariable String email) {
+        try {
+            UserDTO user = userService.searchUser(email);
+            if (user == null) {
+                return ResponseEntity.status(HttpStatus.NOT_FOUND).body(
+                        new ResponseDTO(VarList.NOT_FOUND, "User not found", null));
+            }
+            if (user.getRole() == UserRole.SUPER_ADMIN) {
+                return ResponseEntity.status(HttpStatus.FORBIDDEN).body(
+                        new ResponseDTO(VarList.FORBIDDEN, "Cannot deactivate another Super Admin", null));
+            }
+
+            int res = userService.deactivateUser(email);
+            if (res == VarList.OK) {
+                return ResponseEntity.ok(new ResponseDTO(VarList.OK, "User deactivated successfully by Super Admin", null));
+            } else {
+                return ResponseEntity.status(HttpStatus.NOT_FOUND).body(
+                        new ResponseDTO(VarList.NOT_FOUND, "User not found", null));
+            }
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(
+                    new ResponseDTO(VarList.INTERNAL_SERVER_ERROR, e.getMessage(), null));
+        }
+    }
+
+    @PutMapping("/activate/{email}")
+    @PreAuthorize("hasRole('SUPER_ADMIN')")
+    public ResponseEntity<ResponseDTO> activateUserBySuperAdmin(@PathVariable String email) {
+        try {
+            // Check if the user exists
+            UserDTO user = userService.searchUser(email);
+            if (user == null) {
+                return ResponseEntity.status(HttpStatus.NOT_FOUND).body(
+                        new ResponseDTO(VarList.NOT_FOUND, "User not found", null));
+            }
+            // Prevent activating another Super Admin (optional, since Super Admins shouldn't be deactivated)
+            if (user.getRole() == UserRole.SUPER_ADMIN) {
+                return ResponseEntity.status(HttpStatus.FORBIDDEN).body(
+                        new ResponseDTO(VarList.FORBIDDEN, "Cannot activate a Super Admin", null));
+            }
+
+            int res = userService.activateUser(email);
+            if (res == VarList.OK) {
+                return ResponseEntity.ok(new ResponseDTO(VarList.OK, "User activated successfully by Super Admin", null));
+            } else if (res == VarList.NOT_FOUND) {
+                return ResponseEntity.status(HttpStatus.NOT_FOUND).body(
+                        new ResponseDTO(VarList.NOT_FOUND, "User not found", null));
+            } else if (res == VarList.CONFLICT) {
+                return ResponseEntity.status(HttpStatus.CONFLICT).body(
+                        new ResponseDTO(VarList.CONFLICT, "User is already active", null));
+            } else {
+                return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(
+                        new ResponseDTO(VarList.INTERNAL_SERVER_ERROR, "Failed to activate user", null));
+            }
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(
+                    new ResponseDTO(VarList.INTERNAL_SERVER_ERROR, e.getMessage(), null));
+        }
+    }
+
     @PostMapping("/profile-picture")
     @PreAuthorize("authentication.name == #email")
     public ResponseEntity<ResponseDTO> uploadProfilePicture(

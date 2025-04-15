@@ -17,6 +17,7 @@ import org.modelmapper.ModelMapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.authentication.DisabledException;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -63,6 +64,11 @@ UserServiceImpl implements UserDetailsService, UserService {
     public UserDetails loadUserByUsername(String email) throws UsernameNotFoundException {
         User user = userRepository.findByEmail(email)
                 .orElseThrow(() -> new UsernameNotFoundException("User not found with email: " + email));
+
+        if (!user.isActive()) {
+            throw new DisabledException("User account is deactivated: " + email);
+        }
+
         return new org.springframework.security.core.userdetails.User(
                 user.getEmail(),
                 user.getPassword(),
@@ -242,6 +248,24 @@ UserServiceImpl implements UserDetailsService, UserService {
         }
         user.setActive(false);
         userRepository.save(user);
+        return VarList.OK;
+    }
+
+    @Override
+    public int activateUser(String email) {
+        Optional<User> userOpt = userRepository.findByEmail(email);
+        if (userOpt.isEmpty()) {
+            logger.warn("User not found for email: {}", email);
+            return VarList.NOT_FOUND;
+        }
+        User user = userOpt.get();
+        if (user.isActive()) {
+            logger.info("User is already active: {}", email);
+            return VarList.CONFLICT;
+        }
+        user.setActive(true);
+        userRepository.save(user);
+        logger.info("User activated successfully: {}", email);
         return VarList.OK;
     }
 

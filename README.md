@@ -21,6 +21,12 @@
   
 - **Create Exam**: ![Screenshot 2025-04-16 224027](https://github.com/user-attachments/assets/ede321a1-48d5-4afc-84a2-6289d583949c)
 
+- **Admin Manage**: ![Screenshot 2025-04-16 225100](https://github.com/user-attachments/assets/c45a981e-37fa-423f-837d-3c83f52fadc4)
+
+- ![Screenshot 2025-04-16 224725](https://github.com/user-attachments/assets/164ebd38-28db-43df-b3b6-c3c4e014c0f4)
+
+
+
 *Note: Replace the placeholder paths with actual image links or file paths in your repository.*
 
 ## Technologies Used

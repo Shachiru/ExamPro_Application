@@ -13,7 +13,7 @@
 
 ## Screenshots
 
-- **Home Page**: ![Home Page](ExamPro_FrontEnd/static/screenshots/Screenshot 2025-04-16 213815.png)
+- **Home Page**: ![Home Page](screenshots/Screenshot 2025-04-16 213815.png)
 - **Dashboard**: ![Dashboard](path_to_dashboard_screenshot)
 - **Exam Page**: ![Exam Page](path_to_exam_page_screenshot)
 

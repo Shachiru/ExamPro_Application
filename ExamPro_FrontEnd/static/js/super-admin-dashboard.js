@@ -1,16 +1,12 @@
 document.addEventListener("DOMContentLoaded", () => {
-    // Initially, show loading and hide content
-    $("#loading").show();
-    $("#content").hide();
-
-    // Check if token exists in localStorage
     const token = localStorage.getItem("token");
     if (!token) {
         window.location.href = "login.html";
         return;
     }
 
-    // Make AJAX call to validate token and check role
+    $("#loading").show();
+
     $.ajax({
         url: "http://localhost:8080/api/v1/user/profile",
         method: "GET",
@@ -31,7 +27,6 @@ document.addEventListener("DOMContentLoaded", () => {
                 return;
             }
 
-            // Populate user info
             $("#userFullName").text(user.fullName);
             $("#userRole").text(user.role);
             $("#modalUserFullName").text(user.fullName);
@@ -50,14 +45,12 @@ document.addEventListener("DOMContentLoaded", () => {
             $("#userInitials").text(initials);
             $("#modalUserInitials").text(initials);
 
-            // Store email for exam creation/updates
             localStorage.setItem("email", user.email);
 
-            // Hide loading and show content
-            $("#loading").hide();
-            $("#content").show();
+            $("#loading").fadeOut(300, () => {
+                $("#content").fadeIn(300);
+            });
 
-            // Load initial dashboard content
             loadDashboard();
         },
         error: (xhr) => {
@@ -71,12 +64,12 @@ document.addEventListener("DOMContentLoaded", () => {
         },
     });
 
+    $("#content").hide();
+
     function showSection(sectionId) {
         $(".dashboard-content").hide();
-        $(sectionId).show();
+        $(sectionId).fadeIn(300);
     }
-
-    $("#sidebar .menu-item").eq(4).attr("id", "examsMenu"); // Exams is the 5th menu item (index 4)
 
     // Menu event listeners
     $("#dashboardMenu").on("click", function (e) {
@@ -109,7 +102,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
         const title = $("#examTitle").val().trim();
         const subject = $("#examSubject").val().trim();
-        const startTime = $("#examStartTime").val(); // Format: YYYY-MM-DDTHH:MM
+        const startTime = $("#examStartTime").val();
         const duration = parseInt($("#examDuration").val());
         const examType = $("#examType").val();
         const createdByEmail = localStorage.getItem("email");
@@ -142,6 +135,8 @@ document.addEventListener("DOMContentLoaded", () => {
             return;
         }
 
+        $("#saveExam").prop("disabled", true).html('<div class="three-body"><div class="three-body__dot"></div><div class="three-body__dot"></div><div class="three-body__dot"></div></div>');
+
         $.ajax({
             url: "http://localhost:8080/api/v1/exam/create",
             method: "POST",
@@ -169,6 +164,9 @@ document.addEventListener("DOMContentLoaded", () => {
                 } else {
                     showError("Error creating exam: " + (xhr.responseJSON?.message || "Unknown error"));
                 }
+            },
+            complete: function () {
+                $("#saveExam").prop("disabled", false).html('<i class="bi bi-check-circle me-1"></i>Create Exam');
             },
         });
     });
@@ -217,6 +215,8 @@ document.addEventListener("DOMContentLoaded", () => {
             return;
         }
 
+        $("#updateExamBtn").prop("disabled", true).html('<div class="three-body"><div class="three-body__dot"></div><div class="three-body__dot"></div><div class="three-body__dot"></div></div>');
+
         $.ajax({
             url: `http://localhost:8080/api/v1/exam/${examId}`,
             method: "PUT",
@@ -247,6 +247,9 @@ document.addEventListener("DOMContentLoaded", () => {
                     showError("Error updating exam: " + (xhr.responseJSON?.message || "Unknown error"));
                 }
             },
+            complete: function () {
+                $("#updateExamBtn").prop("disabled", false).html('<i class="bi bi-check-circle me-1"></i>Update Exam');
+            },
         });
     });
 
@@ -275,7 +278,7 @@ document.addEventListener("DOMContentLoaded", () => {
         $("#sidebar").toggleClass("show");
     });
 
-    // Add Admin functionality (unchanged)
+    // Add Admin functionality
     const form = document.getElementById("addAdminForm");
     const saveAdminBtn = document.getElementById("saveAdmin");
 
@@ -296,11 +299,12 @@ document.addEventListener("DOMContentLoaded", () => {
         }
 
         if (password !== confirmPassword) {
-            showError("Passwords do not match");
+            showError("Passwords do not match.");
+            $("#adminConfirmPassword").addClass("is-invalid");
             return;
         }
 
-        const data = {
+        const adminData = {
             fullName,
             nic,
             dateOfBirth,
@@ -315,8 +319,11 @@ document.addEventListener("DOMContentLoaded", () => {
         const token = localStorage.getItem("token");
         if (!token) {
             showError("You are not logged in. Please log in again.");
+            redirectToLogin();
             return;
         }
+
+        $("#saveAdmin").prop("disabled", true).html('<div class="three-body"><div class="three-body__dot"></div><div class="three-body__dot"></div><div class="three-body__dot"></div></div>');
 
         $.ajax({
             url: "http://localhost:8080/api/v1/user/sign_up/admin",
@@ -325,8 +332,8 @@ document.addEventListener("DOMContentLoaded", () => {
             headers: {
                 Authorization: "Bearer " + token,
             },
-            data: JSON.stringify(data),
-            success: (response) => {
+            data: JSON.stringify(adminData),
+            success: function (response) {
                 if (response.code === 201) {
                     showSuccess("Admin added successfully!");
                     $("#addAdminModal").modal("hide");
@@ -337,10 +344,8 @@ document.addEventListener("DOMContentLoaded", () => {
                     showError(response.message || "Error adding admin");
                 }
             },
-            error: (xhr) => {
-                if (xhr.status === 406) {
-                    showError("Email already in use");
-                } else if (xhr.status === 401 || xhr.status === 403) {
+            error: function (xhr) {
+                if (xhr.status === 401 || xhr.status === 403) {
                     showError("Unauthorized. Please log in again.");
                     localStorage.removeItem("token");
                     redirectToLogin();
@@ -348,583 +353,616 @@ document.addEventListener("DOMContentLoaded", () => {
                     showError("Error adding admin: " + (xhr.responseJSON?.message || "Unknown error"));
                 }
             },
+            complete: function () {
+                $("#saveAdmin").prop("disabled", false).html('<i class="bi bi-check-circle me-1"></i>Add Administrator');
+            },
         });
     });
 
+    // Reset add admin form when modal is closed
     $("#addAdminModal").on("hidden.bs.modal", () => {
+        const form = document.getElementById("addAdminForm");
         form.reset();
         form.classList.remove("was-validated");
     });
 
-    // Initialize table features
-    initAdminTableFeatures();
-    initExamTableFeatures();
-});
+    // Load all admins
+    function loadAllAdmins(page = 0, size = 10, filter = "all", search = "") {
+        const token = localStorage.getItem("token");
+        if (!token) {
+            redirectToLogin();
+            return;
+        }
 
-// Helper functions
-function showError(message) {
-    Toastify({
-        text: message,
-        duration: 3000,
-        gravity: "top",
-        position: "right",
-        style: { background: "#ef4444" },
-    }).showToast();
-}
+        let url = `http://localhost:8080/api/v1/user/admins?page=${page}&size=${size}`;
+        if (filter !== "all") {
+            url += `&status=${filter.toUpperCase()}`;
+        }
+        if (search) {
+            url += `&search=${encodeURIComponent(search)}`;
+        }
 
-function showSuccess(message) {
-    Toastify({
-        text: message,
-        duration: 3000,
-        gravity: "top",
-        position: "right",
-        style: { background: "#10b981" },
-    }).showToast();
-}
-
-function redirectToLogin() {
-    setTimeout(() => {
-        window.location.href = "login.html";
-    }, 1000);
-}
-
-function setActiveMenu(element) {
-    $(".menu-item").removeClass("active");
-    $(element).addClass("active");
-}
-
-function loadDashboard() {
-    $("#dashboardContent").show();
-}
-
-// Admin table functions (unchanged)
-let currentPage = 1;
-const itemsPerPage = 10;
-let totalItems = 0;
-let filteredAdmins = [];
-let allAdmins = [];
-
-function loadAllAdmins() {
-    const token = localStorage.getItem("token");
-    $("#adminsTableBody").html(
-        '<tr><td colspan="9" class="text-center"><div class="spinner-border text-primary" role="status"><span class="visually-hidden">Loading...</span></div></td></tr>'
-    );
-
-    $.ajax({
-        url: "http://localhost:8080/api/v1/user/admins",
-        method: "GET",
-        headers: {
-            Authorization: "Bearer " + token,
-        },
-        success: (response) => {
-            if (response.code === 200 && response.data) {
-                allAdmins = response.data;
-                filteredAdmins = [...allAdmins];
-                totalItems = filteredAdmins.length;
-                updatePaginationInfo();
-                displayAdmins();
-            } else {
-                showError("Failed to load admins: " + response.message);
-            }
-        },
-        error: (xhr) => {
-            if (xhr.status === 401 || xhr.status === 403) {
-                showError("Unauthorized access to admins list");
-                localStorage.removeItem("token");
-                redirectToLogin();
-            } else {
-                showError("Error loading admins: " + (xhr.responseJSON?.message || "Unknown error"));
-            }
-        },
-    });
-}
-
-function displayAdmins() {
-    const tableBody = $("#adminsTableBody");
-    tableBody.empty();
-
-    if (filteredAdmins.length === 0) {
-        tableBody.html('<tr><td colspan="9" class="text-center">No administrators found</td></tr>');
-        return;
+        $.ajax({
+            url: url,
+            method: "GET",
+            headers: {
+                Authorization: "Bearer " + token,
+            },
+            success: function (response) {
+                if (response.code === 200 && response.data) {
+                    updateAdminsTable(response.data.content, response.data);
+                } else {
+                    showError("Error loading admins");
+                }
+            },
+            error: function (xhr) {
+                if (xhr.status === 401 || xhr.status === 403) {
+                    showError("Unauthorized. Please log in again.");
+                    localStorage.removeItem("token");
+                    redirectToLogin();
+                } else {
+                    showError("Error loading admins: " + (xhr.responseJSON?.message || "Unknown error"));
+                }
+            },
+        });
     }
 
-    const startIndex = (currentPage - 1) * itemsPerPage;
-    const endIndex = Math.min(startIndex + itemsPerPage, filteredAdmins.length);
+    // Update admins table
+    function updateAdminsTable(admins, pageInfo) {
+        const $tbody = $("#adminsTableBody");
+        $tbody.empty();
 
-    $("#showingStart").text(startIndex + 1);
-    $("#showingEnd").text(endIndex);
-    $("#totalAdmins").text(filteredAdmins.length);
+        if (!admins || admins.length === 0) {
+            $tbody.append('<tr><td colspan="9" class="text-center">No administrators found</td></tr>');
+            updatePagination(0, 0, 0);
+            return;
+        }
 
-    $("#prevPage").prop("disabled", currentPage === 1);
-    $("#nextPage").prop("disabled", endIndex >= filteredAdmins.length);
+        admins.forEach((admin) => {
+            const status = admin.active ? "Active" : "Inactive";
+            const statusClass = admin.active ? "text-success" : "text-danger";
+            const row = `
+                <tr>
+                    <td>${admin.fullName}</td>
+                    <td>${admin.username}</td>
+                    <td>${admin.email}</td>
+                    <td>${admin.nic}</td>
+                    <td>${admin.phoneNumber || "N/A"}</td>
+                    <td>${admin.dateOfBirth || "N/A"}</td>
+                    <td>${admin.schoolName || "N/A"}</td>
+                    <td><span class="${statusClass}">${status}</span></td>
+                    <td>
+                        <div class="dropdown">
+                            <button class="btn-icon dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+                                <i class="fas fa-ellipsis-v"></i>
+                            </button>
+                            <ul class="dropdown-menu dropdown-menu-end">
+                                <li><a class="dropdown-item view-admin" href="#" data-email="${admin.email}">View Details</a></li>
+                                <li><a class="dropdown-item edit-admin" href="#" data-email="${admin.email}">Edit</a></li>
+                                <li><a class="dropdown-item ${admin.active ? "deactivate-admin" : "activate-admin"}" href="#" data-email="${admin.email}">
+                                    ${admin.active ? "Deactivate" : "Activate"}
+                                </a></li>
+                                <li><a class="dropdown-item delete-admin" href="#" data-email="${admin.email}">Delete</a></li>
+                            </ul>
+                        </div>
+                    </td>
+                </tr>`;
+            $tbody.append(row);
+        });
 
-    for (let i = startIndex; i < endIndex; i++) {
-        const admin = filteredAdmins[i];
-        const formattedDate = admin.dateOfBirth ? new Date(admin.dateOfBirth).toLocaleDateString() : "N/A";
-        const statusBadge = admin.active
-            ? '<span class="badge bg-success rounded-pill">Active</span>'
-            : '<span class="badge bg-danger rounded-pill">Inactive</span>';
+        updatePagination(pageInfo.number, pageInfo.totalPages, pageInfo.totalElements);
+    }
 
-        // Disable toggle status and delete for super admins
-        const toggleStatusItem = admin.role === "SUPER_ADMIN"
-            ? `<li><a class="dropdown-item disabled" href="#" aria-disabled="true">
-                <i class="fas fa-ban text-muted me-2"></i>Cannot deactivate Super Admin
-            </a></li>`
-            : `<li><a class="dropdown-item ${admin.active ? "" : "text-success"}" href="#" onclick="toggleAdminStatus('${admin.email}', ${!admin.active}); return false;">
-                <i class="fas ${admin.active ? "fa-ban text-warning" : "fa-check-circle text-success"} me-2"></i>
-                ${admin.active ? "Deactivate" : "Activate"}
-            </a></li>`;
+    // Update pagination
+    function updatePagination(currentPage, totalPages, totalItems) {
+        const start = currentPage * 10 + 1;
+        const end = Math.min((currentPage + 1) * 10, totalItems);
+        $("#showingStart").text(start);
+        $("#showingEnd").text(end);
+        $("#totalAdmins").text(totalItems);
 
-        const deleteItem = admin.role === "SUPER_ADMIN"
-            ? `<li><a class="dropdown-item disabled" href="#" aria-disabled="true">
-                <i class="fas fa-trash-alt text-muted me-2"></i>Cannot delete Super Admin
-            </a></li>`
-            : `<li><a class="dropdown-item text-danger" href="#" onclick="deleteAdmin('${admin.email}'); return false;">
-                <i class="fas fa-trash-alt me-2"></i>Delete
-            </a></li>`;
+        $("#prevPage").prop("disabled", currentPage === 0);
+        $("#nextPage").prop("disabled", currentPage >= totalPages - 1);
+    }
 
-        const row = `
+    // Load exams
+    function loadExams(filter = "all", search = "") {
+        const token = localStorage.getItem("token");
+        if (!token) {
+            redirectToLogin();
+            return;
+        }
+
+        let url = `http://localhost:8080/api/v1/exam/all`;
+        if (filter !== "all") {
+            url += `?status=${filter.toUpperCase()}`;
+        }
+        if (search) {
+            url += `${filter === "all" ? "?" : "&"}search=${encodeURIComponent(search)}`;
+        }
+
+        // Show loader
+        $("#loading").show();
+        $("#examsTableBody").html('<tr><td colspan="8" class="text-center">Loading...</td></tr>');
+
+        $.ajax({
+            url: url,
+            method: "GET",
+            headers: {
+                Authorization: "Bearer " + token,
+            },
+            success: function (response) {
+                if (response.code === 200 && response.data) {
+                    updateExamsTable(response.data);
+                } else {
+                    showError("Error loading exams: " + (response.message || "No data returned"));
+                }
+            },
+            error: function (xhr) {
+                if (xhr.status === 401 || xhr.status === 403) {
+                    showError("Unauthorized. Please log in again.");
+                    localStorage.removeItem("token");
+                    redirectToLogin();
+                } else if (xhr.status === 404) {
+                    showError("Exam endpoint not found. Please contact support.");
+                } else {
+                    showError("Error loading exams: " + (xhr.responseJSON?.message || "Unknown error"));
+                }
+            },
+            complete: function () {
+                $("#loading").hide();
+            },
+        });
+    }
+
+    // Update exams table
+    function updateExamsTable(exams) {
+        const $tbody = $("#examsTableBody");
+        $tbody.empty();
+
+        if (!exams || exams.length === 0) {
+            $tbody.append('<tr><td colspan="8" class="text-center">No exams found</td></tr>');
+            $("#examShowingStart").text(0);
+            $("#examShowingEnd").text(0);
+            $("#totalExams").text(0);
+            $("#examPrevPage").prop("disabled", true);
+            $("#examNextPage").prop("disabled", true);
+            return;
+        }
+
+        exams.forEach((exam) => {
+            const startTime = new Date(exam.startTime).toLocaleString();
+            const status = exam.status || (new Date(exam.startTime) > new Date() ? "Upcoming" : "Past");
+            const statusClass = status === "Upcoming" ? "text-primary" : "text-muted";
+            const row = `
             <tr>
-                <td>
-                    <div class="d-flex align-items-center">
-                        <div class="avatar avatar-sm me-2">${getInitials(admin.fullName)}</div>
-                        <div>${admin.fullName}</div>
-                    </div>
-                </td>
-                <td>${admin.username}</td>
-                <td>${admin.email}</td>
-                <td>${admin.nic || "N/A"}</td>
-                <td>${admin.phoneNumber || "N/A"}</td>
-                <td>${formattedDate}</td>
-                <td>${admin.schoolName || "N/A"}</td>
-                <td>${statusBadge}</td>
+                <td>${exam.title}</td>
+                <td>${exam.subject}</td>
+                <td>${startTime}</td>
+                <td>${exam.duration} min</td>
+                <td>${exam.examType}</td>
+                <td>${exam.createdByEmail}</td>
+                <td><span class="${statusClass}">${status}</span></td>
                 <td>
                     <div class="dropdown">
-                        <button class="btn btn-sm btn-icon" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+                        <button class="btn-icon dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false">
                             <i class="fas fa-ellipsis-v"></i>
                         </button>
                         <ul class="dropdown-menu dropdown-menu-end">
-                            <li><a class="dropdown-item" href="#" onclick="editAdmin('${admin.email}'); return false;">
-                                <i class="fas fa-edit me-2 text-primary"></i>Edit
-                            </a></li>
-                            <li><a class="dropdown-item" href="#" onclick="viewAdminDetails('${admin.email}'); return false;">
-                                <i class="fas fa-eye me-2 text-info"></i>View Details
-                            </a></li>
-                            <li><hr class="dropdown-divider"></li>
-                            ${toggleStatusItem}
-                            ${deleteItem}
+                            <li><a class="dropdown-item view-exam" href="#" data-id="${exam.id}">View Details</a></li>
+                            <li><a class="dropdown-item edit-exam" href="#" data-id="${exam.id}">Edit</a></li>
+                            <li><a class="dropdown-item delete-exam" href="#" data-id="${exam.id}">Delete</a></li>
                         </ul>
                     </div>
                 </td>
             </tr>`;
-        tableBody.append(row);
+            $tbody.append(row);
+        });
+
+        $("#examShowingStart").text(1);
+        $("#examShowingEnd").text(exams.length);
+        $("#totalExams").text(exams.length);
+        $("#examPrevPage").prop("disabled", true);
+        $("#examNextPage").prop("disabled", true);
     }
-}
 
-function deleteAdmin(email) {
-    const token = localStorage.getItem("token");
+    // Update exam pagination
+    function updateExamPagination(currentPage, totalPages, totalItems) {
+        const start = currentPage * 10 + 1;
+        const end = Math.min((currentPage + 1) * 10, totalItems);
+        $("#examShowingStart").text(start);
+        $("#examShowingEnd").text(end);
+        $("#totalExams").text(totalItems);
 
-    if (confirm("Are you sure you want to delete this administrator? This action cannot be undone.")) {
+        $("#examPrevPage").prop("disabled", currentPage === 0);
+        $("#examNextPage").prop("disabled", currentPage >= totalPages - 1);
+    }
+
+    // Handle edit admin
+    $("#adminsTableBody").on("click", ".edit-admin", function (e) {
+        e.preventDefault();
+        const email = $(this).data("email");
+        const token = localStorage.getItem("token");
+
         $.ajax({
-            url: `http://localhost:8080/api/v1/user/delete/${email}`,
-            method: "DELETE",
+            url: `http://localhost:8080/api/v1/user/profile/${email}`,
+            method: "GET",
             headers: {
                 Authorization: "Bearer " + token,
             },
-            success: (response) => {
-                if (response.code === 200) {
-                    showSuccess("Administrator deleted successfully");
-                    loadAllAdmins();
+            success: function (response) {
+                if (response.code === 200 && response.data) {
+                    const admin = response.data;
+                    $("#editAdminEmail").val(admin.email);
+                    $("#editAdminFullName").val(admin.fullName);
+                    $("#editAdminNIC").val(admin.nic);
+                    $("#editAdminDOB").val(admin.dateOfBirth);
+                    $("#editAdminPhone").val(admin.phoneNumber);
+                    $("#editAdminSchoolName").val(admin.schoolName);
+                    $("#editAdminUsername").val(admin.username);
+                    $("#editAdminModal").modal("show");
                 } else {
-                    showError("Failed to delete administrator: " + response.message);
+                    showError("Error fetching admin details");
                 }
             },
-            error: (xhr) => {
-                if (xhr.status === 403) {
-                    showError("Forbidden: You cannot delete this administrator.");
-                } else if (xhr.status === 404) {
-                    showError("Administrator not found.");
-                } else {
-                    showError("Error deleting administrator: " + (xhr.responseJSON?.message || "Unknown error"));
-                }
+            error: function (xhr) {
+                showError("Error fetching admin: " + (xhr.responseJSON?.message || "Unknown error"));
             },
         });
-    }
-}
+    });
 
-function updatePaginationInfo() {
-    const totalPages = Math.ceil(filteredAdmins.length / itemsPerPage);
-    if (currentPage > totalPages && totalPages > 0) {
-        currentPage = totalPages;
-    }
-}
+    // Save updated admin
+    $("#updateAdmin").on("click", function () {
+        const form = document.getElementById("editAdminForm");
+        if (!form.checkValidity()) {
+            form.classList.add("was-validated");
+            return;
+        }
 
-function getInitials(name) {
-    if (!name) return "?";
-    return name
-        .split(" ")
-        .map((word) => word[0])
-        .join("")
-        .toUpperCase()
-        .substring(0, 2);
-}
+        const adminData = {
+            email: $("#editAdminEmail").val(),
+            fullName: $("#editAdminFullName").val().trim(),
+            nic: $("#editAdminNIC").val().trim(),
+            dateOfBirth: $("#editAdminDOB").val(),
+            phoneNumber: $("#editAdminPhone").val().trim(),
+            schoolName: $("#editAdminSchoolName").val().trim(),
+            username: $("#editAdminUsername").val().trim(),
+        };
 
-function viewAdminDetails(email) {
-    const admin = allAdmins.find((a) => a.email === email);
-    if (!admin) return;
-
-    const formattedDate = admin.dateOfBirth ? new Date(admin.dateOfBirth).toLocaleDateString() : "N/A";
-    $("#detailsAdminInitials").text(getInitials(admin.fullName));
-    $("#detailsAdminName").text(admin.fullName);
-    $("#detailsAdminSchool").text(admin.schoolName || "No school assigned");
-    $("#detailsAdminUsername").text(admin.username);
-    $("#detailsAdminEmail").text(admin.email);
-    $("#detailsAdminNIC").text(admin.nic || "N/A");
-    $("#detailsAdminPhone").text(admin.phoneNumber || "N/A");
-    $("#detailsAdminDOB").text(formattedDate);
-    const statusText = admin.active
-        ? '<span class="badge bg-success rounded-pill">Active</span>'
-        : '<span class="badge bg-danger rounded-pill">Inactive</span>';
-    $("#detailsAdminStatus").html(statusText);
-    $("#editSelectedAdmin").data("admin-email", email); // Updated to use email
-    $("#adminDetailsModal").modal("show");
-}
-
-function editAdmin(adminId) {
-    console.log("Editing admin with ID:", adminId);
-}
-
-function toggleAdminStatus(email, setActive) {
-    const token = localStorage.getItem("token");
-    const action = setActive ? "activate" : "deactivate";
-    const endpoint = setActive ? `/api/v1/user/activate/${email}` : `/api/v1/user/deactivate/${email}`;
-
-    if (confirm(`Are you sure you want to ${action} this administrator?`)) {
+        const token = localStorage.getItem("token");
         $.ajax({
-            url: `http://localhost:8080${endpoint}`,
+            url: "http://localhost:8080/api/v1/user/update",
+            method: "PUT",
+            contentType: "application/json",
+            headers: {
+                Authorization: "Bearer " + token,
+            },
+            data: JSON.stringify(adminData),
+            success: function (response) {
+                if (response.code === 200) {
+                    showSuccess("Admin updated successfully!");
+                    $("#editAdminModal").modal("hide");
+                    loadAllAdmins();
+                } else {
+                    showError(response.message || "Error updating admin");
+                }
+            },
+            error: function (xhr) {
+                showError("Error updating admin: " + (xhr.responseJSON?.message || "Unknown error"));
+            },
+        });
+    });
+
+    // Handle view admin details
+    $("#adminsTableBody").on("click", ".view-admin", function (e) {
+        e.preventDefault();
+        const email = $(this).data("email");
+        const token = localStorage.getItem("token");
+
+        $.ajax({
+            url: `http://localhost:8080/api/v1/user/profile/${email}`,
+            method: "GET",
+            headers: {
+                Authorization: "Bearer " + token,
+            },
+            success: function (response) {
+                if (response.code === 200 && response.data) {
+                    const admin = response.data;
+                    $("#detailsAdminName").text(admin.fullName);
+                    $("#detailsAdminSchool").text(admin.schoolName || "N/A");
+                    $("#detailsAdminUsername").text(admin.username);
+                    $("#detailsAdminEmail").text(admin.email);
+                    $("#detailsAdminNIC").text(admin.nic);
+                    $("#detailsAdminPhone").text(admin.phoneNumber || "N/A");
+                    $("#detailsAdminDOB").text(admin.dateOfBirth || "N/A");
+                    $("#detailsAdminStatus").text(admin.active ? "Active" : "Inactive");
+                    const initials = admin.fullName
+                        .split(" ")
+                        .map((n) => n[0])
+                        .join("")
+                        .substring(0, 2)
+                        .toUpperCase();
+                    $("#detailsAdminInitials").text(initials);
+                    $("#editSelectedAdmin").data("email", admin.email);
+                    $("#adminDetailsModal").modal("show");
+                } else {
+                    showError("Error fetching admin details");
+                }
+            },
+            error: function (xhr) {
+                showError("Error fetching admin: " + (xhr.responseJSON?.message || "Unknown error"));
+            },
+        });
+    });
+
+    // Handle edit from details modal
+    $("#editSelectedAdmin").on("click", function () {
+        const email = $(this).data("email");
+        $("#adminDetailsModal").modal("hide");
+        $(".edit-admin[data-email='" + email + "']").trigger("click");
+    });
+
+    // Handle deactivate admin
+    $("#adminsTableBody").on("click", ".deactivate-admin", function (e) {
+        e.preventDefault();
+        const email = $(this).data("email");
+        toggleAdminStatus(email, false);
+    });
+
+    // Handle activate admin
+    $("#adminsTableBody").on("click", ".activate-admin", function (e) {
+        e.preventDefault();
+        const email = $(this).data("email");
+        toggleAdminStatus(email, true);
+    });
+
+    // Toggle admin status
+    function toggleAdminStatus(email, activate) {
+        const token = localStorage.getItem("token");
+        const action = activate ? "activate" : "deactivate";
+        $.ajax({
+            url: `http://localhost:8080/api/v1/user/${action}/${email}`,
             method: "PUT",
             headers: {
                 Authorization: "Bearer " + token,
             },
-            success: (response) => {
+            success: function (response) {
                 if (response.code === 200) {
-                    showSuccess(`Administrator ${action}d successfully`);
+                    showSuccess(`Admin ${action}d successfully!`);
                     loadAllAdmins();
                 } else {
-                    showError("Failed to update status: " + response.message);
+                    showError(response.message || `Error ${action}ing admin`);
                 }
             },
-            error: (xhr) => {
-                if (xhr.status === 403) {
-                    showError("Forbidden: You do not have permission to perform this action.");
-                } else if (xhr.status === 404) {
-                    showError("User not found.");
-                } else {
-                    showError("Error updating status: " + (xhr.responseJSON?.message || "Unknown error"));
-                }
+            error: function (xhr) {
+                showError(`Error ${action}ing admin: ` + (xhr.responseJSON?.message || "Unknown error"));
             },
         });
     }
-}
 
-// Exam table functions
-let examCurrentPage = 1;
-const examItemsPerPage = 10;
-let totalExamItems = 0;
-let filteredExams = [];
-let allExams = [];
-
-function loadExams() {
-    const token = localStorage.getItem("token");
-
-    $("#examsTableBody").html(
-        '<tr><td colspan="8" class="text-center"><div class="spinner-border text-primary" role="status"><span class="visually-hidden">Loading...</span></div></td></tr>'
-    );
-
-    $.ajax({
-        url: "http://localhost:8080/api/v1/exam/all",
-        method: "GET",
-        headers: {
-            Authorization: "Bearer " + token,
-        },
-        success: (response) => {
-            if (response.code === 200 && response.data) {
-                allExams = response.data;
-                filteredExams = [...allExams];
-                totalExamItems = filteredExams.length;
-                examUpdatePaginationInfo();
-                displayExams();
-            } else {
-                showError("Failed to load exams: " + response.message);
-                $("#examsTableBody").html('<tr><td colspan="8" class="text-center">No exams found</td></tr>');
-            }
-        },
-        error: (xhr) => {
-            if (xhr.status === 401 || xhr.status === 403) {
-                showError("Unauthorized access to exams list");
-                localStorage.removeItem("token");
-                redirectToLogin();
-            } else {
-                showError("Error loading exams: " + (xhr.responseJSON?.message || "Unknown error"));
-                $("#examsTableBody").html('<tr><td colspan="8" class="text-center">Error loading exams</td></tr>');
-            }
-        },
-    });
-}
-
-function displayExams() {
-    const tableBody = $("#examsTableBody");
-    tableBody.empty();
-
-    if (filteredExams.length === 0) {
-        tableBody.html('<tr><td colspan="8" class="text-center">No exams found</td></tr>');
-        return;
-    }
-
-    const startIndex = (examCurrentPage - 1) * examItemsPerPage;
-    const endIndex = Math.min(startIndex + examItemsPerPage, filteredExams.length);
-
-    $("#examShowingStart").text(startIndex + 1);
-    $("#examShowingEnd").text(endIndex);
-    $("#totalExams").text(filteredExams.length);
-
-    $("#examPrevPage").prop("disabled", examCurrentPage === 1);
-    $("#examNextPage").prop("disabled", endIndex >= filteredExams.length);
-
-    for (let i = startIndex; i < endIndex; i++) {
-        const exam = filteredExams[i];
-        const startTime = new Date(exam.startTime).toLocaleString();
-        const now = new Date();
-        const examStart = new Date(exam.startTime);
-        const examEnd = new Date(examStart.getTime() + exam.duration * 60000);
-        let statusBadge = "";
-        if (now < examStart) {
-            statusBadge = '<span class="badge bg-warning rounded-pill">Upcoming</span>';
-        } else if (now >= examStart && now <= examEnd) {
-            statusBadge = '<span class="badge bg-success rounded-pill">Ongoing</span>';
-        } else {
-            statusBadge = '<span class="badge bg-danger rounded-pill">Past</span>';
+    // Handle delete admin
+    $("#adminsTableBody").on("click", ".delete-admin", function (e) {
+        e.preventDefault();
+        const email = $(this).data("email");
+        if (confirm("Are you sure you want to delete this admin?")) {
+            const token = localStorage.getItem("token");
+            $.ajax({
+                url: `http://localhost:8080/api/v1/user/delete/${email}`,
+                method: "DELETE",
+                headers: {
+                    Authorization: "Bearer " + token,
+                },
+                success: function (response) {
+                    if (response.code === 200) {
+                        showSuccess("Admin deleted successfully!");
+                        loadAllAdmins();
+                    } else {
+                        showError(response.message || "Error deleting admin");
+                    }
+                },
+                error: function (xhr) {
+                    showError("Error deleting admin: " + (xhr.responseJSON?.message || "Unknown error"));
+                },
+            });
         }
+    });
 
-        const row = `
-      <tr>
-        <td>${exam.title}</td>
-        <td>${exam.subject}</td>
-        <td>${startTime}</td>
-        <td>${exam.duration} mins</td>
-        <td>${exam.examType || "N/A"}</td>
-        <td>${exam.createdByEmail}</td>
-        <td>${statusBadge}</td>
-        <td>
-          <div class="dropdown">
-            <button class="btn btn-sm btn-icon" type="button" data-bs-toggle="dropdown" aria-expanded="false">
-              <i class="fas fa-ellipsis-v"></i>
-            </button>
-            <ul class="dropdown-menu dropdown-menu-end">
-              <li><a class="dropdown-item" href="#" onclick="editExam(${exam.id}); return false;">
-                <i class="fas fa-edit me-2 text-primary"></i>Edit
-              </a></li>
-              <li><a class="dropdown-item" href="#" onclick="viewExamDetails(${exam.id}); return false;">
-                <i class="fas fa-eye me-2 text-info"></i>View Details
-              </a></li>
-              <li><hr class="dropdown-divider"></li>
-              <li><a class="dropdown-item text-danger" href="#" onclick="deleteExam(${exam.id}); return false;">
-                <i class="fas fa-trash-alt me-2"></i>Delete
-              </a></li>
-            </ul>
-          </div>
-        </td>
-      </tr>`;
-        tableBody.append(row);
-    }
-}
+    // Handle view exam details
+    $("#examsTableBody").on("click", ".view-exam", function (e) {
+        e.preventDefault();
+        const id = $(this).data("id");
+        const token = localStorage.getItem("token");
 
-function editExam(examId) {
-    const exam = allExams.find((e) => e.id === examId);
-    if (!exam) {
-        showError("Exam not found");
-        return;
-    }
-
-    // Prefill the update modal form
-    $("#updateExamId").val(exam.id);
-    $("#updateExamTitle").val(exam.title);
-    $("#updateExamSubject").val(exam.subject);
-    // Format startTime for datetime-local (YYYY-MM-DDTHH:MM)
-    const startTime = new Date(exam.startTime).toISOString().slice(0, 16);
-    $("#updateExamStartTime").val(startTime);
-    $("#updateExamDuration").val(exam.duration);
-    $("#updateExamType").val(exam.examType);
-
-    $("#updateExamModal").modal("show");
-}
-
-function viewExamDetails(examId) {
-    console.log("Viewing exam details for ID:", examId);
-}
-
-function deleteExam(examId) {
-    const token = localStorage.getItem("token");
-
-    if (confirm("Are you sure you want to delete this exam? This action cannot be undone.")) {
         $.ajax({
-            url: `http://localhost:8080/api/v1/exam/${examId}`,
-            method: "DELETE",
+            url: `http://localhost:8080/api/v1/exam/${id}`,
+            method: "GET",
             headers: {
                 Authorization: "Bearer " + token,
             },
-            success: (response) => {
-                if (response.code === 200) {
-                    showSuccess("Exam deleted successfully");
-                    loadExams();
+            success: function (response) {
+                if (response.code === 200 && response.data) {
+                    const exam = response.data;
+                    $("#detailsExamTitle").text(exam.title);
+                    $("#detailsExamSubject").text(exam.subject);
+                    $("#detailsExamStartTime").text(new Date(exam.startTime).toLocaleString());
+                    $("#detailsExamDuration").text(exam.duration + " min");
+                    $("#detailsExamType").text(exam.examType);
+                    $("#detailsExamCreator").text(exam.createdByEmail);
+                    $("#examDetailsModal").modal("show");
                 } else {
-                    showError("Failed to delete exam: " + response.message);
+                    showError("Error fetching exam details");
                 }
             },
-            error: (xhr) => {
-                if (xhr.status === 403) {
-                    showError("Unauthorized: You cannot delete this exam");
-                } else {
-                    showError("Error deleting exam: " + (xhr.responseJSON?.message || "Unknown error"));
-                }
+            error: function (xhr) {
+                showError("Error fetching exam: " + (xhr.responseJSON?.message || "Unknown error"));
             },
         });
-    }
-}
-
-function examUpdatePaginationInfo() {
-    const totalPages = Math.ceil(filteredExams.length / examItemsPerPage);
-    if (examCurrentPage > totalPages && totalPages > 0) {
-        examCurrentPage = totalPages;
-    }
-}
-
-function initExamTableFeatures() {
-    $("#searchExam").on("input", function () {
-        const searchTerm = $(this).val().toLowerCase();
-        filteredExams = allExams.filter((exam) => {
-            return (
-                exam.title.toLowerCase().includes(searchTerm) ||
-                exam.subject.toLowerCase().includes(searchTerm) ||
-                exam.createdByEmail.toLowerCase().includes(searchTerm) ||
-                (exam.examType && exam.examType.toLowerCase().includes(searchTerm))
-            );
-        });
-        examCurrentPage = 1;
-        examUpdatePaginationInfo();
-        displayExams();
     });
 
-    $(".filter-btn[data-filter]").click(function () {
-        const filter = $(this).data("filter");
-        $(".filter-btn").removeClass("active");
-        $(this).addClass("active");
+    // Handle edit exam
+    $("#examsTableBody").on("click", ".edit-exam", function (e) {
+        e.preventDefault();
+        const id = $(this).data("id");
+        const token = localStorage.getItem("token");
 
-        const now = new Date();
-        if (filter === "all") {
-            filteredExams = [...allExams];
-        } else if (filter === "upcoming") {
-            filteredExams = allExams.filter((exam) => new Date(exam.startTime) > now);
-        } else if (filter === "past") {
-            filteredExams = allExams.filter((exam) => {
-                const startTime = new Date(exam.startTime);
-                const endTime = new Date(startTime.getTime() + exam.duration * 60000);
-                return endTime < now;
+        $.ajax({
+            url: `http://localhost:8080/api/v1/exam/${id}`,
+            method: "GET",
+            headers: {
+                Authorization: "Bearer " + token,
+            },
+            success: function (response) {
+                if (response.code === 200 && response.data) {
+                    const exam = response.data;
+                    $("#updateExamId").val(exam.id);
+                    $("#updateExamTitle").val(exam.title);
+                    $("#updateExamSubject").val(exam.subject);
+                    $("#updateExamStartTime").val(new Date(exam.startTime).toISOString().slice(0, 16));
+                    $("#updateExamDuration").val(exam.duration);
+                    $("#updateExamType").val(exam.examType);
+                    $("#updateExamModal").modal("show");
+                } else {
+                    showError("Error fetching exam details");
+                }
+            },
+            error: function (xhr) {
+                showError("Error fetching exam: " + (xhr.responseJSON?.message || "Unknown error"));
+            },
+        });
+    });
+
+    // Handle delete exam
+    $("#examsTableBody").on("click", ".delete-exam", function (e) {
+        e.preventDefault();
+        const id = $(this).data("id");
+        if (confirm("Are you sure you want to delete this exam?")) {
+            const token = localStorage.getItem("token");
+            $.ajax({
+                url: `http://localhost:8080/api/v1/exam/${id}`,
+                method: "DELETE",
+                headers: {
+                    Authorization: "Bearer " + token,
+                },
+                success: function (response) {
+                    if (response.code === 200) {
+                        showSuccess("Exam deleted successfully!");
+                        loadExams();
+                    } else {
+                        showError(response.message || "Error deleting exam");
+                    }
+                },
+                error: function (xhr) {
+                    showError("Error deleting exam: " + (xhr.responseJSON?.message || "Unknown error"));
+                },
             });
         }
-
-        examCurrentPage = 1;
-        examUpdatePaginationInfo();
-        displayExams();
     });
 
-    $("#examPrevPage").click(() => {
-        if (examCurrentPage > 1) {
-            examCurrentPage--;
-            displayExams();
-        }
-    });
-
-    $("#examNextPage").click(() => {
-        const totalPages = Math.ceil(filteredExams.length / examItemsPerPage);
-        if (examCurrentPage < totalPages) {
-            examCurrentPage++;
-            displayExams();
-        }
-    });
-
-    initDropdownFix();
-}
-
-function initDropdownFix() {
-    $(document).on("show.bs.dropdown", ".table-responsive .dropdown", function (e) {
-        const $toggleBtn = $(e.target);
-        const $dropdown = $(this).find(".dropdown-menu");
-        const togglePos = $toggleBtn.offset();
-        $dropdown.css({
-            top: togglePos.top + $toggleBtn.outerHeight() + "px",
-            left: togglePos.left - $dropdown.outerWidth() + $toggleBtn.outerWidth() + "px",
-        });
-    });
-}
-
-function initAdminTableFeatures() {
-    $("#editSelectedAdmin").click(function () {
-        const adminEmail = $(this).data("admin-email"); // Updated to use email
-        $("#adminDetailsModal").modal("hide");
-        editAdmin(adminEmail);
-    });
-
-    // Rest of the function remains unchanged
-    $("#searchAdmin").on("input", function () {
-        const searchTerm = $(this).val().toLowerCase();
-        filteredAdmins = allAdmins.filter((admin) => {
-            return (
-                admin.fullName.toLowerCase().includes(searchTerm) ||
-                admin.username.toLowerCase().includes(searchTerm) ||
-                admin.email.toLowerCase().includes(searchTerm) ||
-                (admin.schoolName && admin.schoolName.toLowerCase().includes(searchTerm)) ||
-                (admin.nic && admin.nic.toLowerCase().includes(searchTerm)) ||
-                (admin.phoneNumber && admin.phoneNumber.toLowerCase().includes(searchTerm))
-            );
-        });
-        currentPage = 1;
-        updatePaginationInfo();
-        displayAdmins();
-    });
-
-    $(".filter-btn").click(function () {
-        const filter = $(this).data("filter");
+    // Filter admins
+    $(".filter-btn").on("click", function () {
         $(".filter-btn").removeClass("active");
         $(this).addClass("active");
-
-        if (filter === "all") {
-            filteredAdmins = [...allAdmins];
-        } else if (filter === "active") {
-            filteredAdmins = allAdmins.filter((admin) => admin.active);
-        } else if (filter === "inactive") {
-            filteredAdmins = allAdmins.filter((admin) => !admin.active);
-        }
-
-        currentPage = 1;
-        updatePaginationInfo();
-        displayAdmins();
+        const filter = $(this).data("filter");
+        loadAllAdmins(0, 10, filter, $("#searchAdmin").val());
     });
 
-    $("#prevPage").click(() => {
-        if (currentPage > 1) {
-            currentPage--;
-            displayAdmins();
-        }
+    // Search admins
+    $("#searchAdmin").on("input", function () {
+        const search = $(this).val();
+        const filter = $(".filter-btn.active").data("filter");
+        loadAllAdmins(0, 10, filter, search);
     });
 
-    $("#nextPage").click(() => {
-        const totalPages = Math.ceil(filteredAdmins.length / itemsPerPage);
-        if (currentPage < totalPages) {
-            currentPage++;
-            displayAdmins();
-        }
+    // Filter exams
+    $(".filter-btn").on("click", function () {
+        $(".filter-btn").removeClass("active");
+        $(this).addClass("active");
+        const filter = $(this).data("filter");
+        loadExams(0, 10, filter, $("#searchExam").val());
     });
 
-    initDropdownFix();
-}
+    // Search exams
+    $("#searchExam").on("input", function () {
+        const search = $(this).val();
+        const filter = $(".filter-btn.active").data("filter");
+        loadExams(0, 10, filter, search);
+    });
+
+    // Pagination controls
+    $("#prevPage").on("click", function () {
+        const currentPage = parseInt($("#showingStart").text()) / 10;
+        const filter = $(".filter-btn.active").data("filter");
+        loadAllAdmins(currentPage - 1, 10, filter, $("#searchAdmin").val());
+    });
+
+    $("#nextPage").on("click", function () {
+        const currentPage = parseInt($("#showingStart").text()) / 10;
+        const filter = $(".filter-btn.active").data("filter");
+        loadAllAdmins(currentPage + 1, 10, filter, $("#searchAdmin").val());
+    });
+
+    $("#examPrevPage").on("click", function () {
+        const currentPage = parseInt($("#examShowingStart").text()) / 10;
+        const filter = $(".filter-btn.active").data("filter");
+        loadExams(currentPage - 1, 10, filter, $("#searchExam").val());
+    });
+
+    $("#examNextPage").on("click", function () {
+        const currentPage = parseInt($("#examShowingStart").text()) / 10;
+        const filter = $(".filter-btn.active").data("filter");
+        loadExams(currentPage + 1, 10, filter, $("#searchExam").val());
+    });
+
+    // Load dashboard stats
+    function loadDashboard() {
+        const token = localStorage.getItem("token");
+        $.ajax({
+            url: "http://localhost:8080/api/v1/dashboard/stats",
+            method: "GET",
+            headers: {
+                Authorization: "Bearer " + token,
+            },
+            success: function (response) {
+                if (response.code === 200 && response.data) {
+                    $("#statsCards .card-value").eq(0).text(response.data.totalInstitutions);
+                    $("#statsCards .card-value").eq(1).text(response.data.activeAdmins);
+                    $("#statsCards .card-value").eq(2).text(response.data.totalCourses);
+                    $("#statsCards .card-value").eq(3).text(response.data.examsThisMonth);
+                }
+            },
+            error: function (xhr) {
+                showError("Error loading dashboard stats");
+            },
+        });
+    }
+
+    // Utility functions
+    function setActiveMenu(menu) {
+        $(".menu-item").removeClass("active");
+        $(menu).addClass("active");
+    }
+
+    function showSuccess(message) {
+        Toastify({
+            text: message,
+            duration: 3000,
+            backgroundColor: "linear-gradient(to right, #00b09b, #96c93d)",
+            className: "toast-success",
+        }).showToast();
+    }
+
+    function showError(message) {
+        Toastify({
+            text: message,
+            duration: 3000,
+            backgroundColor: "linear-gradient(to right, #ff5f6d, #ffc371)",
+            className: "toast-error",
+        }).showToast();
+    }
+
+    function redirectToLogin() {
+        setTimeout(() => {
+            window.location.href = "login.html";
+        }, 2000);
+    }
+});

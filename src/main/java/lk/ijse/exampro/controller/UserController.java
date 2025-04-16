@@ -106,6 +106,9 @@ public class UserController {
                 case VarList.NOT_ACCEPTABLE:
                     return ResponseEntity.status(HttpStatus.NOT_ACCEPTABLE).body(
                             new ResponseDTO(VarList.NOT_ACCEPTABLE, "Email already used", null));
+                case VarList.BAD_REQUEST:
+                    return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(
+                            new ResponseDTO(VarList.BAD_REQUEST, "Invalid input data", null));
                 default:
                     return ResponseEntity.status(HttpStatus.BAD_GATEWAY).body(
                             new ResponseDTO(VarList.BAD_GATEWAY, "Error during registration", null));
@@ -167,10 +170,57 @@ public class UserController {
 
     @GetMapping("/admins")
     @PreAuthorize("hasRole('SUPER_ADMIN')")
-    public ResponseEntity<ResponseDTO> getAllAdmins() {
+    public ResponseEntity<ResponseDTO> getAllAdmins(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size,
+            @RequestParam(required = false) String status,
+            @RequestParam(required = false) String search) {
         try {
-            List<UserDTO> admins = userService.getAllAdmins();
-            return ResponseEntity.ok(new ResponseDTO(VarList.OK, "Admins retrieved successfully", admins));
+            List<UserDTO> admins = userService.getAllAdmins(page, size, status, search);
+            long totalElements = userService.countAllAdmins(status, search);
+            int totalPages = (int) Math.ceil((double) totalElements / size);
+
+            PageResponse pageResponse = new PageResponse(admins, page, size, totalElements, totalPages);
+            return ResponseEntity.ok(new ResponseDTO(VarList.OK, "Admins retrieved successfully", pageResponse));
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(
+                    new ResponseDTO(VarList.INTERNAL_SERVER_ERROR, e.getMessage(), null));
+        }
+    }
+
+    @GetMapping("/teachers")
+    @PreAuthorize("hasAnyRole('ADMIN', 'SUPER_ADMIN')")
+    public ResponseEntity<ResponseDTO> getAllTeachers(@RequestParam(defaultValue = "0") int page,
+                                                      @RequestParam(defaultValue = "10") int size,
+                                                      @RequestParam(required = false) String status,
+                                                      @RequestParam(required = false) String search) {
+        try {
+            Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+            String roleString = authentication.getAuthorities().stream().findFirst().orElseThrow(() ->
+                    new IllegalStateException("No authorities found")).getAuthority();
+            UserRole authenticatedRole = UserRole.valueOf(roleString.replace("ROLE_", ""));
+            List<UserDTO> teachers;
+            long totalElements;
+            int totalPages;
+
+            if (authenticatedRole == UserRole.SUPER_ADMIN) {
+                teachers = userService.getAllTeachers(page, size, status, search);
+                totalElements = userService.countAllTeachers(status, search);
+                totalPages = (int) Math.ceil((double) totalElements / size);
+            } else {
+                // Admin can only see teachers from their institution
+                UserDTO admin = userService.searchUser(authentication.getName());
+                if (admin == null || admin.getRole() != UserRole.ADMIN) {
+                    return ResponseEntity.status(HttpStatus.FORBIDDEN).body(
+                            new ResponseDTO(VarList.FORBIDDEN, "Admin access required", null));
+                }
+                teachers = userService.getTeachersForInstitution(admin.getSchoolName(), page, size, status, search);
+                totalElements = userService.countTeachersForInstitution(admin.getSchoolName(), status, search);
+                totalPages = (int) Math.ceil((double) totalElements / size);
+            }
+
+            return ResponseEntity.ok(new ResponseDTO(VarList.OK, "Teachers retrieved successfully",
+                    new PageResponse(teachers, page, size, totalElements, totalPages)));
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(
                     new ResponseDTO(VarList.INTERNAL_SERVER_ERROR, e.getMessage(), null));
@@ -179,7 +229,7 @@ public class UserController {
 
     @DeleteMapping("/delete/{email}")
     @PreAuthorize("hasRole('SUPER_ADMIN')")
-    public ResponseEntity<ResponseDTO> deleteAdmin(@PathVariable String email) {
+    public ResponseEntity<ResponseDTO> deleteUser(@PathVariable String email) {
         try {
             UserDTO user = userService.searchUser(email);
             if (user == null) {
@@ -192,7 +242,7 @@ public class UserController {
             }
             int res = userService.deleteUser(email);
             if (res == VarList.OK) {
-                return ResponseEntity.ok(new ResponseDTO(VarList.OK, "Admin deleted successfully", null));
+                return ResponseEntity.ok(new ResponseDTO(VarList.OK, "User deleted successfully", null));
             } else {
                 return ResponseEntity.status(HttpStatus.NOT_FOUND).body(
                         new ResponseDTO(VarList.NOT_FOUND, "User not found", null));
@@ -204,13 +254,38 @@ public class UserController {
     }
 
     @PutMapping("/update")
-    @PreAuthorize("authentication.name == #email")
-    public ResponseEntity<ResponseDTO> updateUserProfile(@RequestParam String email, @RequestBody @Valid UserDTO userDTO) {
+    @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'ADMIN') or authentication.name == #userDTO.email")
+    public ResponseEntity<ResponseDTO> updateUserProfile(@RequestBody @Valid UserDTO userDTO) {
         try {
-            int res = userService.updateUserProfile(email, userDTO);
+            Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+            String authenticatedEmail = authentication.getName();
+            boolean isSuperAdmin = authentication.getAuthorities().stream()
+                    .anyMatch(a -> a.getAuthority().equals("ROLE_SUPER_ADMIN"));
+            boolean isAdmin = authentication.getAuthorities().stream()
+                    .anyMatch(a -> a.getAuthority().equals("ROLE_ADMIN"));
+
+            if (!isSuperAdmin && !isAdmin && !authenticatedEmail.equals(userDTO.getEmail())) {
+                return ResponseEntity.status(HttpStatus.FORBIDDEN).body(
+                        new ResponseDTO(VarList.FORBIDDEN, "You can only update your own profile", null));
+            }
+
+            if (isAdmin) {
+                UserDTO targetUser = userService.searchUser(userDTO.getEmail());
+                if (targetUser == null) {
+                    return ResponseEntity.status(HttpStatus.NOT_FOUND).body(
+                            new ResponseDTO(VarList.NOT_FOUND, "User not found", null));
+                }
+                UserDTO admin = userService.searchUser(authenticatedEmail);
+                if (!admin.getSchoolName().equals(targetUser.getSchoolName()) || targetUser.getRole() != UserRole.TEACHER) {
+                    return ResponseEntity.status(HttpStatus.FORBIDDEN).body(
+                            new ResponseDTO(VarList.FORBIDDEN, "Admins can only update teachers from their institution", null));
+                }
+            }
+
+            int res = userService.updateUserProfile(userDTO.getEmail(), userDTO);
             switch (res) {
                 case VarList.OK:
-                    UserDTO updatedUser = userService.searchUser(email);
+                    UserDTO updatedUser = userService.searchUser(userDTO.getEmail());
                     return ResponseEntity.status(HttpStatus.OK).body(
                             new ResponseDTO(VarList.OK, "Profile updated successfully", updatedUser));
                 case VarList.NOT_FOUND:
@@ -321,34 +396,8 @@ public class UserController {
         }
     }
 
-    @GetMapping("/teachers")
-    @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<ResponseDTO> getTeachersForAdmin(Authentication authentication) {
-        String adminEmail = authentication.getName();
-        UserDTO admin = userService.searchUser(adminEmail);
-        if (admin == null || admin.getRole() != UserRole.ADMIN) {
-            return ResponseEntity.status(HttpStatus.FORBIDDEN).body(
-                    new ResponseDTO(VarList.FORBIDDEN, "Admin access required", null));
-        }
-        List<UserDTO> teachers = userService.getTeachersForInstitution(admin.getSchoolName());
-        return ResponseEntity.ok(new ResponseDTO(VarList.OK, "Teachers retrieved successfully", teachers));
-    }
-
-    @GetMapping("/students")
-    @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<ResponseDTO> getStudentsForAdmin(Authentication authentication) {
-        String adminEmail = authentication.getName();
-        UserDTO admin = userService.searchUser(adminEmail);
-        if (admin == null || admin.getRole() != UserRole.ADMIN) {
-            return ResponseEntity.status(HttpStatus.FORBIDDEN).body(
-                    new ResponseDTO(VarList.FORBIDDEN, "Admin access required", null));
-        }
-        List<UserDTO> students = userService.getStudentsForInstitution(admin.getSchoolName());
-        return ResponseEntity.ok(new ResponseDTO(VarList.OK, "Students retrieved successfully", students));
-    }
-
     @DeleteMapping("/teachers/{email}")
-    @PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize("hasAnyRole('ADMIN', 'SUPER_ADMIN')")
     public ResponseEntity<ResponseDTO> deleteTeacher(@PathVariable String email) {
         try {
             UserDTO user = userService.searchUser(email);
@@ -358,14 +407,17 @@ public class UserController {
             }
             if (user.getRole() != UserRole.TEACHER) {
                 return ResponseEntity.status(HttpStatus.FORBIDDEN).body(
-                        new ResponseDTO(VarList.FORBIDDEN, "Only teachers can be deleted by admins", null));
+                        new ResponseDTO(VarList.FORBIDDEN, "Only teachers can be deleted", null));
             }
-            // Verify institution
-            String adminEmail = SecurityContextHolder.getContext().getAuthentication().getName();
-            UserDTO admin = userService.searchUser(adminEmail);
-            if (!admin.getSchoolName().equals(user.getSchoolName())) {
-                return ResponseEntity.status(HttpStatus.FORBIDDEN).body(
-                        new ResponseDTO(VarList.FORBIDDEN, "Cannot delete teacher from another institution", null));
+            Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+            boolean isAdmin = authentication.getAuthorities().stream()
+                    .anyMatch(a -> a.getAuthority().equals("ROLE_ADMIN"));
+            if (isAdmin) {
+                UserDTO admin = userService.searchUser(authentication.getName());
+                if (!admin.getSchoolName().equals(user.getSchoolName())) {
+                    return ResponseEntity.status(HttpStatus.FORBIDDEN).body(
+                            new ResponseDTO(VarList.FORBIDDEN, "Cannot delete teacher from another institution", null));
+                }
             }
             int res = userService.deleteUser(email);
             if (res == VarList.OK) {
@@ -376,6 +428,43 @@ public class UserController {
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(
                     new ResponseDTO(VarList.INTERNAL_SERVER_ERROR, e.getMessage(), null));
+        }
+    }
+
+    // Helper class for paginated response
+    private static class PageResponse {
+        private final List<UserDTO> content;
+        private final int number;
+        private final int size;
+        private final long totalElements;
+        private final int totalPages;
+
+        public PageResponse(List<UserDTO> content, int number, int size, long totalElements, int totalPages) {
+            this.content = content;
+            this.number = number;
+            this.size = size;
+            this.totalElements = totalElements;
+            this.totalPages = totalPages;
+        }
+
+        public List<UserDTO> getContent() {
+            return content;
+        }
+
+        public int getNumber() {
+            return number;
+        }
+
+        public int getSize() {
+            return size;
+        }
+
+        public long getTotalElements() {
+            return totalElements;
+        }
+
+        public int getTotalPages() {
+            return totalPages;
         }
     }
 }

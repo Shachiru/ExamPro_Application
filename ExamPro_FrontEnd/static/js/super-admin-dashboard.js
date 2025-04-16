@@ -71,7 +71,6 @@ document.addEventListener("DOMContentLoaded", () => {
         $(sectionId).fadeIn(300);
     }
 
-    // Menu event listeners
     $("#dashboardMenu").on("click", function (e) {
         e.preventDefault();
         showSection("#dashboardContent");
@@ -92,7 +91,13 @@ document.addEventListener("DOMContentLoaded", () => {
         loadExams();
     });
 
-    // Handle exam creation
+    $("#teachersMenu").on("click", function (e) {
+        e.preventDefault();
+        showSection("#teachersContent");
+        setActiveMenu(this);
+        loadAllTeachers();
+    });
+
     $("#saveExam").on("click", function () {
         const form = $("#createExamForm")[0];
         if (!form.checkValidity()) {
@@ -107,7 +112,6 @@ document.addEventListener("DOMContentLoaded", () => {
         const examType = $("#examType").val();
         const createdByEmail = localStorage.getItem("email");
 
-        // Client-side validation
         const now = new Date();
         const selectedStartTime = new Date(startTime);
         if (selectedStartTime <= now) {
@@ -171,7 +175,6 @@ document.addEventListener("DOMContentLoaded", () => {
         });
     });
 
-    // Handle exam update
     $("#updateExamBtn").on("click", function () {
         const form = $("#updateExamForm")[0];
         if (!form.checkValidity()) {
@@ -187,7 +190,6 @@ document.addEventListener("DOMContentLoaded", () => {
         const examType = $("#updateExamType").val();
         const createdByEmail = localStorage.getItem("email");
 
-        // Client-side validation
         const now = new Date();
         const selectedStartTime = new Date(startTime);
         if (selectedStartTime <= now) {
@@ -253,7 +255,6 @@ document.addEventListener("DOMContentLoaded", () => {
         });
     });
 
-    // Reset forms when modals are closed
     $("#createExamModal").on("hidden.bs.modal", () => {
         const form = document.getElementById("createExamForm");
         form.reset();
@@ -273,13 +274,12 @@ document.addEventListener("DOMContentLoaded", () => {
         window.location.href = "login.html";
     });
 
-    // Toggle sidebar for mobile
     $("#toggleSidebar").on("click", () => {
         $("#sidebar").toggleClass("show");
     });
 
     // Add Admin functionality
-    const form = document.getElementById("addAdminForm");
+    const adminForm = document.getElementById("addAdminForm");
     const saveAdminBtn = document.getElementById("saveAdmin");
 
     saveAdminBtn.addEventListener("click", () => {
@@ -293,8 +293,8 @@ document.addEventListener("DOMContentLoaded", () => {
         const password = document.getElementById("adminPassword").value;
         const confirmPassword = document.getElementById("adminConfirmPassword").value;
 
-        if (!form.checkValidity()) {
-            form.classList.add("was-validated");
+        if (!adminForm.checkValidity()) {
+            adminForm.classList.add("was-validated");
             return;
         }
 
@@ -337,8 +337,8 @@ document.addEventListener("DOMContentLoaded", () => {
                 if (response.code === 201) {
                     showSuccess("Admin added successfully!");
                     $("#addAdminModal").modal("hide");
-                    form.reset();
-                    form.classList.remove("was-validated");
+                    adminForm.reset();
+                    adminForm.classList.remove("was-validated");
                     loadAllAdmins();
                 } else {
                     showError(response.message || "Error adding admin");
@@ -359,14 +359,107 @@ document.addEventListener("DOMContentLoaded", () => {
         });
     });
 
-    // Reset add admin form when modal is closed
+    // Add Teacher functionality
+    const teacherForm = document.getElementById("addTeacherForm");
+    const saveTeacherBtn = document.getElementById("saveTeacher");
+
+    saveTeacherBtn.addEventListener("click", () => {
+        const fullName = document.getElementById("teacherName").value.trim();
+        const nic = document.getElementById("teacherNIC").value.trim();
+        const dateOfBirth = document.getElementById("teacherDOB").value;
+        const phoneNumber = document.getElementById("teacherPhoneNumber").value.trim();
+        const schoolName = document.getElementById("teacherSchoolName").value.trim();
+        const subject = document.getElementById("teacherSubject").value.trim();
+        const username = document.getElementById("teacherUsername").value.trim();
+        const email = document.getElementById("teacherEmail").value.trim();
+        const password = document.getElementById("teacherPassword").value;
+        const confirmPassword = document.getElementById("teacherConfirmPassword").value;
+
+        if (!teacherForm.checkValidity()) {
+            teacherForm.classList.add("was-validated");
+            return;
+        }
+
+        if (password !== confirmPassword) {
+            showError("Passwords do not match.");
+            $("#teacherConfirmPassword").addClass("is-invalid");
+            return;
+        }
+
+        const teacherData = {
+            fullName,
+            nic,
+            dateOfBirth,
+            phoneNumber,
+            schoolName,
+            subject,
+            username,
+            email,
+            password,
+            role: "TEACHER",
+        };
+
+        const token = localStorage.getItem("token");
+        if (!token) {
+            showError("You are not logged in. Please log in again.");
+            redirectToLogin();
+            return;
+        }
+
+        $("#saveTeacher").prop("disabled", true).html('<div class="three-body"><div class="three-body__dot"></div><div class="three-body__dot"></div><div class="three-body__dot"></div></div>');
+
+        $.ajax({
+            url: "http://localhost:8080/api/v1/user/sign_up/teacher",
+            method: "POST",
+            contentType: "application/json",
+            headers: {
+                Authorization: "Bearer " + token,
+            },
+            data: JSON.stringify(teacherData),
+            success: function (response) {
+                if (response.code === 201) {
+                    showSuccess("Teacher added successfully!");
+                    $("#addTeacherModal").modal("hide");
+                    teacherForm.reset();
+                    teacherForm.classList.remove("was-validated");
+                    loadAllTeachers();
+                } else {
+                    showError(response.message || "Error adding teacher");
+                }
+            },
+            error: function (xhr) {
+                if (xhr.status === 401 || xhr.status === 403) {
+                    showError("Unauthorized. Please log in again.");
+                    localStorage.removeItem("token");
+                    redirectToLogin();
+                } else {
+                    showError("Error adding teacher: " + (xhr.responseJSON?.message || "Unknown error"));
+                }
+            },
+            complete: function () {
+                $("#saveTeacher").prop("disabled", false).html('<i class="bi bi-check-circle me-1"></i>Add Teacher');
+            },
+        });
+    });
+
     $("#addAdminModal").on("hidden.bs.modal", () => {
         const form = document.getElementById("addAdminForm");
         form.reset();
         form.classList.remove("was-validated");
     });
 
-    // Load all admins
+    $("#addTeacherModal").on("hidden.bs.modal", () => {
+        const form = document.getElementById("addTeacherForm");
+        form.reset();
+        form.classList.remove("was-validated");
+    });
+
+    $("#editTeacherModal").on("hidden.bs.modal", () => {
+        const form = document.getElementById("editTeacherForm");
+        form.reset();
+        form.classList.remove("was-validated");
+    });
+
     function loadAllAdmins(page = 0, size = 10, filter = "all", search = "") {
         const token = localStorage.getItem("token");
         if (!token) {
@@ -407,7 +500,6 @@ document.addEventListener("DOMContentLoaded", () => {
         });
     }
 
-    // Update admins table
     function updateAdminsTable(admins, pageInfo) {
         const $tbody = $("#adminsTableBody");
         $tbody.empty();
@@ -421,39 +513,42 @@ document.addEventListener("DOMContentLoaded", () => {
         admins.forEach((admin) => {
             const status = admin.active ? "Active" : "Inactive";
             const statusClass = admin.active ? "text-success" : "text-danger";
+            const toggleAction = admin.active ? "deactivate-admin" : "activate-admin";
+            const toggleIcon = admin.active ? "fa-toggle-off" : "fa-toggle-on";
+            const toggleTitle = admin.active ? "Deactivate" : "Activate";
             const row = `
-                <tr>
-                    <td>${admin.fullName}</td>
-                    <td>${admin.username}</td>
-                    <td>${admin.email}</td>
-                    <td>${admin.nic}</td>
-                    <td>${admin.phoneNumber || "N/A"}</td>
-                    <td>${admin.dateOfBirth || "N/A"}</td>
-                    <td>${admin.schoolName || "N/A"}</td>
-                    <td><span class="${statusClass}">${status}</span></td>
-                    <td>
-                        <div class="dropdown">
-                            <button class="btn-icon dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false">
-                                <i class="fas fa-ellipsis-v"></i>
-                            </button>
-                            <ul class="dropdown-menu dropdown-menu-end">
-                                <li><a class="dropdown-item view-admin" href="#" data-email="${admin.email}">View Details</a></li>
-                                <li><a class="dropdown-item edit-admin" href="#" data-email="${admin.email}">Edit</a></li>
-                                <li><a class="dropdown-item ${admin.active ? "deactivate-admin" : "activate-admin"}" href="#" data-email="${admin.email}">
-                                    ${admin.active ? "Deactivate" : "Activate"}
-                                </a></li>
-                                <li><a class="dropdown-item delete-admin" href="#" data-email="${admin.email}">Delete</a></li>
-                            </ul>
-                        </div>
-                    </td>
-                </tr>`;
+            <tr>
+                <td>${admin.fullName}</td>
+                <td>${admin.username}</td>
+                <td>${admin.email}</td>
+                <td>${admin.nic}</td>
+                <td>${admin.phoneNumber || "N/A"}</td>
+                <td>${admin.dateOfBirth || "N/A"}</td>
+                <td>${admin.schoolName || "N/A"}</td>
+                <td><span class="${statusClass}">${status}</span></td>
+                <td>
+                    <div class="action-buttons">
+                        <button class="btn btn-sm btn-outline-primary view-admin me-1" data-email="${admin.email}" title="View Details">
+                            <i class="fas fa-eye"></i>
+                        </button>
+                        <button class="btn btn-sm btn-outline-warning edit-admin me-1" data-email="${admin.email}" title="Edit">
+                            <i class="fas fa-edit"></i>
+                        </button>
+                        <button class="btn btn-sm btn-outline-info ${toggleAction} me-1" data-email="${admin.email}" title="${toggleTitle}">
+                            <i class="fas ${toggleIcon}"></i>
+                        </button>
+                        <button class="btn btn-sm btn-outline-danger delete-admin" data-email="${admin.email}" title="Delete">
+                            <i class="fas fa-trash"></i>
+                        </button>
+                    </div>
+                </td>
+            </tr>`;
             $tbody.append(row);
         });
 
         updatePagination(pageInfo.number, pageInfo.totalPages, pageInfo.totalElements);
     }
 
-    // Update pagination
     function updatePagination(currentPage, totalPages, totalItems) {
         const start = currentPage * 10 + 1;
         const end = Math.min((currentPage + 1) * 10, totalItems);
@@ -465,7 +560,107 @@ document.addEventListener("DOMContentLoaded", () => {
         $("#nextPage").prop("disabled", currentPage >= totalPages - 1);
     }
 
-    // Load exams
+    function loadAllTeachers(page = 0, size = 10, filter = "all", search = "") {
+        const token = localStorage.getItem("token");
+        if (!token) {
+            redirectToLogin();
+            return;
+        }
+
+        let url = `http://localhost:8080/api/v1/user/teachers?page=${page}&size=${size}`;
+        if (filter !== "all") {
+            url += `&status=${filter.toUpperCase()}`;
+        }
+        if (search) {
+            url += `&search=${encodeURIComponent(search)}`;
+        }
+
+        $.ajax({
+            url: url,
+            method: "GET",
+            headers: {
+                Authorization: "Bearer " + token,
+            },
+            success: function (response) {
+                if (response.code === 200 && response.data) {
+                    updateTeachersTable(response.data.content, response.data);
+                } else {
+                    showError("Error loading teachers");
+                }
+            },
+            error: function (xhr) {
+                if (xhr.status === 401 || xhr.status === 403) {
+                    showError("Unauthorized. Please log in again.");
+                    localStorage.removeItem("token");
+                    redirectToLogin();
+                } else {
+                    showError("Error loading teachers: " + (xhr.responseJSON?.message || "Unknown error"));
+                }
+            },
+        });
+    }
+
+    function updateTeachersTable(teachers, pageInfo) {
+        const $tbody = $("#teachersTableBody");
+        $tbody.empty();
+
+        if (!teachers || teachers.length === 0) {
+            $tbody.append('<tr><td colspan="10" class="text-center">No teachers found</td></tr>');
+            updateTeacherPagination(0, 0, 0);
+            return;
+        }
+
+        teachers.forEach((teacher) => {
+            const status = teacher.active ? "Active" : "Inactive";
+            const statusClass = teacher.active ? "text-success" : "text-danger";
+            const toggleAction = teacher.active ? "deactivate-teacher" : "activate-teacher";
+            const toggleIcon = teacher.active ? "fa-toggle-off" : "fa-toggle-on";
+            const toggleTitle = teacher.active ? "Deactivate" : "Activate";
+            const row = `
+            <tr>
+                <td>${teacher.fullName}</td>
+                <td>${teacher.username}</td>
+                <td>${teacher.email}</td>
+                <td>${teacher.nic}</td>
+                <td>${teacher.phoneNumber || "N/A"}</td>
+                <td>${teacher.dateOfBirth || "N/A"}</td>
+                <td>${teacher.schoolName || "N/A"}</td>
+                <td>${teacher.subject || "N/A"}</td>
+                <td><span class="${statusClass}">${status}</span></td>
+                <td>
+                    <div class="action-buttons">
+                        <button class="btn btn-sm btn-outline-primary view-teacher me-1" data-email="${teacher.email}" title="View Details">
+                            <i class="fas fa-eye"></i>
+                        </button>
+                        <button class="btn btn-sm btn-outline-warning edit-teacher me-1" data-email="${teacher.email}" title="Edit">
+                            <i class="fas fa-edit"></i>
+                        </button>
+                        <button class="btn btn-sm btn-outline-info ${toggleAction} me-1" data-email="${teacher.email}" title="${toggleTitle}">
+                            <i class="fas ${toggleIcon}"></i>
+                        </button>
+                        <button class="btn btn-sm btn-outline-danger delete-teacher" data-email="${teacher.email}" title="Delete">
+                            <i class="fas fa-trash"></i>
+                        </button>
+                    </div>
+                </td>
+            </tr>`;
+            $tbody.append(row);
+        });
+
+        updateTeacherPagination(pageInfo.number, pageInfo.totalPages, pageInfo.totalElements);
+    }
+
+    function updateTeacherPagination(currentPage, totalPages, totalItems) {
+        const start = currentPage * 10 + 1;
+        const end = Math.min((currentPage + 1) * 10, totalItems);
+        $("#teacherShowingStart").text(start);
+        $("#teacherShowingEnd").text(end);
+        $("#totalTeachers").text(totalItems);
+
+        $("#teacherPrevPage").prop("disabled", currentPage === 0);
+        $("#teacherNextPage").prop("disabled", currentPage >= totalPages - 1);
+    }
+
     function loadExams(filter = "all", search = "") {
         const token = localStorage.getItem("token");
         if (!token) {
@@ -481,7 +676,6 @@ document.addEventListener("DOMContentLoaded", () => {
             url += `${filter === "all" ? "?" : "&"}search=${encodeURIComponent(search)}`;
         }
 
-        // Show loader
         $("#loading").show();
         $("#examsTableBody").html('<tr><td colspan="8" class="text-center">Loading...</td></tr>');
 
@@ -515,7 +709,6 @@ document.addEventListener("DOMContentLoaded", () => {
         });
     }
 
-    // Update exams table
     function updateExamsTable(exams) {
         const $tbody = $("#examsTableBody");
         $tbody.empty();
@@ -544,15 +737,16 @@ document.addEventListener("DOMContentLoaded", () => {
                 <td>${exam.createdByEmail}</td>
                 <td><span class="${statusClass}">${status}</span></td>
                 <td>
-                    <div class="dropdown">
-                        <button class="btn-icon dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false">
-                            <i class="fas fa-ellipsis-v"></i>
+                    <div class="action-buttons">
+                        <button class="btn btn-sm btn-outline-primary view-exam me-1" data-id="${exam.id}" title="View Details">
+                            <i class="fas fa-eye"></i>
                         </button>
-                        <ul class="dropdown-menu dropdown-menu-end">
-                            <li><a class="dropdown-item view-exam" href="#" data-id="${exam.id}">View Details</a></li>
-                            <li><a class="dropdown-item edit-exam" href="#" data-id="${exam.id}">Edit</a></li>
-                            <li><a class="dropdown-item delete-exam" href="#" data-id="${exam.id}">Delete</a></li>
-                        </ul>
+                        <button class="btn btn-sm btn-outline-warning edit-exam me-1" data-id="${exam.id}" title="Edit">
+                            <i class="fas fa-edit"></i>
+                        </button>
+                        <button class="btn btn-sm btn-outline-danger delete-exam" data-id="${exam.id}" title="Delete">
+                            <i class="fas fa-trash"></i>
+                        </button>
                     </div>
                 </td>
             </tr>`;
@@ -566,7 +760,6 @@ document.addEventListener("DOMContentLoaded", () => {
         $("#examNextPage").prop("disabled", true);
     }
 
-    // Update exam pagination
     function updateExamPagination(currentPage, totalPages, totalItems) {
         const start = currentPage * 10 + 1;
         const end = Math.min((currentPage + 1) * 10, totalItems);
@@ -578,7 +771,6 @@ document.addEventListener("DOMContentLoaded", () => {
         $("#examNextPage").prop("disabled", currentPage >= totalPages - 1);
     }
 
-    // Handle edit admin
     $("#adminsTableBody").on("click", ".edit-admin", function (e) {
         e.preventDefault();
         const email = $(this).data("email");
@@ -611,7 +803,6 @@ document.addEventListener("DOMContentLoaded", () => {
         });
     });
 
-    // Save updated admin
     $("#updateAdmin").on("click", function () {
         const form = document.getElementById("editAdminForm");
         if (!form.checkValidity()) {
@@ -653,7 +844,81 @@ document.addEventListener("DOMContentLoaded", () => {
         });
     });
 
-    // Handle view admin details
+    $("#teachersTableBody").on("click", ".edit-teacher", function (e) {
+        e.preventDefault();
+        const email = $(this).data("email");
+        const token = localStorage.getItem("token");
+
+        $.ajax({
+            url: `http://localhost:8080/api/v1/user/profile/${email}`,
+            method: "GET",
+            headers: {
+                Authorization: "Bearer " + token,
+            },
+            success: function (response) {
+                if (response.code === 200 && response.data) {
+                    const teacher = response.data;
+                    $("#editTeacherEmail").val(teacher.email);
+                    $("#editTeacherFullName").val(teacher.fullName);
+                    $("#editTeacherNIC").val(teacher.nic);
+                    $("#editTeacherDOB").val(teacher.dateOfBirth);
+                    $("#editTeacherPhone").val(teacher.phoneNumber);
+                    $("#editTeacherSchoolName").val(teacher.schoolName);
+                    $("#editTeacherSubject").val(teacher.subject);
+                    $("#editTeacherUsername").val(teacher.username);
+                    $("#editTeacherModal").modal("show");
+                } else {
+                    showError("Error fetching teacher details");
+                }
+            },
+            error: function (xhr) {
+                showError("Error fetching teacher: " + (xhr.responseJSON?.message || "Unknown error"));
+            },
+        });
+    });
+
+    $("#updateTeacher").on("click", function () {
+        const form = document.getElementById("editTeacherForm");
+        if (!form.checkValidity()) {
+            form.classList.add("was-validated");
+            return;
+        }
+
+        const teacherData = {
+            email: $("#editTeacherEmail").val(),
+            fullName: $("#editTeacherFullName").val().trim(),
+            nic: $("#editTeacherNIC").val().trim(),
+            dateOfBirth: $("#editTeacherDOB").val(),
+            phoneNumber: $("#editTeacherPhone").val().trim(),
+            schoolName: $("#editTeacherSchoolName").val().trim(),
+            subject: $("#editTeacherSubject").val().trim(),
+            username: $("#editTeacherUsername").val().trim(),
+        };
+
+        const token = localStorage.getItem("token");
+        $.ajax({
+            url: "http://localhost:8080/api/v1/user/update",
+            method: "PUT",
+            contentType: "application/json",
+            headers: {
+                Authorization: "Bearer " + token,
+            },
+            data: JSON.stringify(teacherData),
+            success: function (response) {
+                if (response.code === 200) {
+                    showSuccess("Teacher updated successfully!");
+                    $("#editTeacherModal").modal("hide");
+                    loadAllTeachers();
+                } else {
+                    showError(response.message || "Error updating teacher");
+                }
+            },
+            error: function (xhr) {
+                showError("Error updating teacher: " + (xhr.responseJSON?.message || "Unknown error"));
+            },
+        });
+    });
+
     $("#adminsTableBody").on("click", ".view-admin", function (e) {
         e.preventDefault();
         const email = $(this).data("email");
@@ -695,28 +960,84 @@ document.addEventListener("DOMContentLoaded", () => {
         });
     });
 
-    // Handle edit from details modal
+    $("#teachersTableBody").on("click", ".view-teacher", function (e) {
+        e.preventDefault();
+        const email = $(this).data("email");
+        const token = localStorage.getItem("token");
+
+        $.ajax({
+            url: `http://localhost:8080/api/v1/user/profile/${email}`,
+            method: "GET",
+            headers: {
+                Authorization: "Bearer " + token,
+            },
+            success: function (response) {
+                if (response.code === 200 && response.data) {
+                    const teacher = response.data;
+                    $("#detailsTeacherName").text(teacher.fullName);
+                    $("#detailsTeacherSchool").text(teacher.schoolName || "N/A");
+                    $("#detailsTeacherUsername").text(teacher.username);
+                    $("#detailsTeacherEmail").text(teacher.email);
+                    $("#detailsTeacherNIC").text(teacher.nic);
+                    $("#detailsTeacherPhone").text(teacher.phoneNumber || "N/A");
+                    $("#detailsTeacherDOB").text(teacher.dateOfBirth || "N/A");
+                    $("#detailsTeacherSubject").text(teacher.subject || "N/A");
+                    $("#detailsTeacherStatus").text(teacher.active ? "Active" : "Inactive");
+                    const initials = teacher.fullName
+                        .split(" ")
+                        .map((n) => n[0])
+                        .join("")
+                        .substring(0, 2)
+                        .toUpperCase();
+                    $("#detailsTeacherInitials").text(initials);
+                    $("#editSelectedTeacher").data("email", teacher.email);
+                    $("#teacherDetailsModal").modal("show");
+                } else {
+                    showError("Error fetching teacher details");
+                }
+            },
+            error: function (xhr) {
+                showError("Error fetching teacher: " + (xhr.responseJSON?.message || "Unknown error"));
+            },
+        });
+    });
+
     $("#editSelectedAdmin").on("click", function () {
         const email = $(this).data("email");
         $("#adminDetailsModal").modal("hide");
         $(".edit-admin[data-email='" + email + "']").trigger("click");
     });
 
-    // Handle deactivate admin
+    $("#editSelectedTeacher").on("click", function () {
+        const email = $(this).data("email");
+        $("#teacherDetailsModal").modal("hide");
+        $(".edit-teacher[data-email='" + email + "']").trigger("click");
+    });
+
     $("#adminsTableBody").on("click", ".deactivate-admin", function (e) {
         e.preventDefault();
         const email = $(this).data("email");
         toggleAdminStatus(email, false);
     });
 
-    // Handle activate admin
     $("#adminsTableBody").on("click", ".activate-admin", function (e) {
         e.preventDefault();
         const email = $(this).data("email");
         toggleAdminStatus(email, true);
     });
 
-    // Toggle admin status
+    $("#teachersTableBody").on("click", ".deactivate-teacher", function (e) {
+        e.preventDefault();
+        const email = $(this).data("email");
+        toggleTeacherStatus(email, false);
+    });
+
+    $("#teachersTableBody").on("click", ".activate-teacher", function (e) {
+        e.preventDefault();
+        const email = $(this).data("email");
+        toggleTeacherStatus(email, true);
+    });
+
     function toggleAdminStatus(email, activate) {
         const token = localStorage.getItem("token");
         const action = activate ? "activate" : "deactivate";
@@ -740,7 +1061,29 @@ document.addEventListener("DOMContentLoaded", () => {
         });
     }
 
-    // Handle delete admin
+    function toggleTeacherStatus(email, activate) {
+        const token = localStorage.getItem("token");
+        const action = activate ? "activate" : "deactivate";
+        $.ajax({
+            url: `http://localhost:8080/api/v1/user/${action}/${email}`,
+            method: "PUT",
+            headers: {
+                Authorization: "Bearer " + token,
+            },
+            success: function (response) {
+                if (response.code === 200) {
+                    showSuccess(`Teacher ${action}d successfully!`);
+                    loadAllTeachers();
+                } else {
+                    showError(response.message || `Error ${action}ing teacher`);
+                }
+            },
+            error: function (xhr) {
+                showError(`Error ${action}ing teacher: ` + (xhr.responseJSON?.message || "Unknown error"));
+            },
+        });
+    }
+
     $("#adminsTableBody").on("click", ".delete-admin", function (e) {
         e.preventDefault();
         const email = $(this).data("email");
@@ -767,7 +1110,32 @@ document.addEventListener("DOMContentLoaded", () => {
         }
     });
 
-    // Handle view exam details
+    $("#teachersTableBody").on("click", ".delete-teacher", function (e) {
+        e.preventDefault();
+        const email = $(this).data("email");
+        if (confirm("Are you sure you want to delete this teacher?")) {
+            const token = localStorage.getItem("token");
+            $.ajax({
+                url: `http://localhost:8080/api/v1/user/delete/${email}`,
+                method: "DELETE",
+                headers: {
+                    Authorization: "Bearer " + token,
+                },
+                success: function (response) {
+                    if (response.code === 200) {
+                        showSuccess("Teacher deleted successfully!");
+                        loadAllTeachers();
+                    } else {
+                        showError(response.message || "Error deleting teacher");
+                    }
+                },
+                error: function (xhr) {
+                    showError("Error deleting teacher: " + (xhr.responseJSON?.message || "Unknown error"));
+                },
+            });
+        }
+    });
+
     $("#examsTableBody").on("click", ".view-exam", function (e) {
         e.preventDefault();
         const id = $(this).data("id");
@@ -799,7 +1167,6 @@ document.addEventListener("DOMContentLoaded", () => {
         });
     });
 
-    // Handle edit exam
     $("#examsTableBody").on("click", ".edit-exam", function (e) {
         e.preventDefault();
         const id = $(this).data("id");
@@ -831,7 +1198,6 @@ document.addEventListener("DOMContentLoaded", () => {
         });
     });
 
-    // Handle delete exam
     $("#examsTableBody").on("click", ".delete-exam", function (e) {
         e.preventDefault();
         const id = $(this).data("id");
@@ -858,37 +1224,38 @@ document.addEventListener("DOMContentLoaded", () => {
         }
     });
 
-    // Filter admins
     $(".filter-btn").on("click", function () {
         $(".filter-btn").removeClass("active");
         $(this).addClass("active");
         const filter = $(this).data("filter");
-        loadAllAdmins(0, 10, filter, $("#searchAdmin").val());
+        const section = $(this).closest(".dashboard-content").attr("id");
+        if (section === "adminsContent") {
+            loadAllAdmins(0, 10, filter, $("#searchAdmin").val());
+        } else if (section === "examsContent") {
+            loadExams(filter, $("#searchExam").val());
+        } else if (section === "teachersContent") {
+            loadAllTeachers(0, 10, filter, $("#searchTeacher").val());
+        }
     });
 
-    // Search admins
     $("#searchAdmin").on("input", function () {
         const search = $(this).val();
         const filter = $(".filter-btn.active").data("filter");
         loadAllAdmins(0, 10, filter, search);
     });
 
-    // Filter exams
-    $(".filter-btn").on("click", function () {
-        $(".filter-btn").removeClass("active");
-        $(this).addClass("active");
-        const filter = $(this).data("filter");
-        loadExams(0, 10, filter, $("#searchExam").val());
-    });
-
-    // Search exams
     $("#searchExam").on("input", function () {
         const search = $(this).val();
         const filter = $(".filter-btn.active").data("filter");
-        loadExams(0, 10, filter, search);
+        loadExams(filter, search);
     });
 
-    // Pagination controls
+    $("#searchTeacher").on("input", function () {
+        const search = $(this).val();
+        const filter = $(".filter-btn.active").data("filter");
+        loadAllTeachers(0, 10, filter, search);
+    });
+
     $("#prevPage").on("click", function () {
         const currentPage = parseInt($("#showingStart").text()) / 10;
         const filter = $(".filter-btn.active").data("filter");
@@ -913,7 +1280,18 @@ document.addEventListener("DOMContentLoaded", () => {
         loadExams(currentPage + 1, 10, filter, $("#searchExam").val());
     });
 
-    // Load dashboard stats
+    $("#teacherPrevPage").on("click", function () {
+        const currentPage = parseInt($("#teacherShowingStart").text()) / 10;
+        const filter = $(".filter-btn.active").data("filter");
+        loadAllTeachers(currentPage - 1, 10, filter, $("#searchTeacher").val());
+    });
+
+    $("#teacherNextPage").on("click", function () {
+        const currentPage = parseInt($("#teacherShowingStart").text()) / 10;
+        const filter = $(".filter-btn.active").data("filter");
+        loadAllTeachers(currentPage + 1, 10, filter, $("#searchTeacher").val());
+    });
+
     function loadDashboard() {
         const token = localStorage.getItem("token");
         $.ajax({
@@ -936,7 +1314,14 @@ document.addEventListener("DOMContentLoaded", () => {
         });
     }
 
-    // Utility functions
+    // Toggle password visibility
+    $(".toggle-password").on("click", function () {
+        const input = $(this).closest(".input-group").find("input");
+        const type = input.attr("type") === "password" ? "text" : "password";
+        input.attr("type", type);
+        $(this).find("i").toggleClass("bi-eye bi-eye-slash");
+    });
+
     function setActiveMenu(menu) {
         $(".menu-item").removeClass("active");
         $(menu).addClass("active");

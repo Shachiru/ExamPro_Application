@@ -29,4 +29,3 @@ public class UserDTO {
 
     private boolean isActive;
 }
-

@@ -189,6 +189,11 @@ body {
     display: none;
 }
 
+.button-group {
+    display: flex;
+    gap: 1rem;
+}
+
 /* Card Styles */
 .stat-card {
     background: white;
@@ -1029,4 +1034,77 @@ body {
 #updateExamModal .btn-outline-secondary:hover {
     background-color: #e9ecef;
     color: #212529;
+}
+
+#teachersTable {
+    min-width: 1100px;
+    table-layout: fixed;
+}
+
+#teachersTable th,
+#teachersTable td {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+#teachersContent .table-card {
+    padding: 20px;
+}
+
+.action-buttons {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.action-buttons .btn {
+    padding: 4px 8px;
+    font-size: 0.85rem;
+    line-height: 1;
+    border-radius: 4px;
+}
+
+.action-buttons .btn i {
+    margin: 0;
+}
+
+.action-buttons .btn-outline-primary {
+    border-color: var(--primary);
+    color: var(--primary);
+}
+
+.action-buttons .btn-outline-primary:hover {
+    background-color: var(--primary);
+    color: white;
+}
+
+.action-buttons .btn-outline-warning {
+    border-color: var(--warning);
+    color: var(--warning);
+}
+
+.action-buttons .btn-outline-warning:hover {
+    background-color: var(--warning);
+    color: white;
+}
+
+.action-buttons .btn-outline-info {
+    border-color: var(--info);
+    color: var(--info);
+}
+
+.action-buttons .btn-outline-info:hover {
+    background-color: var(--info);
+    color: white;
+}
+
+.action-buttons .btn-outline-danger {
+    border-color: var(--danger);
+    color: var(--danger);
+}
+
+.action-buttons .btn-outline-danger:hover {
+    background-color: var(--danger);
+    color: white;
 }

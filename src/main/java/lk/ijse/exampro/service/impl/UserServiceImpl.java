@@ -12,6 +12,11 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.DisabledException;
 import org.springframework.security.core.Authentication;
@@ -28,12 +33,12 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
 import java.util.*;
+import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
 @Service
 @Transactional
-public class
-UserServiceImpl implements UserDetailsService, UserService {
+public class UserServiceImpl implements UserDetailsService, UserService {
 
     private static final Logger logger = LoggerFactory.getLogger(UserServiceImpl.class);
 
@@ -94,6 +99,11 @@ UserServiceImpl implements UserDetailsService, UserService {
         if (userRepository.existsByEmail(userDTO.getEmail())) {
             return VarList.NOT_ACCEPTABLE;
         }
+        if ((userDTO.getRole() == UserRole.ADMIN || userDTO.getRole() == UserRole.TEACHER) &&
+                (userDTO.getSchoolName() == null || userDTO.getSchoolName().isEmpty())) {
+            logger.warn("School name is required for {} registration", userDTO.getRole());
+            return VarList.BAD_REQUEST;
+        }
         User user = modelMapper.map(userDTO, User.class);
         user.setPassword(passwordEncoder.encode(userDTO.getPassword()));
         user.setActive(true);
@@ -107,10 +117,6 @@ UserServiceImpl implements UserDetailsService, UserService {
 
         if (userDTO.getRole() != UserRole.SUPER_ADMIN) {
             if (isSuperAdmin) {
-                if (userDTO.getSchoolName() == null || userDTO.getSchoolName().isEmpty()) {
-                    logger.warn("schoolName is required for Super Admin registration of {}", userDTO.getRole());
-                    return VarList.BAD_REQUEST;
-                }
                 schoolName = userDTO.getSchoolName();
             } else if (auth != null && auth.getAuthorities().stream()
                     .anyMatch(a -> a.getAuthority().equals("ROLE_ADMIN"))) {
@@ -123,6 +129,8 @@ UserServiceImpl implements UserDetailsService, UserService {
                     logger.warn("Admin has no associated schoolName for email: {}", auth.getName());
                     return VarList.BAD_REQUEST;
                 }
+            } else {
+                schoolName = userDTO.getSchoolName();
             }
         }
 
@@ -130,7 +138,7 @@ UserServiceImpl implements UserDetailsService, UserService {
             case ADMIN:
                 Admin admin = new Admin();
                 admin.setUser(user);
-                admin.setSchoolName(schoolName != null ? schoolName : userDTO.getSchoolName());
+                admin.setSchoolName(schoolName);
                 adminRepository.save(admin);
                 break;
             case TEACHER:
@@ -158,20 +166,105 @@ UserServiceImpl implements UserDetailsService, UserService {
         return VarList.CREATED;
     }
 
-    public List<UserDTO> getTeachersForInstitution(String schoolName) {
-        List<Teacher> teachers = teacherRepository.findBySchoolName(schoolName);
-        return teachers.stream()
+    @Override
+    public List<UserDTO> getAllTeachers(int page, int size, String status, String search) {
+        Pageable pageable = PageRequest.of(page, size);
+        Page<Teacher> teacherPage;
+
+        boolean isActive = status != null && status.equalsIgnoreCase("ACTIVE");
+        boolean isInactive = status != null && status.equalsIgnoreCase("INACTIVE");
+        boolean filterByStatus = isActive || isInactive;
+
+        if (search != null && !search.isEmpty()) {
+            if (filterByStatus) {
+                teacherPage = teacherRepository.findByUser_FullNameContainingIgnoreCaseOrUser_EmailContainingIgnoreCase(
+                        search, search, pageable);
+                teacherPage = new PageImpl<>(
+                        teacherPage.getContent().stream()
+                                .filter(t -> t.getUser().isActive() == isActive)
+                                .collect(Collectors.toList()),
+                        pageable,
+                        teacherPage.getTotalElements()
+                );
+            } else {
+                teacherPage = teacherRepository.findByUser_FullNameContainingIgnoreCaseOrUser_EmailContainingIgnoreCase(
+                        search, search, pageable);
+            }
+        } else if (filterByStatus) {
+            teacherPage = teacherRepository.findByUser_IsActive(isActive, pageable);
+        } else {
+            teacherPage = teacherRepository.findAll(pageable);
+        }
+
+        return teacherPage.getContent().stream()
                 .map(teacher -> convertToDTO(teacher.getUser()))
                 .collect(Collectors.toList());
     }
 
-    public List<UserDTO> getStudentsForInstitution(String schoolName) {
-        List<Student> students = studentRepository.findBySchoolName(schoolName);
-        return students.stream()
-                .map(student -> convertToDTO(student.getUser()))
+    @Override
+    public long countAllTeachers(String status, String search) {
+        boolean isActive = status != null && status.equalsIgnoreCase("ACTIVE");
+        boolean isInactive = status != null && status.equalsIgnoreCase("INACTIVE");
+        boolean filterByStatus = isActive || isInactive;
+
+        if (search != null && !search.isEmpty()) {
+            return teacherRepository.countBySearchAndStatus(search, filterByStatus ? isActive : null);
+        } else if (filterByStatus) {
+            return teacherRepository.countByUser_IsActive(isActive);
+        }
+        return teacherRepository.count();
+    }
+
+    @Override
+    public List<UserDTO> getTeachersForInstitution(String schoolName, int page, int size, String status, String search) {
+        Pageable pageable = PageRequest.of(page, size);
+        Page<Teacher> teacherPage;
+
+        boolean isActive = status != null && status.equalsIgnoreCase("ACTIVE");
+        boolean isInactive = status != null && status.equalsIgnoreCase("INACTIVE");
+        boolean filterByStatus = isActive || isInactive;
+
+        if (search != null && !search.isEmpty()) {
+            if (filterByStatus) {
+                teacherPage = teacherRepository.findBySchoolNameAndUser_FullNameContainingIgnoreCaseOrSchoolNameAndUser_EmailContainingIgnoreCase(
+                        schoolName, search, schoolName, search, pageable);
+                teacherPage = new PageImpl<>(
+                        teacherPage.getContent().stream()
+                                .filter(t -> t.getUser().isActive() == isActive)
+                                .collect(Collectors.toList()),
+                        pageable,
+                        teacherPage.getTotalElements()
+                );
+            } else {
+                teacherPage = teacherRepository.findBySchoolNameAndUser_FullNameContainingIgnoreCaseOrSchoolNameAndUser_EmailContainingIgnoreCase(
+                        schoolName, search, schoolName, search, pageable);
+            }
+        } else if (filterByStatus) {
+            teacherPage = teacherRepository.findBySchoolNameAndUser_IsActive(schoolName, isActive, pageable);
+        } else {
+            teacherPage = teacherRepository.findBySchoolName(schoolName, pageable);
+        }
+
+        return teacherPage.getContent().stream()
+                .map(teacher -> convertToDTO(teacher.getUser()))
                 .collect(Collectors.toList());
     }
 
+    @Override
+    public long countTeachersForInstitution(String schoolName, String status, String search) {
+        boolean isActive = status != null && status.equalsIgnoreCase("ACTIVE");
+        boolean isInactive = status != null && status.equalsIgnoreCase("INACTIVE");
+        boolean filterByStatus = isActive || isInactive;
+
+        if (search != null && !search.isEmpty()) {
+            return teacherRepository.countBySchoolNameAndSearchAndStatus(schoolName, search, filterByStatus ? isActive : null);
+        } else if (filterByStatus) {
+            return teacherRepository.countBySchoolNameAndUser_IsActive(schoolName, isActive);
+        }
+        return teacherRepository.countBySchoolName(schoolName);
+    }
+
+    // Other methods remain unchanged; included here for completeness
     @Override
     public List<UserDTO> getAllUsers(UserRole authenticatedRole) {
         if (authenticatedRole == UserRole.SUPER_ADMIN) {
@@ -183,7 +276,7 @@ UserServiceImpl implements UserDetailsService, UserService {
             Admin admin = adminRepository.findByUser(adminUser).orElseThrow();
             String schoolName = admin.getSchoolName();
 
-            List<UserDTO> teachers = getTeachersForInstitution(schoolName);
+            List<UserDTO> teachers = getTeachersForInstitution(schoolName, 0, Integer.MAX_VALUE, null, null);
             List<UserDTO> students = getStudentsForInstitution(schoolName);
             List<UserDTO> combined = new ArrayList<>(teachers);
             combined.addAll(students);
@@ -193,10 +286,61 @@ UserServiceImpl implements UserDetailsService, UserService {
         }
     }
 
+    public List<UserDTO> getAllAdmins(int page, int size, String status, String search) {
+        Pageable pageable = PageRequest.of(page, size);
+        Specification<User> spec = (root, query, cb) -> {
+            List<jakarta.persistence.criteria.Predicate> predicates = new ArrayList<>();
+            predicates.add(cb.equal(root.get("role"), UserRole.ADMIN));
+            if (status != null && !status.isEmpty()) {
+                predicates.add(cb.equal(root.get("isActive"), status.equalsIgnoreCase("ACTIVE"))); // Fixed field name
+            }
+            if (search != null && !search.isEmpty()) {
+                String searchPattern = "%" + search.toLowerCase() + "%";
+                predicates.add(cb.or(
+                        cb.like(cb.lower(root.get("fullName")), searchPattern),
+                        cb.like(cb.lower(root.get("email")), searchPattern),
+                        cb.like(cb.lower(root.get("username")), searchPattern)
+                ));
+            }
+            return cb.and(predicates.toArray(new jakarta.persistence.criteria.Predicate[0]));
+        };
+        return userRepository.findAll(spec, pageable).map(this::convertToDTO).getContent();
+    }
+
+    public long countAllAdmins(String status, String search) {
+        Specification<User> spec = (root, query, cb) -> {
+            List<jakarta.persistence.criteria.Predicate> predicates = new ArrayList<>();
+            predicates.add(cb.equal(root.get("role"), UserRole.ADMIN));
+            if (status != null && !status.isEmpty()) {
+                predicates.add(cb.equal(root.get("isActive"), status.equalsIgnoreCase("ACTIVE"))); // Fixed field name
+            }
+            if (search != null && !search.isEmpty()) {
+                String searchPattern = "%" + search.toLowerCase() + "%";
+                predicates.add(cb.or(
+                        cb.like(cb.lower(root.get("fullName")), searchPattern),
+                        cb.like(cb.lower(root.get("email")), searchPattern),
+                        cb.like(cb.lower(root.get("username")), searchPattern)
+                ));
+            }
+            return cb.and(predicates.toArray(new jakarta.persistence.criteria.Predicate[0]));
+        };
+        return userRepository.count(spec);
+    }
+
     @Override
-    public List<UserDTO> getAllAdmins() {
-        List<User> admins = userRepository.findAllByRole(UserRole.ADMIN);
-        return admins.stream().map(this::convertToDTO).collect(Collectors.toList());
+    public List<UserDTO> getTeachersForInstitution(String schoolName) {
+        List<Teacher> teachers = teacherRepository.findBySchoolName(schoolName);
+        return teachers.stream()
+                .map(teacher -> convertToDTO(teacher.getUser()))
+                .collect(Collectors.toList());
+    }
+
+    @Override
+    public List<UserDTO> getStudentsForInstitution(String schoolName) {
+        List<Student> students = studentRepository.findBySchoolName(schoolName);
+        return students.stream()
+                .map(student -> convertToDTO(student.getUser()))
+                .collect(Collectors.toList());
     }
 
     @Override
@@ -240,6 +384,7 @@ UserServiceImpl implements UserDetailsService, UserService {
                 teacherRepository.findByUser_Email(email)
                         .ifPresent(teacher -> {
                             teacher.setSubject(userDTO.getSubject() != null ? userDTO.getSubject() : teacher.getSubject());
+                            teacher.setSchoolName(userDTO.getSchoolName() != null ? userDTO.getSchoolName() : teacher.getSchoolName());
                             teacherRepository.save(teacher);
                         });
                 break;
@@ -247,6 +392,7 @@ UserServiceImpl implements UserDetailsService, UserService {
                 studentRepository.findByUser_Email(email)
                         .ifPresent(student -> {
                             student.setGrade(userDTO.getGrade() != null ? userDTO.getGrade() : student.getGrade());
+                            student.setSchoolName(userDTO.getSchoolName() != null ? userDTO.getSchoolName() : student.getSchoolName());
                             studentRepository.save(student);
                         });
                 break;
@@ -333,7 +479,6 @@ UserServiceImpl implements UserDetailsService, UserService {
                 break;
         }
 
-        // Delete profile picture if exists
         if (user.getProfilePicturePublicId() != null) {
             try {
                 cloudinaryService.deleteImage(user.getProfilePicturePublicId());
@@ -342,7 +487,6 @@ UserServiceImpl implements UserDetailsService, UserService {
             }
         }
 
-        // Delete the user
         userRepository.delete(user);
         return VarList.OK;
     }
@@ -404,12 +548,17 @@ UserServiceImpl implements UserDetailsService, UserService {
         if (user.getRole() == UserRole.ADMIN) {
             adminRepository.findByUser(user).ifPresent(admin -> userDTO.setSchoolName(admin.getSchoolName()));
         } else if (user.getRole() == UserRole.TEACHER) {
-            teacherRepository.findByUser(user).ifPresent(teacher -> userDTO.setSubject(teacher.getSubject()));
+            teacherRepository.findByUser(user).ifPresent(teacher -> {
+                userDTO.setSubject(teacher.getSubject());
+                userDTO.setSchoolName(teacher.getSchoolName());
+            });
         } else if (user.getRole() == UserRole.STUDENT) {
-            studentRepository.findByUser(user).ifPresent(student -> userDTO.setGrade(student.getGrade()));
+            studentRepository.findByUser(user).ifPresent(student -> {
+                userDTO.setGrade(student.getGrade());
+                userDTO.setSchoolName(student.getSchoolName());
+            });
         }
 
         return userDTO;
     }
-
 }

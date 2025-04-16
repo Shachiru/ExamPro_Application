@@ -12,7 +12,17 @@ public interface UserService {
 
     List<UserDTO> getAllUsers(UserRole authenticatedRole);
 
-    List<UserDTO> getAllAdmins();
+    List<UserDTO> getAllAdmins(int page, int size, String status, String search); // Updated
+
+    long countAllAdmins(String status, String search); // Updated
+
+    List<UserDTO> getAllTeachers(int page, int size, String status, String search);
+
+    long countAllTeachers(String status, String search);
+
+    List<UserDTO> getTeachersForInstitution(String schoolName, int page, int size, String status, String search);
+
+    long countTeachersForInstitution(String schoolName, String status, String search);
 
     UserDTO searchUser(String username);
 

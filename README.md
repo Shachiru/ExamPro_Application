@@ -13,7 +13,7 @@
 
 ## Screenshots
 
-- **Home Page**: ![Home Page]([ExamPro_FrontEnd/static/screenshots/Screenshot 2025-04-16 213815.png](https://github.com/Shachiru/ExamPro_Application/blob/9504e96ddc62b124759222bc5330ce6cf3c79697/Screenshot%202025-04-16%20213815.png))
+- **Home Page**: ![Home Page](![Screenshot 2025-04-16 213815](https://github.com/user-attachments/assets/dfef24e7-05ea-4b4e-8114-2ed3198aa6f0)
 - **Dashboard**: ![Dashboard](path_to_dashboard_screenshot)
 - **Exam Page**: ![Exam Page](path_to_exam_page_screenshot)
 

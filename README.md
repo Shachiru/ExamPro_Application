@@ -14,11 +14,11 @@
 ## Screenshots
 
 - **Home Page**: ![Screenshot 2025-04-16 213815](https://github.com/user-attachments/assets/8171906e-9a26-441f-aa8a-f3f919771e34)
-- 
+  
 - **Dashboard**: ![Screenshot 2025-04-16 223344](https://github.com/user-attachments/assets/cc19d561-d28f-49ba-b391-fda7a9b101d6)
-- 
+  
 - **View Profile**: ![Screenshot 2025-04-16 223650](https://github.com/user-attachments/assets/fbfd0e4f-1cf0-4c8f-a67c-7d3b4555d40c)
-- 
+  
 - **Create Exam**: ![Screenshot 2025-04-16 224027](https://github.com/user-attachments/assets/ede321a1-48d5-4afc-84a2-6289d583949c)
 
 *Note: Replace the placeholder paths with actual image links or file paths in your repository.*

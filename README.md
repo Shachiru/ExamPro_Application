@@ -13,9 +13,9 @@
 
 ## Screenshots
 
-- **Home Page**: ![Screenshot 2025-04-16 213815](https://github.com/user-attachments/assets/8171906e-9a26-441f-aa8a-f3f919771e34
-)
-- **Dashboard**: ![Dashboard](path_to_dashboard_screenshot)
+- **Home Page**: ![Screenshot 2025-04-16 213815](https://github.com/user-attachments/assets/8171906e-9a26-441f-aa8a-f3f919771e34)
+- **Dashboard**: !![Screenshot 2025-04-16 223344](https://github.com/user-attachments/assets/cc19d561-d28f-49ba-b391-fda7a9b101d6)
+
 - **Exam Page**: ![Exam Page](path_to_exam_page_screenshot)
 
 *Note: Replace the placeholder paths with actual image links or file paths in your repository.*

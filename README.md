@@ -13,7 +13,7 @@
 
 ## Screenshots
 
-- **Home Page**: ![Home Page](![Screenshot 2025-04-16 213815](https://github.com/user-attachments/assets/8171906e-9a26-441f-aa8a-f3f919771e34)
+- **Home Page**: ![Screenshot 2025-04-16 213815](https://github.com/user-attachments/assets/8171906e-9a26-441f-aa8a-f3f919771e34
 )
 - **Dashboard**: ![Dashboard](path_to_dashboard_screenshot)
 - **Exam Page**: ![Exam Page](path_to_exam_page_screenshot)

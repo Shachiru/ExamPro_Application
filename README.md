@@ -36,4 +36,4 @@
 Clone the repository containing both frontend and backend code.
 
 ```bash
-git clone https://github.com/yourusername/exampro.git
+git clone [https://github.com/yourusername/exampro.git](https://github.com/Shachiru/ExamPro_Application.git)

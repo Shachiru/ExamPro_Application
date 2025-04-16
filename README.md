@@ -1,109 +1,62 @@
-Apologies for the confusion! Here's the code for your `README.md` file:
-
-```markdown
 # ExamPro - Online Examination System
+
+**ExamPro** is a secure and user-friendly online examination system designed to simplify the testing process for both teachers and students. It offers various features such as creating tests with multiple question types, setting time limits, automatic grading, and real-time countdown timers. The system ensures that only authorized users can access the tests, maintaining fairness and security.
+
+### Table of Contents
+1. [Project Description](#project-description)
+2. [Features](#features)
+3. [Technologies Used](#technologies-used)
+4. [Setup Instructions](#setup-instructions)
+5. [Video Demonstration](#video-demonstration)
+6. [Contributors](#contributors)
 
 ## Project Description
 
-ExamPro is a secure and user-friendly online examination system that simplifies the testing process for both teachers and students. It allows teachers to create tests with various question types, including multiple choice, true/false, and short answer, while setting time limits and enabling automatic grading for objective questions. A real-time countdown timer helps students keep track of their remaining time during the exam, and the system ensures that only authorized users can access the tests, maintaining fairness and security.
+ExamPro allows teachers to create tests with different types of questions, including:
+- **Multiple Choice**
+- **True/False**
+- **Short Answer**
 
-A key feature of ExamPro is its integrated email notification system. This functionality sends timely updates to both teachers and students about exam schedules, upcoming tests, and released results. The email notifications are implemented using the JavaMail API within a Spring Boot framework. SMTP server settings—using providers like Gmail or SendGrid—are configured in the application’s properties file. A dedicated mail service, built on Spring’s JavaMailSender bean, constructs and sends email messages with appropriate recipient addresses, subject lines, and content. This seamless integration of email notifications helps keep everyone informed and enhances the overall exam experience by automating communication.
+It supports:
+- **Time Limits** for each exam
+- **Automatic Grading** for objective questions
+- A **Countdown Timer** that helps students track their remaining time during the exam
+- **Secure Test Access** with role-based user management to ensure fairness
 
----
-
-## Project Structure
-
-```
-ExamPro/
-│
-├── backend/                # Contains the backend Spring Boot application
-│   ├── src/                # Main source code
-│   ├── application.properties  # Configuration file
-│   ├── pom.xml             # Maven dependencies and project configuration
-│
-└── frontend/               # Contains the frontend application
-    ├── src/                # Main source code
-    ├── index.html          # Main HTML page
-    ├── app.js              # JavaScript logic for frontend
-    ├── styles.css          # CSS styles for frontend
-```
-
----
-
-## Setup Instructions
-
-### Backend Setup (Spring Boot)
-
-1. Clone the repository to your local machine:
-   ```bash
-   git clone https://github.com/yourusername/ExamPro.git
-   ```
-
-2. Navigate to the `backend/` folder:
-   ```bash
-   cd backend
-   ```
-
-3. Build and run the Spring Boot application using Maven:
-   ```bash
-   ./mvnw spring-boot:run
-   ```
-
-4. The backend will be accessible at `http://localhost:8080`.
-
----
-
-### Frontend Setup
-
-1. Navigate to the `frontend/` folder:
-   ```bash
-   cd frontend
-   ```
-
-2. Install the required dependencies:
-   ```bash
-   npm install
-   ```
-
-3. Run the frontend application:
-   ```bash
-   npm start
-   ```
-
-4. The frontend will be accessible at `http://localhost:3000`.
-
----
-
-## Link to the Demo Video
-
-[Spring Boot Project - IJSE - GDSE69 - Panadura - Udara San - 2nd Semester Final Project](https://www.youtube.com/watch?v=example)
-
----
+A key feature of ExamPro is its integrated **email notification system**, which sends timely updates to both teachers and students regarding exam schedules, upcoming tests, and released results. This system is implemented using the **JavaMail API** within the **Spring Boot** framework, configured with SMTP server settings such as Gmail or SendGrid.
 
 ## Features
 
-- **Test Creation:** Teachers can create various types of questions including multiple choice, true/false, and short answer.
-- **Automatic Grading:** Automatic grading for objective questions.
-- **Countdown Timer:** Real-time countdown timer for students during exams.
-- **Role-based Access Control:** Only authorized users (Admins, Super Admins, Teachers, and Students) can access the system.
-- **Email Notifications:** Timely email notifications for exam schedules, updates, and results.
-- **Security:** Secure access to exams and roles based on user authentication.
-
----
+- **Role-Based Authentication**: User roles include `Admin`, `Super Admin`, `Teacher`, and `Student`, with specific permissions for each.
+- **Test Creation**: Teachers can create tests with different question types and set time limits.
+- **Automatic Grading**: Automatically grades objective questions and provides results to students.
+- **Real-Time Countdown Timer**: Displays a countdown timer for each exam, showing remaining time.
+- **Email Notifications**: Teachers and students receive timely updates about exam schedules, test results, and more.
+- **Secure Access**: JWT-based authentication ensures only authorized users can access exams and related features.
 
 ## Technologies Used
 
-- **Backend:** Spring Boot, Spring Security, Hibernate, JavaMail API
-- **Frontend:** HTML, CSS, JavaScript (React or similar framework)
-- **Database:** MySQL
-- **Email Service:** Gmail/SendGrid SMTP
-- **Authentication:** JWT (JSON Web Token)
+- **Frontend**: (Frontend framework here, e.g., React, Angular, or Vue.js)
+- **Backend**: 
+  - **Spring Boot** for the backend
+  - **JavaMail API** for email notifications
+  - **JWT Authentication** for secure login and authorization
+- **Database**: MySQL (for storing exam, user, and result data)
+- **Other**: 
+  - **Thymeleaf** for rendering HTML views (if applicable)
+  - **Maven** for project management and dependency management
 
----
+## Setup Instructions
 
-## Final Submission
+### Prerequisites
 
-Submit the GitHub repository link containing both frontend and backend projects. Make sure to follow the submission guidelines mentioned.
-```
+Before running the project locally, ensure you have the following installed:
+- **Java 17** or later
+- **MySQL** database
+- **Maven** (for building and managing the project)
 
-You can copy-paste this into your `README.md` file and replace any placeholder links or details, such as the YouTube link, repository link, or any specific instructions.
+### Backend Setup
+
+1. Clone the repository:
+   ```bash
+   git clone https://github.com/yourusername/exampro.git

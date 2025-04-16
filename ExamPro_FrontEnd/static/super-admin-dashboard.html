@@ -63,6 +63,7 @@
 
 <!-- Content Area -->
 <div class="content" id="content">
+
     <!-- Top Header -->
     <div class="top-header">
         <div class="d-flex align-items-center">
@@ -535,6 +536,87 @@
         </div>
     </div>
 
+    <!-- Edit Admin Modal -->
+    <div class="modal fade" id="editAdminModal" tabindex="-1" aria-labelledby="editAdminModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered modal-lg">
+            <div class="modal-content">
+                <div class="modal-header bg-primary text-white">
+                    <h5 class="modal-title fw-bold" id="editAdminModalLabel">
+                        <i class="bi bi-pencil-square me-2"></i>Edit Administrator
+                    </h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"
+                            aria-label="Close"></button>
+                </div>
+                <div class="modal-body p-4">
+                    <form id="editAdminForm" class="needs-validation" novalidate>
+                        <input type="hidden" id="editAdminEmail">
+                        <div class="mb-4">
+                            <h6 class="fw-bold text-primary mb-3">Personal Information</h6>
+                            <div class="row g-3">
+                                <div class="col-md-6">
+                                    <label for="editAdminFullName" class="form-label">Full Name</label>
+                                    <input type="text" class="form-control" id="editAdminFullName"
+                                           placeholder="Enter full name"
+                                           required>
+                                    <div class="invalid-feedback">Please provide a name.</div>
+                                </div>
+                                <div class="col-md-6">
+                                    <label for="editAdminNIC" class="form-label">NIC Number</label>
+                                    <input type="text" class="form-control" id="editAdminNIC"
+                                           placeholder="Enter NIC number"
+                                           required>
+                                    <div class="invalid-feedback">Please provide a valid NIC number.</div>
+                                </div>
+                                <div class="col-md-6">
+                                    <label for="editAdminDOB" class="form-label">Date of Birth</label>
+                                    <input type="date" class="form-control" id="editAdminDOB" required>
+                                    <div class="invalid-feedback">Please select a date of birth.</div>
+                                </div>
+                                <div class="col-md-6">
+                                    <label for="editAdminPhone" class="form-label">Phone Number</label>
+                                    <div class="input-group">
+                                        <span class="input-group-text"><i class="bi bi-telephone-fill"></i></span>
+                                        <input type="tel" class="form-control" id="editAdminPhone"
+                                               placeholder="Enter phone number" required>
+                                    </div>
+                                    <div class="invalid-feedback">Please provide a valid phone number.</div>
+                                </div>
+                                <div class="col-12">
+                                    <label for="editAdminSchoolName" class="form-label">School Name</label>
+                                    <input type="text" class="form-control" id="editAdminSchoolName"
+                                           placeholder="Enter school name" required>
+                                    <div class="invalid-feedback">Please provide a school name.</div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="mb-3">
+                            <h6 class="fw-bold text-primary mb-3">Account Information</h6>
+                            <div class="row g-3">
+                                <div class="col-md-6">
+                                    <label for="editAdminUsername" class="form-label">Username</label>
+                                    <div class="input-group">
+                                        <span class="input-group-text"><i class="bi bi-person"></i></span>
+                                        <input type="text" class="form-control" id="editAdminUsername"
+                                               placeholder="Enter username" required>
+                                    </div>
+                                    <div class="invalid-feedback">Please provide a username.</div>
+                                </div>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer bg-light">
+                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">
+                        <i class="bi bi-x-circle me-1"></i>Cancel
+                    </button>
+                    <button type="button" class="btn btn-primary" id="updateAdmin">
+                        <i class="bi bi-check-circle me-1"></i>Update Administrator
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- User Profile Modal -->
     <div class="modal fade" id="userProfileModal" tabindex="-1" aria-labelledby="userProfileModalLabel"
          aria-hidden="true">
@@ -565,7 +647,7 @@
         </div>
     </div>
 
-    <!-- Admin Details Modal - ADDED FROM ENHANCED VERSION -->
+    <!-- Admin Details Modal -->
     <div class="modal fade" id="adminDetailsModal" tabindex="-1" aria-labelledby="adminDetailsModalLabel"
          aria-hidden="true">
         <div class="modal-dialog modal-dialog-centered">
@@ -597,8 +679,34 @@
             </div>
         </div>
     </div>
-</div>
 
+    <!-- Exam Details Modal -->
+    <div class="modal fade" id="examDetailsModal" tabindex="-1" aria-labelledby="examDetailsModalLabel"
+         aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header gradient-header">
+                    <h5 class="modal-title" id="examDetailsModalLabel">Exam Details</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"
+                            aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="exam-details">
+                        <p><strong>Title:</strong> <span id="detailsExamTitle">Loading...</span></p>
+                        <p><strong>Subject:</strong> <span id="detailsExamSubject">Loading...</span></p>
+                        <p><strong>Start Time:</strong> <span id="detailsExamStartTime">Loading...</span></p>
+                        <p><strong>Duration:</strong> <span id="detailsExamDuration">Loading...</span></p>
+                        <p><strong>Type:</strong> <span id="detailsExamType">Loading...</span></p>
+                        <p><strong>Created By:</strong> <span id="detailsExamCreator">Loading...</span></p>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Close</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
 
 <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>

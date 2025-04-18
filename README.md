@@ -17,8 +17,8 @@
   
 - **Dashboard**: ![Screenshot 2025-04-16 223344](https://github.com/user-attachments/assets/cc19d561-d28f-49ba-b391-fda7a9b101d6)
   
-- **View Profile**: ![Screenshot 2025-04-16 223650](https://github.com/user-attachments/assets/fbfd0e4f-1cf0-4c8f-a67c-7d3b4555d40c)
-  
+- **View Profile**: ![view-profile](https://github.com/user-attachments/assets/65f3fbc2-19c9-4aae-8698-6fa3e54f6750)
+
 - **Create Exam**: ![Screenshot 2025-04-16 224027](https://github.com/user-attachments/assets/ede321a1-48d5-4afc-84a2-6289d583949c)
 
 - **Admin Manage**: ![Screenshot 2025-04-16 225100](https://github.com/user-attachments/assets/c45a981e-37fa-423f-837d-3c83f52fadc4)

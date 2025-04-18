@@ -31,8 +31,8 @@ public class DataInitializer {
                 superAdminDTO.setPassword("123456");
                 superAdminDTO.setRole(UserRole.SUPER_ADMIN);
                 superAdminDTO.setActive(true);
-                superAdminDTO.setDateOfBirth(LocalDate.of(2000, 3, 14));
-                superAdminDTO.setNic("200062132152");
+                superAdminDTO.setDateOfBirth(LocalDate.of(2003, 11, 24));
+                superAdminDTO.setNic("200362132152");
                 superAdminDTO.setPhoneNumber("0773322111");
 
                 try {

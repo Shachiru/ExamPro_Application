@@ -513,23 +513,28 @@ public class UserServiceImpl implements UserDetailsService, UserService {
 
     @Override
     public UserDTO deleteProfilePicture(String email) throws IOException {
-        logger.info("Deleting profile picture for email: {}", email);
+        logger.info("Attempting to delete profile picture for: {}", email);
         User user = userRepository.findByEmail(email)
-                .orElseThrow(() -> new IllegalArgumentException("User not found with email: " + email));
+                .orElseThrow(() -> new IllegalArgumentException("User not found"));
 
-        if (user.getProfilePicturePublicId() == null) {
-            logger.info("No profile picture to delete for email: {}", email);
-            throw new IOException("No profile picture found for this user");
+        if (user.getProfilePicturePublicId() == null || user.getProfilePicturePublicId().isEmpty()) {
+            logger.warn("No profile picture exists for: {}", email);
+            throw new IllegalStateException("No profile picture to delete");
         }
 
-        cloudinaryService.deleteImage(user.getProfilePicturePublicId());
+        try {
+            cloudinaryService.deleteImage(user.getProfilePicturePublicId());
+            logger.info("Deleted image from Cloudinary: {}", user.getProfilePicturePublicId());
 
-        user.setProfilePicture(null);
-        user.setProfilePicturePublicId(null);
-        userRepository.save(user);
-        logger.info("Profile picture deleted for email: {}", email);
+            user.setProfilePicture(null);
+            user.setProfilePicturePublicId(null);
+            userRepository.save(user);
 
-        return convertToDTO(user);
+            return convertToDTO(user);
+        } catch (IOException e) {
+            logger.error("Cloudinary deletion failed for {}: {}", email, e.getMessage());
+            throw new IOException("Failed to delete image from storage service");
+        }
     }
 
     private UserDTO convertToDTO(User user) {

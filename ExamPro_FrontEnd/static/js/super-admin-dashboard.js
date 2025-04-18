@@ -7,6 +7,20 @@ document.addEventListener("DOMContentLoaded", () => {
 
     $("#loading").show();
 
+    const originalSetText = $.fn.text;
+    $.fn.text = function(text) {
+        const result = originalSetText.apply(this, arguments);
+
+        // Apply special styling to the status badge
+        if (this.attr('id') === 'modalUserStatus' && text !== undefined) {
+            const isActive = text === 'Active';
+            $('#statusBadge').removeClass('status-active status-inactive')
+                .addClass(isActive ? 'status-active' : 'status-inactive');
+        }
+
+        return result;
+    };
+
     $.ajax({
         url: "http://localhost:8080/api/v1/user/profile",
         method: "GET",
@@ -36,14 +50,9 @@ document.addEventListener("DOMContentLoaded", () => {
             $("#modalUserDOB").text(user.dateOfBirth || "Not provided");
             $("#modalUserStatus").text(user.active ? "Active" : "Inactive");
 
-            const initials = user.fullName
-                .split(" ")
-                .map((n) => n[0])
-                .join("")
-                .substring(0, 2)
-                .toUpperCase();
-            $("#userInitials").text(initials);
-            $("#modalUserInitials").text(initials);
+            const profileImage = user.profilePicture || 'default-profile.png';
+            $("#userProfileImage").attr('src', profileImage);
+            $("#modalUserProfileImage").attr('src', profileImage);
 
             localStorage.setItem("email", user.email);
 
@@ -62,6 +71,92 @@ document.addEventListener("DOMContentLoaded", () => {
                 showError("Error loading profile: " + (xhr.responseJSON?.message || "Unknown error"));
             }
         },
+    });
+
+    $(".profile-image-container").on("click", function() {
+        $("#profileImageInput").click();
+    });
+
+    $(".icon-btn").on("click", function(e) {
+        e.stopPropagation();
+    });
+
+    $(".delete-btn").on("click", function(e) {
+        e.stopPropagation();
+        $(".image-overlay .fa-trash").click();
+    });
+
+    $(".upload-icon").on("click", function(e) {
+        e.stopPropagation();
+        $("#profileImageInput").click();
+    });
+
+    $("#profileImageInput").on("change", function() {
+        const file = this.files[0];
+        if (file) {
+            const formData = new FormData();
+            formData.append('email', localStorage.getItem("email"));
+            formData.append('file', file);
+
+            $.ajax({
+                url: "http://localhost:8080/api/v1/user/profile-picture",
+                method: "POST",
+                headers: { Authorization: "Bearer " + token },
+                processData: false,
+                contentType: false,
+                data: formData,
+                success: (response) => {
+                    if (response.code === 200 && response.data) {
+                        const profilePicture = response.data.profilePicture || 'default-profile.png';
+                        $("#userProfileImage").attr('src', profilePicture);
+                        $("#modalUserProfileImage").attr('src', profilePicture);
+                        showSuccess('Profile picture updated successfully');
+                    } else {
+                        showError('Failed to update profile picture');
+                    }
+                },
+                error: (xhr) => {
+                    showError('Failed to update profile picture: ' + (xhr.responseJSON?.message || 'Unknown error'));
+                }
+            });
+        }
+    });
+
+    $(".image-overlay").on("click", ".fa-trash", async function(e) {
+        e.stopPropagation();
+
+        if (!confirm("Are you sure you want to delete your profile picture?")) return;
+
+        try {
+            const response = await $.ajax({
+                url: "http://localhost:8080/api/v1/user/profile-picture",
+                method: "DELETE",
+                headers: {
+                    Authorization: "Bearer " + token,
+                    "Content-Type": "application/json"
+                },
+                dataType: "json"
+            });
+
+            if (response.code === 200) {
+                const defaultImage = 'default-profile.png';
+                $("#userProfileImage").attr('src', defaultImage + '?t=' + Date.now());
+                $("#modalUserProfileImage").attr('src', defaultImage + '?t=' + Date.now());
+                showSuccess(response.message || 'Profile picture deleted successfully');
+            } else {
+                showError(response.message || 'Failed to delete profile picture');
+            }
+        } catch (error) {
+            const errorMsg = error.responseJSON?.message ||
+                error.statusText ||
+                'Network error - please check your connection';
+            showError(`Deletion failed: ${errorMsg}`);
+            console.error('Delete error:', error);
+        }
+    });
+
+    $("#profileImageInput").on("click", function(e) {
+        e.stopPropagation();
     });
 
     $("#content").hide();

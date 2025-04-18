@@ -99,11 +99,21 @@ public class UserServiceImpl implements UserDetailsService, UserService {
         if (userRepository.existsByEmail(userDTO.getEmail())) {
             return VarList.NOT_ACCEPTABLE;
         }
-        if ((userDTO.getRole() == UserRole.ADMIN || userDTO.getRole() == UserRole.TEACHER) &&
-                (userDTO.getSchoolName() == null || userDTO.getSchoolName().isEmpty())) {
-            logger.warn("School name is required for {} registration", userDTO.getRole());
+
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        boolean isSuperAdmin = auth != null && auth.getAuthorities().stream()
+                .anyMatch(a -> a.getAuthority().equals("ROLE_SUPER_ADMIN"));
+
+        if (userDTO.getRole() == UserRole.ADMIN && (userDTO.getSchoolName() == null || userDTO.getSchoolName().isEmpty())) {
+            logger.warn("School name is required for ADMIN registration");
             return VarList.BAD_REQUEST;
         }
+        if (userDTO.getRole() == UserRole.TEACHER && isSuperAdmin &&
+                (userDTO.getSchoolName() == null || userDTO.getSchoolName().isEmpty())) {
+            logger.warn("School name is required for TEACHER registration by SUPER_ADMIN");
+            return VarList.BAD_REQUEST;
+        }
+
         User user = modelMapper.map(userDTO, User.class);
         user.setPassword(passwordEncoder.encode(userDTO.getPassword()));
         user.setActive(true);
@@ -111,10 +121,6 @@ public class UserServiceImpl implements UserDetailsService, UserService {
         userRepository.save(user);
 
         String schoolName = null;
-        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
-        boolean isSuperAdmin = auth != null && auth.getAuthorities().stream()
-                .anyMatch(a -> a.getAuthority().equals("ROLE_SUPER_ADMIN"));
-
         if (userDTO.getRole() != UserRole.SUPER_ADMIN) {
             if (isSuperAdmin) {
                 schoolName = userDTO.getSchoolName();

@@ -118,6 +118,9 @@ public class UserServiceImpl implements UserDetailsService, UserService {
         user.setPassword(passwordEncoder.encode(userDTO.getPassword()));
         user.setActive(true);
 
+        user.setProfilePicture("https://asset.cloudinary.com/detaqxoas/70c2c872c22b82a4aacbe7d3ef3d73bb");
+        user.setProfilePicturePublicId("default-profile");
+
         userRepository.save(user);
 
         String schoolName = null;
@@ -316,6 +319,27 @@ public class UserServiceImpl implements UserDetailsService, UserService {
         Specification<User> spec = (root, query, cb) -> {
             List<jakarta.persistence.criteria.Predicate> predicates = new ArrayList<>();
             predicates.add(cb.equal(root.get("role"), UserRole.ADMIN));
+            if (status != null && !status.isEmpty()) {
+                predicates.add(cb.equal(root.get("isActive"), status.equalsIgnoreCase("ACTIVE")));
+            }
+            if (search != null && !search.isEmpty()) {
+                String searchPattern = "%" + search.toLowerCase() + "%";
+                predicates.add(cb.or(
+                        cb.like(cb.lower(root.get("fullName")), searchPattern),
+                        cb.like(cb.lower(root.get("email")), searchPattern),
+                        cb.like(cb.lower(root.get("username")), searchPattern)
+                ));
+            }
+            return cb.and(predicates.toArray(new jakarta.persistence.criteria.Predicate[0]));
+        };
+        return userRepository.count(spec);
+    }
+
+    @Override
+    public long countAllStudents(String status, String search) {
+        Specification<User> spec = (root, query, cb) -> {
+            List<jakarta.persistence.criteria.Predicate> predicates = new ArrayList<>();
+            predicates.add(cb.equal(root.get("role"), UserRole.STUDENT));
             if (status != null && !status.isEmpty()) {
                 predicates.add(cb.equal(root.get("isActive"), status.equalsIgnoreCase("ACTIVE")));
             }
@@ -572,9 +596,11 @@ public class UserServiceImpl implements UserDetailsService, UserService {
             Map uploadResult = cloudinaryService.uploadImage(profileImage);
             String profilePictureUrl = (String) uploadResult.get("secure_url");
             String publicId = (String) uploadResult.get("public_id");
-
             user.setProfilePicture(profilePictureUrl);
             user.setProfilePicturePublicId(publicId);
+        } else {
+            user.setProfilePicture("https://asset.cloudinary.com/detaqxoas/70c2c872c22b82a4aacbe7d3ef3d73bb");
+            user.setProfilePicturePublicId("default-profile");
         }
 
         User savedUser = userRepository.save(user);

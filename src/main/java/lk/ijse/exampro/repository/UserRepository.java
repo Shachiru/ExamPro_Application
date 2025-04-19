@@ -30,4 +30,7 @@ public interface UserRepository extends JpaRepository<User, UUID>, JpaSpecificat
 
     List<User> findAllByRoleNot(UserRole role);
 
+    @Query("SELECT COUNT(u) FROM User u WHERE u.role = ?1")
+    long countByRole(UserRole role);
+
 }

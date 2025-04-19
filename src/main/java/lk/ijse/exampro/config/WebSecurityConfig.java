@@ -56,6 +56,7 @@ public class WebSecurityConfig {
                         .requestMatchers("/api/v1/student/**").hasRole("STUDENT")
                         .requestMatchers(HttpMethod.DELETE, "/api/v1/user/delete/**").hasRole("SUPER_ADMIN")
                         .requestMatchers(HttpMethod.DELETE, "/api/v1/user/profile-picture").hasRole("SUPER_ADMIN")
+                        .requestMatchers("/api/v1/dashboard/**").hasRole("SUPER_ADMIN")
                         .requestMatchers("/api/v1/user/**").authenticated()
                         .anyRequest().authenticated()
                 )

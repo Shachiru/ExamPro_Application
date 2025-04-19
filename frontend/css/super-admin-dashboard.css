@@ -1355,3 +1355,46 @@ canvas {
         height: 220px;
     }
 }
+
+.skeleton {
+    background: #f6f7f8;
+    position: relative;
+    overflow: hidden;
+    border-radius: 8px;
+}
+.skeleton:before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+    animation: shimmer 1.5s infinite;
+}
+.skeleton-icon {
+    width: 40px;
+    height: 40px;
+    background: #e0e0e0;
+    border-radius: 50%;
+    margin: 10px auto;
+}
+.skeleton-value {
+    width: 60%;
+    height: 24px;
+    background: #e0e0e0;
+    border-radius: 4px;
+    margin: 10px auto;
+}
+.skeleton-text {
+    width: 80%;
+    height: 16px;
+    background: #e0e0e0;
+    border-radius: 4px;
+    margin: 5px auto;
+}
+@keyframes shimmer {
+    100% {
+        left: 100%;
+    }
+}

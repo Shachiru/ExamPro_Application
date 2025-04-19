@@ -8,10 +8,9 @@ document.addEventListener("DOMContentLoaded", () => {
     $("#loading").show();
 
     const originalSetText = $.fn.text;
-    $.fn.text = function(text) {
+    $.fn.text = function (text) {
         const result = originalSetText.apply(this, arguments);
 
-        // Apply special styling to the status badge
         if (this.attr('id') === 'modalUserStatus' && text !== undefined) {
             const isActive = text === 'Active';
             $('#statusBadge').removeClass('status-active status-inactive')
@@ -73,25 +72,25 @@ document.addEventListener("DOMContentLoaded", () => {
         },
     });
 
-    $(".profile-image-container").on("click", function() {
+    $(".profile-image-container").on("click", function () {
         $("#profileImageInput").click();
     });
 
-    $(".icon-btn").on("click", function(e) {
+    $(".icon-btn").on("click", function (e) {
         e.stopPropagation();
     });
 
-    $(".delete-btn").on("click", function(e) {
+    $(".delete-btn").on("click", function (e) {
         e.stopPropagation();
         $(".image-overlay .fa-trash").click();
     });
 
-    $(".upload-icon").on("click", function(e) {
+    $(".upload-icon").on("click", function (e) {
         e.stopPropagation();
         $("#profileImageInput").click();
     });
 
-    $("#profileImageInput").on("change", function() {
+    $("#profileImageInput").on("change", function () {
         const file = this.files[0];
         if (file) {
             const formData = new FormData();
@@ -101,7 +100,7 @@ document.addEventListener("DOMContentLoaded", () => {
             $.ajax({
                 url: "http://localhost:8080/api/v1/user/profile-picture",
                 method: "POST",
-                headers: { Authorization: "Bearer " + token },
+                headers: {Authorization: "Bearer " + token},
                 processData: false,
                 contentType: false,
                 data: formData,
@@ -122,7 +121,7 @@ document.addEventListener("DOMContentLoaded", () => {
         }
     });
 
-    $(".image-overlay").on("click", ".fa-trash", async function(e) {
+    $(".image-overlay").on("click", ".fa-trash", async function (e) {
         e.stopPropagation();
 
         if (!confirm("Are you sure you want to delete your profile picture?")) return;
@@ -155,7 +154,7 @@ document.addEventListener("DOMContentLoaded", () => {
         }
     });
 
-    $("#profileImageInput").on("click", function(e) {
+    $("#profileImageInput").on("click", function (e) {
         e.stopPropagation();
     });
 
@@ -1389,6 +1388,48 @@ document.addEventListener("DOMContentLoaded", () => {
 
     function loadDashboard() {
         const token = localStorage.getItem("token");
+        if (!token) {
+            redirectToLogin();
+            return;
+        }
+
+        $("#statsCards").html(`
+        <div class="row mb-4">
+            <div class="col-md-3 col-sm-6 mb-4 mb-md-0">
+                <div class="stat-card skeleton">
+                    <div class="card-icon skeleton-icon"></div>
+                    <div class="card-value skeleton-value"></div>
+                    <div class="card-label skeleton-text"></div>
+                    <div class="growth-indicator skeleton-text"></div>
+                </div>
+            </div>
+            <div class="col-md-3 col-sm-6 mb-4 mb-md-0">
+                <div class="stat-card skeleton">
+                    <div class="card-icon skeleton-icon"></div>
+                    <div class="card-value skeleton-value"></div>
+                    <div class="card-label skeleton-text"></div>
+                    <div class="growth-indicator skeleton-text"></div>
+                </div>
+            </div>
+            <div class="col-md-3 col-sm-6 mb-4 mb-md-0">
+                <div class="stat-card skeleton">
+                    <div class="card-icon skeleton-icon"></div>
+                    <div class="card-value skeleton-value"></div>
+                    <div class="card-label skeleton-text"></div>
+                    <div class="growth-indicator skeleton-text"></div>
+                </div>
+            </div>
+            <div class="col-md-3 col-sm-6 mb-4 mb-md-0">
+                <div class="stat-card skeleton">
+                    <div class="card-icon skeleton-icon"></div>
+                    <div class="card-value skeleton-value"></div>
+                    <div class="card-label skeleton-text"></div>
+                    <div class="growth-indicator skeleton-text"></div>
+                </div>
+            </div>
+        </div>
+    `);
+
         $.ajax({
             url: "http://localhost:8080/api/v1/dashboard/stats",
             method: "GET",
@@ -1397,14 +1438,18 @@ document.addEventListener("DOMContentLoaded", () => {
             },
             success: function (response) {
                 if (response.code === 200 && response.data) {
-                    $("#statsCards .card-value").eq(0).text(response.data.totalInstitutions);
-                    $("#statsCards .card-value").eq(1).text(response.data.activeAdmins);
-                    $("#statsCards .card-value").eq(2).text(response.data.totalCourses);
-                    $("#statsCards .card-value").eq(3).text(response.data.examsThisMonth);
+                    $("#totalAdminsCard").text(response.data.totalAdmins);
+                    $("#totalStudentsCard").text(response.data.totalStudents);
+                    $("#totalTeachersCard").text(response.data.totalTeachers);
+                    $("#examsThisMonthCard").text(response.data.examsThisMonth);
+                } else {
+                    showError("Failed to load dashboard stats");
+                    $("#statsCards").html('<p class="text-center text-danger">Failed to load stats</p>');
                 }
             },
             error: function (xhr) {
-                showError("Error loading dashboard stats");
+                showError("Error loading dashboard stats: " + (xhr.responseJSON?.message || "Unknown error"));
+                $("#statsCards").html('<p class="text-center text-danger">Failed to load stats</p>');
             },
         });
     }
@@ -1445,4 +1490,28 @@ document.addEventListener("DOMContentLoaded", () => {
             window.location.href = "login.html";
         }, 2000);
     }
+
+    // Periodically check if token is present in local storage
+    function checkTokenPresence() {
+        // Check immediately on function call
+        if (!localStorage.getItem('token')) {
+            logout();
+            return;
+        }
+
+        // Then set up interval for periodic checking
+        setInterval(() => {
+            if (!localStorage.getItem('token')) {
+                logout();
+            }
+        }, 5000); // Check every 5 seconds
+    }
+
+    // Call this function when document is ready
+    $(document).ready(function () {
+        // Other initialization code...
+
+        // Start token presence check
+        checkTokenPresence();
+    });
 });

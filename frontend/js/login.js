@@ -56,18 +56,18 @@ document.addEventListener("DOMContentLoaded", function () {
 
                 const token = data.data.token;
                 console.log("Received token:", token);
-                localStorage.setItem("token", token); // Changed to "token"
+                localStorage.setItem("token", token);
                 localStorage.setItem("role", data.data.role);
                 localStorage.setItem("email", data.data.email); // Store email for profile
 
-                const storedToken = localStorage.getItem("token"); // Changed to "token"
+                const storedToken = localStorage.getItem("token");
                 console.log("Stored token from localStorage:", storedToken);
 
                 const tokenParts = token.split('.');
                 console.log("Token parts count:", tokenParts.length);
                 if (tokenParts.length !== 3) {
                     console.error("Invalid token format:", token);
-                    localStorage.removeItem("token"); // Changed to "token"
+                    localStorage.removeItem("token");
                     throw new Error("Received token is not a valid JWT");
                 }
 

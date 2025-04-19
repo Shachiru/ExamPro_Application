@@ -31,7 +31,7 @@
 
 ## Technologies Used
 
-- **Frontend**: React.js, HTML, CSS, JavaScript
+- **Frontend**: HTML, CSS, JavaScript
 - **Backend**: Spring Boot, Java 17, Hibernate, MySQL
 - **Authentication**: JWT (JSON Web Tokens)
 - **Email Service**: JavaMail API

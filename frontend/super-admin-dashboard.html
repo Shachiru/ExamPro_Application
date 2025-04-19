@@ -1,0 +1,1132 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ExamPro - Super Admin Dashboard</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.8.1/font/bootstrap-icons.css" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap"
+        rel="stylesheet">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/toastify-js/src/toastify.min.css">
+  <link rel="stylesheet" href="css/super-admin-dashboard.css">
+</head>
+<body>
+<!-- Sidebar -->
+<div class="sidebar" id="sidebar">
+  <div class="logo-section">
+    <a href="#" class="d-flex align-items-center text-decoration-none">
+      <i class="fas fa-graduation-cap fs-3 text-white"></i>
+      <span class="ms-2 fs-4 fw-bold text-white logo-text">Exam<span class="text-accent">Pro</span></span>
+    </a>
+    <p class="mt-2 text-white-50 small logo-text">Super Admin Portal</p>
+  </div>
+  <div class="mt-4">
+    <a href="#" class="menu-item active" id="dashboardMenu">
+      <i class="fas fa-chart-line"></i>
+      <span class="menu-text">Dashboard</span>
+    </a>
+    <a href="#" class="menu-item">
+      <i class="fas fa-building"></i>
+      <span class="menu-text">Institutions</span>
+    </a>
+    <a href="#" class="menu-item" id="adminsMenu">
+      <i class="fas fa-user-shield"></i>
+      <span class="menu-text">Admins</span>
+    </a>
+    <a href="#" class="menu-item" id="teachersMenu">
+      <i class="fas fa-chalkboard-teacher"></i>
+      <span class="menu-text">Teachers</span>
+    </a>
+    <a href="#" class="menu-item">
+      <i class="fas fa-book"></i>
+      <span class="menu-text">Courses</span>
+    </a>
+    <a href="#" class="menu-item" id="examsMenu">
+      <i class="fas fa-file-alt"></i>
+      <span class="menu-text">Exams</span>
+    </a>
+    <a href="#" class="menu-item">
+      <i class="fas fa-chart-bar"></i>
+      <span class="menu-text">Reports</span>
+    </a>
+    <a href="#" class="menu-item">
+      <i class="fas fa-cog"></i>
+      <span class="menu-text">Settings</span>
+    </a>
+    <a href="#" class="menu-item" id="logout">
+      <i class="fas fa-sign-out-alt"></i>
+      <span class="menu-text">Logout</span>
+    </a>
+  </div>
+</div>
+
+<!-- Content Area -->
+<div class="content" id="content">
+  <!-- Loading Overlay -->
+  <div class="loading-overlay" id="loading">
+    <div class="three-body">
+      <div class="three-body__dot"></div>
+      <div class="three-body__dot"></div>
+      <div class="three-body__dot"></div>
+    </div>
+  </div>
+
+  <!-- Top Header -->
+  <div class="top-header">
+    <div class="d-flex align-items-center">
+      <button class="btn d-lg-none me-3" id="toggleSidebar">
+        <i class="fas fa-bars text-primary"></i>
+      </button>
+      <div class="search-container d-none d-md-block">
+        <i class="fas fa-search"></i>
+        <input type="text" placeholder="Search..." class="form-control">
+      </div>
+    </div>
+    <div class="user-profile" data-bs-toggle="modal" data-bs-target="#userProfileModal" style="cursor: pointer;">
+      <div class="notification-icon me-4">
+        <i class="far fa-bell fs-5 text-muted"></i>
+        <span class="notification-badge">3</span>
+      </div>
+      <div class="text-end d-none d-sm-block">
+        <h6 class="mb-0" id="userFullName">Loading...</h6>
+        <small class="text-muted" id="userRole">Loading...</small>
+      </div>
+      <img id="userProfileImage" src="assets/default-user.jpg" alt="Profile Image" class="avatar">
+    </div>
+  </div>
+
+  <!-- Dashboard Content -->
+  <div class="dashboard-content" id="dashboardContent">
+    <div class="row mb-4">
+      <div class="col-md-12">
+        <div class="section-header">
+          <h1 class="section-title fs-4">Super Admin Dashboard</h1>
+        </div>
+        <p class="text-muted mb-4">Overview of the entire system</p>
+      </div>
+    </div>
+    <!-- Stats Cards -->
+    <div class="row mb-4" id="statsCards">
+      <div class="col-md-3 col-sm-6 mb-4 mb-md-0">
+        <div class="stat-card">
+          <div class="card-icon" style="background: linear-gradient(135deg, #4361ee 0%, #3a0ca3 100%);">
+            <i class="fas fa-building"></i>
+          </div>
+          <div class="card-value">28</div>
+          <div class="card-label">Total Institutions</div>
+          <div class="growth-indicator positive">
+            <i class="fas fa-arrow-up me-1"></i> 12% from last month
+          </div>
+        </div>
+      </div>
+      <div class="col-md-3 col-sm-6 mb-4 mb-md-0">
+        <div class="stat-card">
+          <div class="card-icon" style="background: linear-gradient(135deg, #3f37c9 0%, #4cc9f0 100%);">
+            <i class="fas fa-user-shield"></i>
+          </div>
+          <div class="card-value">156</div>
+          <div class="card-label">Active Admins</div>
+          <div class="growth-indicator positive">
+            <i class="fas fa-arrow-up me-1"></i> 5% from last month
+          </div>
+        </div>
+      </div>
+      <div class="col-md-3 col-sm-6 mb-4 mb-md-0">
+        <div class="stat-card">
+          <div class="card-icon" style="background: linear-gradient(135deg, #fb5607 0%, #ff006e 100%);">
+            <i class="fas fa-book"></i>
+          </div>
+          <div class="card-value">1,284</div>
+          <div class="card-label">Total Courses</div>
+          <div class="growth-indicator positive">
+            <i class="fas fa-arrow-up me-1"></i> 5% from last month
+          </div>
+        </div>
+      </div>
+      <div class="col-md-3 col-sm-6">
+        <div class="stat-card">
+          <div class="card-icon" style="background: linear-gradient(135deg, #8338ec 0%, #3a86ff 100%);">
+            <i class="fas fa-file-alt"></i>
+          </div>
+          <div class="card-value">3,842</div>
+          <div class="card-label">Exams This Month</div>
+          <div class="growth-indicator positive">
+            <i class="fas fa-arrow-up me-1"></i> 10% from last month
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Add this after the stats cards row -->
+    <div class="row mb-4" id="chartsContainer">
+      <!-- Monthly Activity Chart -->
+      <div class="col-lg-8 col-md-12 mb-4">
+        <div class="chart-card">
+          <div class="chart-card-header">
+            <h3 class="chart-title"><i class="fas fa-chart-line me-2"></i>Monthly Activity</h3>
+          </div>
+          <div class="chart-body">
+            <canvas id="monthlyActivityChart"></canvas>
+          </div>
+        </div>
+      </div>
+
+      <!-- User Distribution Chart -->
+      <div class="col-lg-4 col-md-12 mb-4">
+        <div class="chart-card">
+          <div class="chart-card-header">
+            <h3 class="chart-title"><i class="fas fa-users me-2"></i>User Distribution</h3>
+          </div>
+          <div class="chart-body">
+            <canvas id="userDistributionChart"></canvas>
+          </div>
+        </div>
+      </div>
+
+      <!-- Subject Distribution Chart -->
+      <div class="col-lg-6 col-md-12 mb-4">
+        <div class="chart-card">
+          <div class="chart-card-header">
+            <h3 class="chart-title"><i class="fas fa-book me-2"></i>Exams by Subject</h3>
+          </div>
+          <div class="chart-body">
+            <canvas id="subjectDistributionChart"></canvas>
+          </div>
+        </div>
+      </div>
+
+      <!-- School Performance Chart -->
+      <div class="col-lg-6 col-md-12 mb-4">
+        <div class="chart-card">
+          <div class="chart-card-header">
+            <h3 class="chart-title"><i class="fas fa-university me-2"></i>School Performance</h3>
+          </div>
+          <div class="chart-body">
+            <canvas id="schoolPerformanceChart"></canvas>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- Admins List Content -->
+  <div class="dashboard-content" id="adminsContent" style="display: none;">
+    <div class="row mb-4">
+      <div class="col-md-12">
+        <div class="section-header">
+          <h1 class="section-title fs-4">Administrators Management</h1>
+          <button class="btn btn-primary d-flex align-items-center" data-bs-toggle="modal"
+                  data-bs-target="#addAdminModal">
+            <i class="fas fa-plus me-2"></i> Add New Admin
+          </button>
+        </div>
+        <p class="text-muted mb-4">Manage all registered administrators across institutions</p>
+      </div>
+    </div>
+    <div class="row mb-4">
+      <div class="col-md-12">
+        <div class="admins-header">
+          <div class="search-admin">
+            <i class="fas fa-search"></i>
+            <input type="text" class="form-control" id="searchAdmin" placeholder="Search administrators...">
+          </div>
+          <div class="filter-buttons">
+            <button class="filter-btn active" data-filter="all">All</button>
+            <button class="filter-btn" data-filter="active">Active</button>
+            <button class="filter-btn" data-filter="inactive">Inactive</button>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="row mb-4">
+      <div class="col-md-12">
+        <div class="table-card">
+          <div class="table-responsive">
+            <table class="table activity-table mb-0" id="adminsTable">
+              <thead>
+              <tr>
+                <th>ADMINISTRATOR</th>
+                <th>USERNAME</th>
+                <th>EMAIL</th>
+                <th>NIC</th>
+                <th>PHONE</th>
+                <th>DOB</th>
+                <th>SCHOOL</th>
+                <th>STATUS</th>
+                <th>ACTIONS</th>
+              </tr>
+              </thead>
+              <tbody id="adminsTableBody">
+              <!-- Admins will be populated dynamically -->
+              </tbody>
+            </table>
+          </div>
+          <div class="table-pagination">
+            <div class="page-info">
+              Showing <span id="showingStart">1</span> to <span id="showingEnd">10</span> of <span
+                    id="totalAdmins">0</span> administrators
+            </div>
+            <div class="pagination-controls">
+              <button class="btn btn-outline-secondary" id="prevPage" disabled>
+                <i class="fas fa-chevron-left"></i>
+              </button>
+              <button class="btn btn-outline-secondary" id="nextPage" disabled>
+                <i class="fas fa-chevron-right"></i>
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Exams List Content -->
+  <div class="dashboard-content" id="examsContent" style="display: none;">
+    <div class="row mb-4">
+      <div class="col-md-12">
+        <div class="section-header">
+          <h1 class="section-title fs-4">Exam Management</h1>
+          <button class="btn btn-primary d-flex align-items-center" data-bs-toggle="modal"
+                  data-bs-target="#createExamModal">
+            <i class="fas fa-plus me-2"></i> Create New Exam
+          </button>
+        </div>
+        <p class="text-muted mb-4">Manage all exams across institutions</p>
+      </div>
+    </div>
+    <div class="row mb-4">
+      <div class="col-md-12">
+        <div class="admins-header">
+          <div class="search-admin">
+            <i class="fas fa-search"></i>
+            <input type="text" class="form-control" id="searchExam" placeholder="Search exams...">
+          </div>
+          <div class="filter-buttons">
+            <button class="filter-btn active" data-filter="all">All</button>
+            <button class="filter-btn" data-filter="upcoming">Upcoming</button>
+            <button class="filter-btn" data-filter="past">Past</button>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="row mb-4">
+      <div class="col-md-12">
+        <div class="table-card">
+          <div class="table-responsive">
+            <table class="table activity-table mb-0" id="examsTable">
+              <thead>
+              <tr>
+                <th>EXAM TITLE</th>
+                <th>SUBJECT</th>
+                <th>START TIME</th>
+                <th>DURATION</th>
+                <th>TYPE</th>
+                <th>CREATED BY</th>
+                <th>STATUS</th>
+                <th>ACTIONS</th>
+              </tr>
+              </thead>
+              <tbody id="examsTableBody">
+              <!-- Exams will be populated dynamically -->
+              </tbody>
+            </table>
+          </div>
+          <div class="table-pagination">
+            <div class="page-info">
+              Showing <span id="examShowingStart">1</span> to <span id="examShowingEnd">10</span> of <span
+                    id="totalExams">0</span> exams
+            </div>
+            <div class="pagination-controls">
+              <button class="btn btn-outline-secondary" id="examPrevPage" disabled>
+                <i class="fas fa-chevron-left"></i>
+              </button>
+              <button class="btn btn-outline-secondary" id="examNextPage" disabled>
+                <i class="fas fa-chevron-right"></i>
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Teachers List Content -->
+  <div class="dashboard-content" id="teachersContent" style="display: none;">
+    <div class="row mb-4">
+      <div class="col-md-12">
+        <div class="section-header">
+          <h1 class="section-title fs-4">Teachers Management</h1>
+          <button class="btn btn-primary d-flex align-items-center" data-bs-toggle="modal"
+                  data-bs-target="#addTeacherModal">
+            <i class="fas fa-plus me-2"></i> Add New Teacher
+          </button>
+        </div>
+        <p class="text-muted mb-4">Manage all registered teachers across institutions</p>
+      </div>
+    </div>
+    <div class="row mb-4">
+      <div class="col-md-12">
+        <div class="admins-header">
+          <div class="search-admin">
+            <i class="fas fa-search"></i>
+            <input type="text" class="form-control" id="searchTeacher" placeholder="Search teachers...">
+          </div>
+          <div class="filter-buttons">
+            <button class="filter-btn active" data-filter="all">All</button>
+            <button class="filter-btn" data-filter="active">Active</button>
+            <button class="filter-btn" data-filter="inactive">Inactive</button>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="row mb-4">
+      <div class="col-md-12">
+        <div class="table-card">
+          <div class="table-responsive">
+            <table class="table activity-table mb-0" id="teachersTable">
+              <thead>
+              <tr>
+                <th>TEACHER</th>
+                <th>USERNAME</th>
+                <th>EMAIL</th>
+                <th>NIC</th>
+                <th>PHONE</th>
+                <th>DOB</th>
+                <th>SCHOOL</th>
+                <th>SUBJECT</th>
+                <th>STATUS</th>
+                <th>ACTIONS</th>
+              </tr>
+              </thead>
+              <tbody id="teachersTableBody">
+              <!-- Teachers will be populated dynamically -->
+              </tbody>
+            </table>
+          </div>
+          <div class="table-pagination">
+            <div class="page-info">
+              Showing <span id="teacherShowingStart">1</span> to <span id="teacherShowingEnd">10</span> of
+              <span id="totalTeachers">0</span> teachers
+            </div>
+            <div class="pagination-controls">
+              <button class="btn btn-outline-secondary" id="teacherPrevPage" disabled>
+                <i class="fas fa-chevron-left"></i>
+              </button>
+              <button class="btn btn-outline-secondary" id="teacherNextPage" disabled>
+                <i class="fas fa-chevron-right"></i>
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Create Exam Modal -->
+  <div class="modal fade" id="createExamModal" tabindex="-1" aria-labelledby="createExamModalLabel"
+       aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
+      <div class="modal-content">
+        <div class="modal-header bg-primary text-white">
+          <h5 class="modal-title fw-bold" id="createExamModalLabel">
+            <i class="bi bi-file-earmark-plus-fill me-2"></i>Create New Exam
+          </h5>
+          <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"
+                  aria-label="Close"></button>
+        </div>
+        <div class="modal-body p-4">
+          <form id="createExamForm" class="needs-validation" novalidate>
+            <div class="mb-3">
+              <label for="examTitle" class="form-label">Exam Title</label>
+              <input type="text" class="form-control" id="examTitle" placeholder="Enter exam title"
+                     required>
+              <div class="invalid-feedback">Please provide an exam title.</div>
+            </div>
+            <div class="mb-3">
+              <label for="examSubject" class="form-label">Subject</label>
+              <input type="text" class="form-control" id="examSubject" placeholder="Enter subject"
+                     required>
+              <div class="invalid-feedback">Please provide a subject.</div>
+            </div>
+            <div class="mb-3">
+              <label for="examStartTime" class="form-label">Start Time</label>
+              <input type="datetime-local" class="form-control" id="examStartTime" required>
+              <div class="invalid-feedback">Please select a start time.</div>
+            </div>
+            <div class="mb-3">
+              <label for="examDuration" class="form-label">Duration (minutes)</label>
+              <input type="number" class="form-control" id="examDuration" min="1" required>
+              <div class="invalid-feedback">Please provide a valid duration (greater than 0).</div>
+            </div>
+            <div class="mb-3">
+              <label for="examType" class="form-label">Exam Type</label>
+              <select class="form-select" id="examType" required>
+                <option value="">Select exam type</option>
+                <option value="MCQ">MCQ</option>
+                <option value="ESSAY">Essay</option>
+              </select>
+              <div class="invalid-feedback">Please select an exam type.</div>
+            </div>
+          </form>
+        </div>
+        <div class="modal-footer bg-light">
+          <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">
+            <i class="bi bi-x-circle me-1"></i>Cancel
+          </button>
+          <button type="button" class="btn btn-primary" id="saveExam">
+            <i class="bi bi-check-circle me-1"></i>Create Exam
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Update Exam Modal -->
+  <div class="modal fade" id="updateExamModal" tabindex="-1" aria-labelledby="updateExamModalLabel"
+       aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
+      <div class="modal-content">
+        <div class="modal-header bg-primary text-white">
+          <h5 class="modal-title fw-bold" id="updateExamModalLabel">
+            <i class="bi bi-pencil-square me-2"></i>Update Exam
+          </h5>
+          <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"
+                  aria-label="Close"></button>
+        </div>
+        <div class="modal-body p-4">
+          <form id="updateExamForm" class="needs-validation" novalidate>
+            <input type="hidden" id="updateExamId">
+            <div class="mb-3">
+              <label for="updateExamTitle" class="form-label">Exam Title</label>
+              <input type="text" class="form-control" id="updateExamTitle" placeholder="Enter exam title"
+                     required>
+              <div class="invalid-feedback">Please provide an exam title.</div>
+            </div>
+            <div class="mb-3">
+              <label for="updateExamSubject" class="form-label">Subject</label>
+              <input type="text" class="form-control" id="updateExamSubject" placeholder="Enter subject"
+                     required>
+              <div class="invalid-feedback">Please provide a subject.</div>
+            </div>
+            <div class="mb-3">
+              <label for="updateExamStartTime" class="form-label">Start Time</label>
+              <input type="datetime-local" class="form-control" id="updateExamStartTime" required>
+              <div class="invalid-feedback">Please select a start time.</div>
+            </div>
+            <div class="mb-3">
+              <label for="updateExamDuration" class="form-label">Duration (minutes)</label>
+              <input type="number" class="form-control" id="updateExamDuration" min="1" required>
+              <div class="invalid-feedback">Please provide a valid duration (greater than 0).</div>
+            </div>
+            <div class="mb-3">
+              <label for="updateExamType" class="form-label">Exam Type</label>
+              <select class="form-select" id="updateExamType" required>
+                <option value="">Select exam type</option>
+                <option value="MCQ">MCQ</option>
+                <option value="ESSAY">Essay</option>
+              </select>
+              <div class="invalid-feedback">Please select an exam type.</div>
+            </div>
+          </form>
+        </div>
+        <div class="modal-footer bg-light">
+          <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">
+            <i class="bi bi-x-circle me-1"></i>Cancel
+          </button>
+          <button type="button" class="btn btn-primary" id="updateExamBtn">
+            <i class="bi bi-check-circle me-1"></i>Update Exam
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Add Admin Modal -->
+  <div class="modal fade" id="addAdminModal" tabindex="-1" aria-labelledby="addAdminModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
+      <div class="modal-content">
+        <div class="modal-header bg-primary text-white">
+          <h5 class="modal-title fw-bold" id="addAdminModalLabel">
+            <i class="bi bi-person-plus-fill me-2"></i>Add New Administrator
+          </h5>
+          <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"
+                  aria-label="Close"></button>
+        </div>
+        <div class="modal-body p-4">
+          <form id="addAdminForm" class="needs-validation" novalidate>
+            <div class="mb-4">
+              <h6 class="fw-bold text-primary mb-3">Personal Information</h6>
+              <div class="row g-3">
+                <div class="col-md-6">
+                  <label for="adminName" class="form-label">Full Name</label>
+                  <input type="text" class="form-control" id="adminName" placeholder="Enter full name"
+                         required>
+                  <div class="invalid-feedback">Please provide a name.</div>
+                </div>
+                <div class="col-md-6">
+                  <label for="adminNIC" class="form-label">NIC Number</label>
+                  <input type="text" class="form-control" id="adminNIC" placeholder="Enter NIC number"
+                         required>
+                  <div class="invalid-feedback">Please provide a valid NIC number.</div>
+                </div>
+                <div class="col-md-6">
+                  <label for="adminDOB" class="form-label">Date of Birth</label>
+                  <input type="date" class="form-control" id="adminDOB" required>
+                  <div class="invalid-feedback">Please select a date of birth.</div>
+                </div>
+                <div class="col-md-6">
+                  <label for="adminPhoneNumber" class="form-label">Phone Number</label>
+                  <div class="input-group">
+                    <span class="input-group-text"><i class="bi bi-telephone-fill"></i></span>
+                    <input type="tel" class="form-control" id="adminPhoneNumber"
+                           placeholder="Enter phone number" required>
+                  </div>
+                  <div class="invalid-feedback">Please provide a valid phone number.</div>
+                </div>
+                <div class="col-12">
+                  <label for="adminSchoolName" class="form-label">School Name</label>
+                  <input type="text" class="form-control" id="adminSchoolName"
+                         placeholder="Enter school name" required>
+                  <div class="invalid-feedback">Please provide a school name.</div>
+                </div>
+              </div>
+            </div>
+            <div class="mb-3">
+              <h6 class="fw-bold text-primary mb-3">Account Information</h6>
+              <div class="row g-3">
+                <div class="col-md-6">
+                  <label for="adminUsername" class="form-label">Username</label>
+                  <div class="input-group">
+                    <span class="input-group-text"><i class="bi bi-person"></i></span>
+                    <input type="text" class="form-control" id="adminUsername"
+                           placeholder="Create a username" required>
+                  </div>
+                  <div class="invalid-feedback">Please choose a username.</div>
+                </div>
+                <div class="col-md-6">
+                  <label for="adminEmail" class="form-label">Email Address</label>
+                  <div class="input-group">
+                    <span class="input-group-text"><i class="bi bi-envelope"></i></span>
+                    <input type="email" class="form-control" id="adminEmail"
+                           placeholder="Enter email address" required>
+                  </div>
+                  <div class="invalid-feedback">Please provide a valid email.</div>
+                </div>
+                <div class="col-md-6">
+                  <label for="adminPassword" class="form-label">Password</label>
+                  <div class="input-group">
+                    <input type="password" class="form-control" id="adminPassword"
+                           placeholder="Create a password" required>
+                    <button class="btn btn-outline-secondary toggle-password" type="button">
+                      <i class="bi bi-eye"></i>
+                    </button>
+                  </div>
+                  <div class="form-text">Password must be at least 8 characters long.</div>
+                </div>
+                <div class="col-md-6">
+                  <label for="adminConfirmPassword" class="form-label">Confirm Password</label>
+                  <div class="input-group">
+                    <input type="password" class="form-control" id="adminConfirmPassword"
+                           placeholder="Confirm password" required>
+                    <button class="btn btn-outline-secondary toggle-password" type="button">
+                      <i class="bi bi-eye"></i>
+                    </button>
+                  </div>
+                  <div class="invalid-feedback">Passwords must match.</div>
+                </div>
+              </div>
+            </div>
+          </form>
+        </div>
+        <div class="modal-footer bg-light">
+          <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">
+            <i class="bi bi-x-circle me-1"></i>Cancel
+          </button>
+          <button type="button" class="btn btn-primary" id="saveAdmin">
+            <i class="bi bi-check-circle me-1"></i>Add Administrator
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Edit Admin Modal -->
+  <div class="modal fade" id="editAdminModal" tabindex="-1" aria-labelledby="editAdminModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
+      <div class="modal-content">
+        <div class="modal-header bg-primary text-white">
+          <h5 class="modal-title fw-bold" id="editAdminModalLabel">
+            <i class="bi bi-pencil-square me-2"></i>Edit Administrator
+          </h5>
+          <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"
+                  aria-label="Close"></button>
+        </div>
+        <div class="modal-body p-4">
+          <form id="editAdminForm" class="needs-validation" novalidate>
+            <input type="hidden" id="editAdminEmail">
+            <div class="mb-4">
+              <h6 class="fw-bold text-primary mb-3">Personal Information</h6>
+              <div class="row g-3">
+                <div class="col-md-6">
+                  <label for="editAdminFullName" class="form-label">Full Name</label>
+                  <input type="text" class="form-control" id="editAdminFullName"
+                         placeholder="Enter full name" required>
+                  <div class="invalid-feedback">Please provide a name.</div>
+                </div>
+                <div class="col-md-6">
+                  <label for="editAdminNIC" class="form-label">NIC Number</label>
+                  <input type="text" class="form-control" id="editAdminNIC"
+                         placeholder="Enter NIC number" required>
+                  <div class="invalid-feedback">Please provide a valid NIC number.</div>
+                </div>
+                <div class="col-md-6">
+                  <label for="editAdminDOB" class="form-label">Date of Birth</label>
+                  <input type="date" class="form-control" id="editAdminDOB" required>
+                  <div class="invalid-feedback">Please select a date of birth.</div>
+                </div>
+                <div class="col-md-6">
+                  <label for="editAdminPhone" class="form-label">Phone Number</label>
+                  <div class="input-group">
+                    <span class="input-group-text"><i class="bi bi-telephone-fill"></i></span>
+                    <input type="tel" class="form-control" id="editAdminPhone"
+                           placeholder="Enter phone number" required>
+                  </div>
+                  <div class="invalid-feedback">Please provide a valid phone number.</div>
+                </div>
+                <div class="col-12">
+                  <label for="editAdminSchoolName" class="form-label">School Name</label>
+                  <input type="text" class="form-control" id="editAdminSchoolName"
+                         placeholder="Enter school name" required>
+                  <div class="invalid-feedback">Please provide a school name.</div>
+                </div>
+              </div>
+            </div>
+            <div class="mb-3">
+              <h6 class="fw-bold text-primary mb-3">Account Information</h6>
+              <div class="row g-3">
+                <div class="col-md-6">
+                  <label for="editAdminUsername" class="form-label">Username</label>
+                  <div class="input-group">
+                    <span class="input-group-text"><i class="bi bi-person"></i></span>
+                    <input type="text" class="form-control" id="editAdminUsername"
+                           placeholder="Enter username" required>
+                  </div>
+                  <div class="invalid-feedback">Please provide a username.</div>
+                </div>
+              </div>
+            </div>
+          </form>
+        </div>
+        <div class="modal-footer bg-light">
+          <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">
+            <i class="bi bi-x-circle me-1"></i>Cancel
+          </button>
+          <button type="button" class="btn btn-primary" id="updateAdmin">
+            <i class="bi bi-check-circle me-1"></i>Update Administrator
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Add Teacher Modal -->
+  <div class="modal fade" id="addTeacherModal" tabindex="-1" aria-labelledby="addTeacherModalLabel"
+       aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
+      <div class="modal-content">
+        <div class="modal-header bg-primary text-white">
+          <h5 class="modal-title fw-bold" id="addTeacherModalLabel">
+            <i class="bi bi-person-plus-fill me-2"></i>Add New Teacher
+          </h5>
+          <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"
+                  aria-label="Close"></button>
+        </div>
+        <div class="modal-body p-4">
+          <form id="addTeacherForm" class="needs-validation" novalidate>
+            <div class="mb-4">
+              <h6 class="fw-bold text-primary mb-3">Personal Information</h6>
+              <div class="row g-3">
+                <div class="col-md-6">
+                  <label for="teacherName" class="form-label">Full Name</label>
+                  <input type="text" class="form-control" id="teacherName"
+                         placeholder="Enter full name" required>
+                  <div class="invalid-feedback">Please provide a name.</div>
+                </div>
+                <div class="col-md-6">
+                  <label for="teacherNIC" class="form-label">NIC Number</label>
+                  <input type="text" class="form-control" id="teacherNIC"
+                         placeholder="Enter NIC number" required>
+                  <div class="invalid-feedback">Please provide a valid NIC number.</div>
+                </div>
+                <div class="col-md-6">
+                  <label for="teacherDOB" class="form-label">Date of Birth</label>
+                  <input type="date" class="form-control" id="teacherDOB" required>
+                  <div class="invalid-feedback">Please select a date of birth.</div>
+                </div>
+                <div class="col-md-6">
+                  <label for="teacherPhoneNumber" class="form-label">Phone Number</label>
+                  <div class="input-group">
+                    <span class="input-group-text"><i class="bi bi-telephone-fill"></i></span>
+                    <input type="tel" class="form-control" id="teacherPhoneNumber"
+                           placeholder="Enter phone number" required>
+                  </div>
+                  <div class="invalid-feedback">Please provide a valid phone number.</div>
+                </div>
+                <div class="col-12">
+                  <label for="teacherSchoolName" class="form-label">School Name</label>
+                  <input type="text" class="form-control" id="teacherSchoolName"
+                         placeholder="Enter school name" required>
+                  <div class="invalid-feedback">Please provide a school name.</div>
+                </div>
+                <div class="col-12">
+                  <label for="teacherSubject" class="form-label">Subject</label>
+                  <input type="text" class="form-control" id="teacherSubject"
+                         placeholder="Enter subject" required>
+                  <div class="invalid-feedback">Please provide a subject.</div>
+                </div>
+              </div>
+            </div>
+            <div class="mb-3">
+              <h6 class="fw-bold text-primary mb-3">Account Information</h6>
+              <div class="row g-3">
+                <div class="col-md-6">
+                  <label for="teacherUsername" class="form-label">Username</label>
+                  <div class="input-group">
+                    <span class="input-group-text"><i class="bi bi-person"></i></span>
+                    <input type="text" class="form-control" id="teacherUsername"
+                           placeholder="Create a username" required>
+                  </div>
+                  <div class="invalid-feedback">Please choose a username.</div>
+                </div>
+                <div class="col-md-6">
+                  <label for="teacherEmail" class="form-label">Email Address</label>
+                  <div class="input-group">
+                    <span class="input-group-text"><i class="bi bi-envelope"></i></span>
+                    <input type="email" class="form-control" id="teacherEmail"
+                           placeholder="Enter email address" required>
+                  </div>
+                  <div class="invalid-feedback">Please provide a valid email.</div>
+                </div>
+                <div class="col-md-6">
+                  <label for="teacherPassword" class="form-label">Password</label>
+                  <div class="input-group">
+                    <input type="password" class="form-control" id="teacherPassword"
+                           placeholder="Create a password" required>
+                    <button class="btn btn-outline-secondary toggle-password" type="button">
+                      <i class="bi bi-eye"></i>
+                    </button>
+                  </div>
+                  <div class="form-text">Password must be at least 8 characters long.</div>
+                </div>
+                <div class="col-md-6">
+                  <label for="teacherConfirmPassword" class="form-label">Confirm Password</label>
+                  <div class="input-group">
+                    <input type="password" class="form-control" id="teacherConfirmPassword"
+                           placeholder="Confirm password" required>
+                    <button class="btn btn-outline-secondary toggle-password" type="button">
+                      <i class="bi bi-eye"></i>
+                    </button>
+                  </div>
+                  <div class="invalid-feedback">Passwords must match.</div>
+                </div>
+              </div>
+            </div>
+          </form>
+        </div>
+        <div class="modal-footer bg-light">
+          <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">
+            <i class="bi bi-x-circle me-1"></i>Cancel
+          </button>
+          <button type="button" class="btn btn-primary" id="saveTeacher">
+            <i class="bi bi-check-circle me-1"></i>Add Teacher
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Edit Teacher Modal -->
+  <div class="modal fade" id="editTeacherModal" tabindex="-1" aria-labelledby="editTeacherModalLabel"
+       aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
+      <div class="modal-content">
+        <div class="modal-header bg-primary text-white">
+          <h5 class="modal-title fw-bold" id="editTeacherModalLabel">
+            <i class="bi bi-pencil-square me-2"></i>Edit Teacher
+          </h5>
+          <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"
+                  aria-label="Close"></button>
+        </div>
+        <div class="modal-body p-4">
+          <form id="editTeacherForm" class="needs-validation" novalidate>
+            <input type="hidden" id="editTeacherEmail">
+            <div class="mb-4">
+              <h6 class="fw-bold text-primary mb-3">Personal Information</h6>
+              <div class="row g-3">
+                <div class="col-md-6">
+                  <label for="editTeacherFullName" class="form-label">Full Name</label>
+                  <input type="text" class="form-control" id="editTeacherFullName"
+                         placeholder="Enter full name" required>
+                  <div class="invalid-feedback">Please provide a name.</div>
+                </div>
+                <div class="col-md-6">
+                  <label for="editTeacherNIC" class="form-label">NIC Number</label>
+                  <input type="text" class="form-control" id="editTeacherNIC"
+                         placeholder="Enter NIC number" required>
+                  <div class="invalid-feedback">Please provide a valid NIC number.</div>
+                </div>
+                <div class="col-md-6">
+                  <label for="editTeacherDOB" class="form-label">Date of Birth</label>
+                  <input type="date" class="form-control" id="editTeacherDOB" required>
+                  <div class="invalid-feedback">Please select a date of birth.</div>
+                </div>
+                <div class="col-md-6">
+                  <label for="editTeacherPhone" class="form-label">Phone Number</label>
+                  <div class="input-group">
+                    <span class="input-group-text"><i class="bi bi-telephone-fill"></i></span>
+                    <input type="tel" class="form-control" id="editTeacherPhone"
+                           placeholder="Enter phone number" required>
+                  </div>
+                  <div class="invalid-feedback">Please provide a valid phone number.</div>
+                </div>
+                <div class="col-12">
+                  <label for="editTeacherSchoolName" class="form-label">School Name</label>
+                  <input type="text" class="form-control" id="editTeacherSchoolName"
+                         placeholder="Enter school name" required>
+                  <div class="invalid-feedback">Please provide a school name.</div>
+                </div>
+                <div class="col-12">
+                  <label for="editTeacherSubject" class="form-label">Subject</label>
+                  <input type="text" class="form-control" id="editTeacherSubject"
+                         placeholder="Enter subject" required>
+                  <div class="invalid-feedback">Please provide a subject.</div>
+                </div>
+              </div>
+            </div>
+            <div class="mb-3">
+              <h6 class="fw-bold text-primary mb-3">Account Information</h6>
+              <div class="row g-3">
+                <div class="col-md-6">
+                  <label for="editTeacherUsername" class="form-label">Username</label>
+                  <div class="input-group">
+                    <span class="input-group-text"><i class="bi bi-person"></i></span>
+                    <input type="text" class="form-control" id="editTeacherUsername"
+                           placeholder="Enter username" required>
+                  </div>
+                  <div class="invalid-feedback">Please provide a username.</div>
+                </div>
+              </div>
+            </div>
+          </form>
+        </div>
+        <div class="modal-footer bg-light">
+          <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">
+            <i class="bi bi-x-circle me-1"></i>Cancel
+          </button>
+          <button type="button" class="btn btn-primary" id="updateTeacher">
+            <i class="bi bi-check-circle me-1"></i>Update Teacher
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- User Profile Modal -->
+  <div class="modal fade" id="userProfileModal" tabindex="-1" aria-labelledby="userProfileModalLabel"
+       aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content shadow">
+        <div class="modal-header gradient-header">
+          <h5 class="modal-title" id="userProfileModalLabel">User Profile</h5>
+          <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"
+                  aria-label="Close"></button>
+        </div>
+        <div class="modal-body p-0">
+          <div class="profile-header">
+            <div class="profile-image-wrapper">
+              <div class="profile-image-container">
+                <img id="modalUserProfileImage" src="assets/default-user.jpg" alt="Profile Image"
+                     class="img-fluid">
+                <div class="image-overlay">
+                  <div class="image-overlay-actions">
+                                    <span class="icon-btn upload-icon">
+                                        <i class="fas fa-camera"></i>
+                                    </span>
+                    <span class="icon-btn delete-btn">
+                                        <i class="fas fa-trash"></i>
+                                    </span>
+                  </div>
+                </div>
+              </div>
+              <input type="file" id="profileImageInput" accept="image/*" style="display: none;">
+            </div>
+            <h5 class="fw-bold mb-1" id="modalUserFullName">Loading...</h5>
+            <span class="user-role-badge" id="modalUserRole">Loading...</span>
+          </div>
+
+          <div class="p-4">
+            <div class="card border-0 shadow-sm mb-3">
+              <div class="card-body">
+                <div class="mb-3 d-flex align-items-center">
+                  <div class="detail-icon me-3">
+                    <i class="fas fa-envelope"></i>
+                  </div>
+                  <div>
+                    <div class="detail-label">Email Address</div>
+                    <div class="detail-value" id="modalUserEmail">Loading...</div>
+                  </div>
+                </div>
+
+                <div class="mb-3 d-flex align-items-center">
+                  <div class="detail-icon me-3">
+                    <i class="fas fa-phone"></i>
+                  </div>
+                  <div>
+                    <div class="detail-label">Phone Number</div>
+                    <div class="detail-value" id="modalUserPhone">Loading...</div>
+                  </div>
+                </div>
+
+                <div class="mb-3 d-flex align-items-center">
+                  <div class="detail-icon me-3">
+                    <i class="fas fa-calendar-alt"></i>
+                  </div>
+                  <div>
+                    <div class="detail-label">Date of Birth</div>
+                    <div class="detail-value" id="modalUserDOB">Loading...</div>
+                  </div>
+                </div>
+
+                <div class="d-flex align-items-center">
+                  <div class="detail-icon me-3">
+                    <i class="fas fa-shield-alt"></i>
+                  </div>
+                  <div>
+                    <div class="detail-label">Account Status</div>
+                    <div class="detail-value">
+                                        <span id="statusBadgeContainer">
+                                            <span class="status-badge" id="statusBadge">
+                                                <i class="fas fa-circle status-indicator"></i>
+                                                <span id="modalUserStatus">Loading...</span>
+                                            </span>
+                                        </span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-light" data-bs-dismiss="modal">Close</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Admin Details Modal -->
+  <div class="modal fade" id="adminDetailsModal" tabindex="-1" aria-labelledby="adminDetailsModalLabel"
+       aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content">
+        <div class="modal-header gradient-header">
+          <h5 class="modal-title" id="adminDetailsModalLabel">Administrator Details</h5>
+          <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"
+                  aria-label="Close"></button>
+        </div>
+        <div class="modal-body">
+          <div class="text-center mb-4">
+            <div class="avatar avatar-lg mx-auto mb-3" id="detailsAdminInitials">?</div>
+            <h5 id="detailsAdminName">Loading...</h5>
+            <p class="text-muted mb-0" id="detailsAdminSchool">Loading...</p>
+          </div>
+          <div class="admin-details">
+            <p><strong>Username:</strong> <span id="detailsAdminUsername">Loading...</span></p>
+            <p><strong>Email:</strong> <span id="detailsAdminEmail">Loading...</span></p>
+            <p><strong>NIC:</strong> <span id="detailsAdminNIC">Loading...</span></p>
+            <p><strong>Phone Number:</strong> <span id="detailsAdminPhone">Loading...</span></p>
+            <p><strong>Date of Birth:</strong> <span id="detailsAdminDOB">Loading...</span></p>
+            <p><strong>Status:</strong> <span id="detailsAdminStatus">Loading...</span></p>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Close</button>
+          <button type="button" class="btn btn-primary" id="editSelectedAdmin">Edit Details</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Exam Details Modal -->
+  <div class="modal fade" id="examDetailsModal" tabindex="-1" aria-labelledby="examDetailsModalLabel"
+       aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content">
+        <div class="modal-header gradient-header">
+          <h5 class="modal-title" id="examDetailsModalLabel">Exam Details</h5>
+          <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"
+                  aria-label="Close"></button>
+        </div>
+        <div class="modal-body">
+          <div class="exam-details">
+            <p><strong>Title:</strong> <span id="detailsExamTitle">Loading...</span></p>
+            <p><strong>Subject:</strong> <span id="detailsExamSubject">Loading...</span></p>
+            <p><strong>Start Time:</strong> <span id="detailsExamStartTime">Loading...</span></p>
+            <p><strong>Duration:</strong> <span id="detailsExamDuration">Loading...</span></p>
+            <p><strong>Type:</strong> <span id="detailsExamType">Loading...</span></p>
+            <p><strong>Created By:</strong> <span id="detailsExamCreator">Loading...</span></p>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Close</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Teacher Details Modal -->
+  <div class="modal fade" id="teacherDetailsModal" tabindex="-1" aria-labelledby="teacherDetailsModalLabel"
+       aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content">
+        <div class="modal-header gradient-header">
+          <h5 class="modal-title" id="teacherDetailsModalLabel">Teacher Details</h5>
+          <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"
+                  aria-label="Close"></button>
+        </div>
+        <div class="modal-body">
+          <div class="text-center mb-4">
+            <div class="avatar avatar-lg mx-auto mb-3" id="detailsTeacherInitials">?</div>
+            <h5 id="detailsTeacherName">Loading...</h5>
+            <p class="text-muted mb-0" id="detailsTeacherSchool">Loading...</p>
+          </div>
+          <div class="teacher-details">
+            <p><strong>Username:</strong> <span id="detailsTeacherUsername">Loading...</span></p>
+            <p><strong>Email:</strong> <span id="detailsTeacherEmail">Loading...</span></p>
+            <p><strong>NIC:</strong> <span id="detailsTeacherNIC">Loading...</span></p>
+            <p><strong>Phone Number:</strong> <span id="detailsTeacherPhone">Loading...</span></p>
+            <p><strong>Date of Birth:</strong> <span id="detailsTeacherDOB">Loading...</span></p>
+            <p><strong>Subject:</strong> <span id="detailsTeacherSubject">Loading...</span></p>
+            <p><strong>Status:</strong> <span id="detailsTeacherStatus">Loading...</span></p>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Close</button>
+          <button type="button" class="btn btn-primary" id="editSelectedTeacher">Edit Details</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/toastify-js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script src="js/super-admin-dashboard.js"></script>
+<script src="js/super-admin-dashboard-charts.js"></script>
+</body>
+</html>

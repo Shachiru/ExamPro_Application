@@ -10,6 +10,8 @@ import java.util.List;
 public interface UserService {
     int saveUser(UserDTO userDTO);
 
+    UserDTO createUserWithProfileImage(UserDTO userDTO, MultipartFile profileImage) throws IOException;
+
     List<UserDTO> getAllUsers(UserRole authenticatedRole);
 
     List<UserDTO> getAllAdmins(int page, int size, String status, String search); // Updated

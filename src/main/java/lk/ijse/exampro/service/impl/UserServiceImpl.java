@@ -270,7 +270,6 @@ public class UserServiceImpl implements UserDetailsService, UserService {
         return teacherRepository.countBySchoolName(schoolName);
     }
 
-    // Other methods remain unchanged; included here for completeness
     @Override
     public List<UserDTO> getAllUsers(UserRole authenticatedRole) {
         if (authenticatedRole == UserRole.SUPER_ADMIN) {
@@ -298,7 +297,7 @@ public class UserServiceImpl implements UserDetailsService, UserService {
             List<jakarta.persistence.criteria.Predicate> predicates = new ArrayList<>();
             predicates.add(cb.equal(root.get("role"), UserRole.ADMIN));
             if (status != null && !status.isEmpty()) {
-                predicates.add(cb.equal(root.get("isActive"), status.equalsIgnoreCase("ACTIVE"))); // Fixed field name
+                predicates.add(cb.equal(root.get("isActive"), status.equalsIgnoreCase("ACTIVE")));
             }
             if (search != null && !search.isEmpty()) {
                 String searchPattern = "%" + search.toLowerCase() + "%";
@@ -318,7 +317,7 @@ public class UserServiceImpl implements UserDetailsService, UserService {
             List<jakarta.persistence.criteria.Predicate> predicates = new ArrayList<>();
             predicates.add(cb.equal(root.get("role"), UserRole.ADMIN));
             if (status != null && !status.isEmpty()) {
-                predicates.add(cb.equal(root.get("isActive"), status.equalsIgnoreCase("ACTIVE"))); // Fixed field name
+                predicates.add(cb.equal(root.get("isActive"), status.equalsIgnoreCase("ACTIVE")));
             }
             if (search != null && !search.isEmpty()) {
                 String searchPattern = "%" + search.toLowerCase() + "%";
@@ -541,6 +540,54 @@ public class UserServiceImpl implements UserDetailsService, UserService {
             logger.error("Cloudinary deletion failed for {}: {}", email, e.getMessage());
             throw new IOException("Failed to delete image from storage service");
         }
+    }
+
+    @Override
+    public UserDTO createUserWithProfileImage(UserDTO userDTO, MultipartFile profileImage) throws IOException {
+        // Validate password and confirm password
+        if (userDTO.getPassword() == null || userDTO.getConfirmPassword() == null ||
+                !userDTO.getPassword().equals(userDTO.getConfirmPassword())) {
+            throw new IllegalArgumentException("Passwords do not match");
+        }
+
+        if (userRepository.existsByEmail(userDTO.getEmail())) {
+            throw new IllegalArgumentException("Email already registered");
+        }
+
+        if (userRepository.existsByUsername(userDTO.getUsername())) {
+            throw new IllegalArgumentException("Username already taken");
+        }
+
+        if (userRepository.existsByNic(userDTO.getNic())) {
+            throw new IllegalArgumentException("NIC already registered");
+        }
+
+        User user = modelMapper.map(userDTO, User.class);
+
+        user.setPassword(passwordEncoder.encode(userDTO.getPassword()));
+
+        user.setActive(true);
+
+        if (profileImage != null && !profileImage.isEmpty()) {
+            Map uploadResult = cloudinaryService.uploadImage(profileImage);
+            String profilePictureUrl = (String) uploadResult.get("secure_url");
+            String publicId = (String) uploadResult.get("public_id");
+
+            user.setProfilePicture(profilePictureUrl);
+            user.setProfilePicturePublicId(publicId);
+        }
+
+        User savedUser = userRepository.save(user);
+
+        if (UserRole.STUDENT.equals(user.getRole())) {
+            Student student = new Student();
+            student.setUser(savedUser);
+            student.setGrade(userDTO.getGrade());
+            student.setSchoolName(userDTO.getSchoolName());
+            studentRepository.save(student);
+        }
+
+        return modelMapper.map(savedUser, UserDTO.class);
     }
 
     private UserDTO convertToDTO(User user) {

@@ -19,7 +19,9 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 @RestController
 @RequestMapping("api/v1/user")
@@ -119,36 +121,34 @@ public class UserController {
         }
     }
 
-    @PostMapping(value = "/sign_up/student")
-    public ResponseEntity<ResponseDTO> registerStudent(@RequestBody @Valid UserDTO userDTO) {
+    @PostMapping("/sign_up/student")
+    public ResponseEntity<ResponseDTO> registerStudent(
+            @RequestPart("userDTO") UserDTO userDTO,
+            @RequestPart(value = "profileImage", required = false) MultipartFile profileImage) {
         try {
-            if (userDTO.getRole() == null) {
-                userDTO.setRole(UserRole.STUDENT);
+            userDTO.setRole(UserRole.STUDENT);
+
+            // Validate password and confirm password
+            if (!userDTO.getPassword().equals(userDTO.getConfirmPassword())) {
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(
+                        new ResponseDTO(VarList.BAD_REQUEST, "Passwords do not match", null));
             }
-            if (userDTO.getRole() != UserRole.STUDENT) {
-                return ResponseEntity.status(HttpStatus.FORBIDDEN).body(
-                        new ResponseDTO(VarList.FORBIDDEN, "Only students can register themselves", null));
-            }
-            int res = userService.saveUser(userDTO);
-            switch (res) {
-                case VarList.CREATED:
-                    String token = jwtUtil.generateToken(userDTO);
-                    AuthDTO authDTO = new AuthDTO();
-                    authDTO.setEmail(userDTO.getEmail());
-                    authDTO.setToken(token);
-                    authDTO.setRole(String.valueOf(userDTO.getRole()));
-                    return ResponseEntity.status(HttpStatus.CREATED).body(
-                            new ResponseDTO(VarList.CREATED, "Student registered successfully", authDTO));
-                case VarList.NOT_ACCEPTABLE:
-                    return ResponseEntity.status(HttpStatus.NOT_ACCEPTABLE).body(
-                            new ResponseDTO(VarList.NOT_ACCEPTABLE, "Email already used", null));
-                default:
-                    return ResponseEntity.status(HttpStatus.BAD_GATEWAY).body(
-                            new ResponseDTO(VarList.BAD_GATEWAY, "Error during registration", null));
-            }
+
+            UserDTO createdUser = userService.createUserWithProfileImage(userDTO, profileImage);
+
+            String token = jwtUtil.generateToken(createdUser);
+
+            // Create response data
+            Map<String, Object> responseData = new HashMap<>();
+            responseData.put("token", token);
+            responseData.put("role", createdUser.getRole());
+            responseData.put("email", createdUser.getEmail());
+
+            return ResponseEntity.status(HttpStatus.CREATED).body(
+                    new ResponseDTO(VarList.CREATED, "Student registered successfully", responseData));
         } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(
-                    new ResponseDTO(VarList.INTERNAL_SERVER_ERROR, e.getMessage(), null));
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(
+                    new ResponseDTO(VarList.BAD_REQUEST, e.getMessage(), null));
         }
     }
 

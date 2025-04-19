@@ -21,37 +21,32 @@ import java.util.List;
 public class AdminController {
 
     @Autowired
-    private UserServiceImpl userService; // Inject UserServiceImpl
+    private UserServiceImpl userService;
 
-    // Only ADMIN can access
     @GetMapping("/admin-only")
     @PreAuthorize("hasRole('ADMIN')")
     public String adminAccess() {
         return "Admin access granted!";
     }
 
-    // Only TEACHER can access
     @GetMapping("/teacher-only")
     @PreAuthorize("hasRole('TEACHER')")
     public String teacherAccess() {
         return "Teacher access granted!";
     }
 
-    // Only STUDENT can access
     @GetMapping("/student-only")
     @PreAuthorize("hasRole('STUDENT')")
     public String studentAccess() {
         return "Student access granted!";
     }
 
-    // Both TEACHER and ADMIN can access
     @GetMapping("/teacher-admin")
     @PreAuthorize("hasAnyRole('TEACHER', 'ADMIN')")
     public String teacherAdminAccess() {
         return "Both TEACHER and ADMIN can access this!";
     }
 
-    // Everyone (ADMIN, TEACHER, STUDENT) can access
     @GetMapping("/all-users")
     @PreAuthorize("hasAnyRole('ADMIN', 'TEACHER', 'STUDENT')")
     public String allUsersAccess() {

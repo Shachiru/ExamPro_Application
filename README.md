@@ -42,8 +42,6 @@ It allows teachers to create exams with various question types (multiple-choice,
 | ![Admin Manage 1](https://github.com/user-attachments/assets/c45a981e-37fa-423f-837d-3c83f52fadc4) |
 | ![Admin Manage 2](https://github.com/user-attachments/assets/164ebd38-28db-43df-b3b6-c3c4e014c0f4) |
 
-> *Note: Replace placeholder links with your actual GitHub-hosted images if necessary.*
-
 ---
 
 ## 🛠️ Technologies Used

@@ -136,7 +136,7 @@ public class UserController {
             UserDTO createdUser = userService.createUserWithProfileImage(userDTO, profileImage);
 
             String token = jwtUtil.generateToken(createdUser);
-
+            
             Map<String, Object> responseData = new HashMap<>();
             responseData.put("token", token);
             responseData.put("role", createdUser.getRole());

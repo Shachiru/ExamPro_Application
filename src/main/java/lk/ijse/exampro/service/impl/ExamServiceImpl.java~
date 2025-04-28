@@ -22,7 +22,6 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
@@ -567,21 +566,22 @@ public class ExamServiceImpl implements ExamService {
             throw new IllegalArgumentException("Teacher has no assigned subject");
         }
 
+        // Find all exams for the teacher's subject
         List<Exam> exams = examRepository.findBySubject(teacherSubject);
         if (exams.isEmpty()) {
             return List.of();
         }
 
-        List<StudentAnswerDTO> ungradedAnswers = new ArrayList<>();
-        for (Exam exam : exams) {
-            // Get answers for the exam
-            List<Answer> answers = answerRepository.findByQuestion_Exam_Id(exam.getId());
-            for (Answer answer : answers) {
-                if (answer.getScore() == null && "SHORT_ANSWER".equals(answer.getQuestion().getType())) {
+        List<Answer> ungradedAnswers = answerRepository.findByQuestion_Exam_InAndScoreIsNullAndQuestionType(
+                exams, "SHORT_ANSWER");
+
+        return ungradedAnswers.stream()
+                .map(answer -> {
                     Question question = answer.getQuestion();
                     StudentResult studentResult = answer.getStudentResult();
                     Student student = studentRepository.findByUser_Email(studentResult.getStudent().getEmail())
                             .orElseThrow(() -> new IllegalArgumentException("Student not found for email: " + studentResult.getStudent().getEmail()));
+                    Exam exam = question.getExam();
 
                     StudentAnswerDTO dto = new StudentAnswerDTO();
                     dto.setStudentId(student.getStudent_id());
@@ -595,12 +595,9 @@ public class ExamServiceImpl implements ExamService {
                     dto.setTotalScore(studentResult.getScore());
                     dto.setIsCompleted(studentResult.getIsCompleted());
                     dto.setSubject(exam.getSubject());
-                    ungradedAnswers.add(dto);
-                }
-            }
-        }
-
-        return ungradedAnswers;
+                    return dto;
+                })
+                .collect(Collectors.toList());
     }
 
     @Override

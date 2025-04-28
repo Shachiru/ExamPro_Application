@@ -13,6 +13,8 @@ import java.util.List;
 public interface ExamRepository extends JpaRepository<Exam, Long> {
     List<Exam> findByCreatedBy(User teacher);
 
+    List<Exam> findByCreatedByEmail(String email);
+
     List<Exam> findByStartTimeAfter(LocalDateTime dateTime);
 
     List<Exam> findByTitleContainingIgnoreCase(String title);

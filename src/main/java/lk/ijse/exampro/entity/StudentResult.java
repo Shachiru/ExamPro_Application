@@ -23,13 +23,12 @@ public class StudentResult {
     @JoinColumn(name = "exam_id", nullable = false)
     private Exam exam;
 
-    @Column(nullable = true) // Allow null in DB
+    @Column(nullable = true)
     private Integer score;
 
     @Column(nullable = false)
     private Boolean isCompleted;
 
-    @Column // Added field
+    @Column
     private LocalDateTime startTime;
 }
-

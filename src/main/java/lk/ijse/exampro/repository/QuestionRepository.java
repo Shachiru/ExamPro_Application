@@ -14,4 +14,6 @@ public interface QuestionRepository extends JpaRepository<Question, Long> {
     int countByExam(Exam exam);
 
     int countByExamAndType(Exam exam, String type);
+
+    List<Question> findByExamId(Long examId);
 }

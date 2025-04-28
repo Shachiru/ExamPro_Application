@@ -3,883 +3,337 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>EduTeach Dashboard</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
+    <title>ExamPro - Teacher Dashboard</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.8.1/font/bootstrap-icons.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap"
           rel="stylesheet">
-    <link rel="stylesheet" href="css/teacher-dashboard.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/toastify-js/src/toastify.min.css">
+    <link rel="stylesheet" href="css/super-admin-dashboard.css">
 </head>
 <body>
 <!-- Sidebar -->
-<div class="sidebar bg-gradient-to-b from-blue-700 to-indigo-800 text-white">
-    <div class="sidebar-header border-b border-blue-600">
-        <h2 class="text-xl font-bold">EduTeach</h2>
-        <button class="sidebar-toggle ml-auto text-white bg-transparent border-0">
-            <i class="fas fa-bars"></i>
-        </button>
+<div class="sidebar" id="sidebar">
+    <div class="logo-section">
+        <a href="#" class="d-flex align-items-center text-decoration-none">
+            <i class="fas fa-graduation-cap fs-3 text-white"></i>
+            <span class="ms-2 fs-4 fw-bold text-white logo-text">Exam<span class="text-accent">Pro</span></span>
+        </a>
+        <p class="mt-2 text-white-50 small logo-text">Teacher Portal</p>
     </div>
-    <div class="p-4 border-b border-blue-600">
-        <div class="flex items-center">
-            <img src="https://via.placeholder.com/50" alt="Teacher" class="rounded-full mr-3">
-            <div>
-                <h6 class="text-sm font-semibold mb-0 menu-text">John Doe</h6>
-                <p class="text-xs text-blue-200 mb-0 menu-text">Mathematics</p>
-            </div>
-        </div>
+    <div class="mt-4">
+        <a href="#" class="menu-item active" id="dashboardMenu">
+            <i class="fas fa-chart-line"></i>
+            <span class="menu-text">Dashboard</span>
+        </a>
+        <a href="#" class="menu-item">
+            <i class="fas fa-building"></i>
+            <span class="menu-text">Institutions</span>
+        </a>
+        <a href="#" class="menu-item" id="examsMenu">
+            <i class="fas fa-file-alt"></i>
+            <span class="menu-text">Exams</span>
+        </a>
+        <a href="#" class="menu-item">
+            <i class="fas fa-cog"></i>
+            <span class="menu-text">Settings</span>
+        </a>
+        <a href="#" class="menu-item" id="logout">
+            <i class="fas fa-sign-out-alt"></i>
+            <span class="menu-text">Logout</span>
+        </a>
     </div>
-    <ul class="sidebar-menu mt-4">
-        <li>
-            <a href="#" class="active" id="dashboard">
-                <i class="fas fa-tachometer-alt"></i>
-                <span class="menu-text">Dashboard</span>
-            </a>
-        </li>
-        <li>
-            <a href="#" id="manageQuestions">
-                <i class="fas fa-question-circle"></i>
-                <span class="menu-text">Manage Questions</span>
-            </a>
-        </li>
-        <li>
-            <a href="#" id="manageExams">
-                <i class="fas fa-file-alt"></i>
-                <span class="menu-text">Manage Exams</span>
-            </a>
-        </li>
-        <li>
-            <a href="#" id="viewStudents">
-                <i class="fas fa-user-graduate"></i>
-                <span class="menu-text">View Students</span>
-            </a>
-        </li>
-        <li>
-            <a href="#" id="analytics">
-                <i class="fas fa-chart-bar"></i>
-                <span class="menu-text">Analytics</span>
-            </a>
-        </li>
-        <li>
-            <a href="#" id="profile">
-                <i class="fas fa-user-circle"></i>
-                <span class="menu-text">Profile</span>
-            </a>
-        </li>
-        <li>
-            <a href="#" id="settings">
-                <i class="fas fa-cog"></i>
-                <span class="menu-text">Settings</span>
-            </a>
-        </li>
-        <li class="mt-auto">
-            <a href="#" id="logout" class="text-red-300 hover:text-red-100 hover:bg-red-500/30">
-                <i class="fas fa-sign-out-alt"></i>
-                <span class="menu-text">Logout</span>
-            </a>
-        </li>
-    </ul>
 </div>
 
-<!-- Main Content -->
-<div class="main-content">
-    <!-- Top Navbar -->
-    <nav class="navbar p-3 mb-4">
-        <div class="container-fluid">
-            <button class="mobile-sidebar-toggle d-none btn btn-sm btn-light">
-                <i class="fas fa-bars"></i>
+<!-- Content Area -->
+<div class="content" id="content">
+    <!-- Loading Overlay -->
+    <div class="loading-overlay" id="loading">
+        <div class="three-body">
+            <div class="three-body__dot"></div>
+            <div class="three-body__dot"></div>
+            <div class="three-body__dot"></div>
+        </div>
+    </div>
+
+    <!-- Top Header -->
+    <div class="top-header">
+        <div class="d-flex align-items-center">
+            <button class="btn d-lg-none me-3" id="toggleSidebar">
+                <i class="fas fa-bars text-primary"></i>
             </button>
-            <div class="d-flex align-items-center">
-                <div class="position-relative">
-                    <input type="text" class="form-control bg-light border-0" placeholder="Search...">
-                    <i class="fas fa-search position-absolute" style="right: 10px; top: 10px; color: #9ca3af;"></i>
-                </div>
-            </div>
-            <div class="d-flex align-items-center">
-                <div class="dropdown me-3">
-                    <button class="btn btn-light position-relative" type="button" data-bs-toggle="dropdown">
-                        <i class="fas fa-bell"></i>
-                        <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger">
-                                3
-                            </span>
-                    </button>
-                    <ul class="dropdown-menu dropdown-menu-end">
-                        <li><a class="dropdown-item" href="#">New student submission</a></li>
-                        <li><a class="dropdown-item" href="#">Exam results ready</a></li>
-                        <li><a class="dropdown-item" href="#">System update</a></li>
-                    </ul>
-                </div>
-                <div class="dropdown">
-                    <button class="btn btn-light" type="button" data-bs-toggle="dropdown">
-                        <i class="fas fa-user-circle"></i>
-                    </button>
-                    <ul class="dropdown-menu dropdown-menu-end">
-                        <li><a class="dropdown-item" href="#" id="profileDropdown">Profile</a></li>
-                        <li><a class="dropdown-item" href="#" id="settingsDropdown">Settings</a></li>
-                        <li>
-                            <hr class="dropdown-divider">
-                        </li>
-                        <li><a class="dropdown-item text-danger" href="#" id="logoutDropdown">Logout</a></li>
-                    </ul>
-                </div>
+            <div class="search-container d-none d-md-block">
+                <i class="fas fa-search"></i>
+                <input type="text" placeholder="Search..." class="form-control">
             </div>
         </div>
-    </nav>
+        <div class="user-profile" data-bs-toggle="modal" data-bs-target="#userProfileModal" style="cursor: pointer;">
+            <div class="notification-icon me-4">
+                <i class="far fa-bell fs-5 text-muted"></i>
+                <span class="notification-badge">3</span>
+            </div>
+            <div class="text-end d-none d-sm-block">
+                <h6 class="mb-0" id="userFullName">Loading...</h6>
+                <small class="text-muted" id="userRole">Loading...</small>
+            </div>
+            <img id="userProfileImage" src="assets/default-user.jpg" alt="Profile Image" class="avatar">
+        </div>
+    </div>
 
     <!-- Dashboard Content -->
-    <div id="dashboardContent" class="fade-in">
-        <div class="d-flex justify-content-between align-items-center mb-4">
-            <h3 class="text-xl font-semibold text-gray-800">Dashboard Overview</h3>
-            <div>
-                <button class="btn btn-light me-2">
-                    <i class="fas fa-download me-1"></i> Export
-                </button>
-                <button class="btn btn-primary">
-                    <i class="fas fa-plus me-1"></i> New Exam
-                </button>
-            </div>
-        </div>
-
-        <!-- Stats Cards -->
+    <div class="dashboard-content" id="dashboardContent">
         <div class="row mb-4">
+            <div class="col-md-12">
+                <div class="section-header">
+                    <h1 class="section-title fs-4">Teacher Dashboard</h1>
+                </div>
+                <p class="text-muted mb-4">Overview of the entire system</p>
+            </div>
+        </div>
+        <!-- Stats Cards -->
+        <div class="row mb-4" id="statsCards">
             <div class="col-md-3 col-sm-6 mb-4 mb-md-0">
-                <div class="card h-100">
-                    <div class="stat-card bg-gradient-to-r from-blue-500 to-blue-600">
-                        <div class="d-flex justify-content-between">
-                            <div>
-                                <h6 class="text-xs font-semibold text-blue-100 mb-1">TOTAL STUDENTS</h6>
-                                <h3 class="text-2xl font-bold mb-0">248</h3>
-                                <p class="text-xs mt-2 mb-0">
-                                    <i class="fas fa-arrow-up text-green-300 me-1"></i>
-                                    <span class="text-green-300">12%</span> from last month
-                                </p>
-                            </div>
-                            <i class="fas fa-users"></i>
-                        </div>
+                <div class="stat-card">
+                    <div class="card-icon" style="background: linear-gradient(135deg, #4361ee 0%, #3a0ca3 100%);">
+                        <i class="fas fa-user-shield"></i>
+                    </div>
+                    <div class="card-value" id="totalExamCard">0</div>
+                    <div class="card-label">Total Exams</div>
+                    <div class="growth-indicator positive">
+                        <i class="fas fa-arrow-up me-1"></i> Data updated
                     </div>
                 </div>
             </div>
             <div class="col-md-3 col-sm-6 mb-4 mb-md-0">
-                <div class="card h-100">
-                    <div class="stat-card bg-gradient-to-r from-purple-500 to-purple-600">
-                        <div class="d-flex justify-content-between">
-                            <div>
-                                <h6 class="text-xs font-semibold text-purple-100 mb-1">ACTIVE EXAMS</h6>
-                                <h3 class="text-2xl font-bold mb-0">12</h3>
-                                <p class="text-xs mt-2 mb-0">
-                                    <i class="fas fa-arrow-up text-green-300 me-1"></i>
-                                    <span class="text-green-300">3</span> new this week
-                                </p>
-                            </div>
-                            <i class="fas fa-file-alt"></i>
-                        </div>
+                <div class="stat-card">
+                    <div class="card-icon" style="background: linear-gradient(135deg, #3f37c9 0%, #4cc9f0 100%);">
+                        <i class="fas fa-user-graduate"></i>
+                    </div>
+                    <div class="card-value" id="totalStudentsCard">0</div>
+                    <div class="card-label">Total Students</div>
+                    <div class="growth-indicator positive">
+                        <i class="fas fa-arrow-up me-1"></i> Data updated
                     </div>
                 </div>
             </div>
             <div class="col-md-3 col-sm-6 mb-4 mb-md-0">
-                <div class="card h-100">
-                    <div class="stat-card bg-gradient-to-r from-green-500 to-green-600">
-                        <div class="d-flex justify-content-between">
-                            <div>
-                                <h6 class="text-xs font-semibold text-green-100 mb-1">COMPLETION RATE</h6>
-                                <h3 class="text-2xl font-bold mb-0">87%</h3>
-                                <p class="text-xs mt-2 mb-0">
-                                    <i class="fas fa-arrow-up text-green-300 me-1"></i>
-                                    <span class="text-green-300">5%</span> from last month
-                                </p>
-                            </div>
-                            <i class="fas fa-chart-line"></i>
-                        </div>
+                <div class="stat-card">
+                    <div class="card-icon" style="background: linear-gradient(135deg, #8338ec 0%, #3a86ff 100%);">
+                        <i class="fas fa-file-alt"></i>
                     </div>
-                </div>
-            </div>
-            <div class="col-md-3 col-sm-6">
-                <div class="card h-100">
-                    <div class="stat-card bg-gradient-to-r from-red-500 to-red-600">
-                        <div class="d-flex justify-content-between">
-                            <div>
-                                <h6 class="text-xs font-semibold text-red-100 mb-1">AVERAGE SCORE</h6>
-                                <h3 class="text-2xl font-bold mb-0">76.2</h3>
-                                <p class="text-xs mt-2 mb-0">
-                                    <i class="fas fa-arrow-down text-red-300 me-1"></i>
-                                    <span class="text-red-300">2.1</span> from last month
-                                </p>
-                            </div>
-                            <i class="fas fa-graduation-cap"></i>
-                        </div>
+                    <div class="card-value" id="examsThisMonthCard">0</div>
+                    <div class="card-label">Exams This Month</div>
+                    <div class="growth-indicator positive">
+                        <i class="fas fa-arrow-up me-1"></i> Data updated
                     </div>
                 </div>
             </div>
         </div>
 
-        <!-- Recent Activity and Quick Access -->
-        <div class="row">
-            <div class="col-lg-8 mb-4 mb-lg-0">
-                <div class="card">
-                    <div class="card-header bg-white p-4 border-0">
-                        <div class="d-flex justify-content-between align-items-center">
-                            <h5 class="mb-0 font-semibold">Recent Activity</h5>
-                            <div class="dropdown">
-                                <button class="btn btn-sm btn-light" type="button" data-bs-toggle="dropdown">
-                                    <i class="fas fa-ellipsis-v"></i>
-                                </button>
-                                <ul class="dropdown-menu dropdown-menu-end">
-                                    <li><a class="dropdown-item" href="#">View All</a></li>
-                                    <li><a class="dropdown-item" href="#">Mark All as Read</a></li>
-                                </ul>
-                            </div>
-                        </div>
+        <!-- Add this after the stats cards row -->
+        <div class="row mb-4" id="chartsContainer">
+            <!-- Monthly Activity Chart -->
+            <div class="col-lg-8 col-md-12 mb-4">
+                <div class="chart-card">
+                    <div class="chart-card-header">
+                        <h3 class="chart-title"><i class="fas fa-chart-line me-2"></i>Monthly Activity</h3>
                     </div>
-                    <div class="card-body p-0">
-                        <ul class="list-group list-group-flush">
-                            <li class="list-group-item p-4 border-0 border-bottom">
-                                <div class="d-flex">
-                                    <div class="flex-shrink-0">
-                                        <div class="bg-blue-100 text-blue-600 rounded-full p-2">
-                                            <i class="fas fa-user-graduate"></i>
-                                        </div>
-                                    </div>
-                                    <div class="ms-3">
-                                        <p class="mb-1"><strong>Sarah Johnson</strong> submitted the Math 101 exam</p>
-                                        <p class="text-sm text-gray-500 mb-0">10 minutes ago</p>
-                                    </div>
-                                </div>
-                            </li>
-                            <li class="list-group-item p-4 border-0 border-bottom">
-                                <div class="d-flex">
-                                    <div class="flex-shrink-0">
-                                        <div class="bg-green-100 text-green-600 rounded-full p-2">
-                                            <i class="fas fa-file-alt"></i>
-                                        </div>
-                                    </div>
-                                    <div class="ms-3">
-                                        <p class="mb-1">You created a new exam <strong>Algebra Final</strong></p>
-                                        <p class="text-sm text-gray-500 mb-0">2 hours ago</p>
-                                    </div>
-                                </div>
-                            </li>
-                            <li class="list-group-item p-4 border-0 border-bottom">
-                                <div class="d-flex">
-                                    <div class="flex-shrink-0">
-                                        <div class="bg-purple-100 text-purple-600 rounded-full p-2">
-                                            <i class="fas fa-question-circle"></i>
-                                        </div>
-                                    </div>
-                                    <div class="ms-3">
-                                        <p class="mb-1">You added <strong>15 new questions</strong> to the question bank
-                                        </p>
-                                        <p class="text-sm text-gray-500 mb-0">Yesterday at 3:45 PM</p>
-                                    </div>
-                                </div>
-                            </li>
-                            <li class="list-group-item p-4 border-0">
-                                <div class="d-flex">
-                                    <div class="flex-shrink-0">
-                                        <div class="bg-yellow-100 text-yellow-600 rounded-full p-2">
-                                            <i class="fas fa-bell"></i>
-                                        </div>
-                                    </div>
-                                    <div class="ms-3">
-                                        <p class="mb-1"><strong>System notification:</strong> Maintenance scheduled for
-                                            this weekend</p>
-                                        <p class="text-sm text-gray-500 mb-0">2 days ago</p>
-                                    </div>
-                                </div>
-                            </li>
-                        </ul>
-                    </div>
-                    <div class="card-footer bg-white border-0 p-3 text-center">
-                        <a href="#" class="text-primary text-decoration-none">View All Activity</a>
+                    <div class="chart-body">
+                        <canvas id="monthlyActivityChart"></canvas>
                     </div>
                 </div>
             </div>
-            <div class="col-lg-4">
-                <div class="card mb-4">
-                    <div class="card-header bg-white p-4 border-0">
-                        <h5 class="mb-0 font-semibold">Quick Access</h5>
+
+            <!-- User Distribution Chart -->
+            <div class="col-lg-4 col-md-12 mb-4">
+                <div class="chart-card">
+                    <div class="chart-card-header">
+                        <h3 class="chart-title"><i class="fas fa-users me-2"></i>User Distribution</h3>
                     </div>
-                    <div class="card-body">
-                        <div class="row g-3">
-                            <div class="col-6">
-                                <a href="#" class="btn btn-light w-100 py-3 d-flex flex-column align-items-center"
-                                   id="quickAddQuestion">
-                                    <i class="fas fa-plus-circle text-primary mb-2 fa-2x"></i>
-                                    <span>Add Question</span>
-                                </a>
+                    <div class="chart-body">
+                        <canvas id="userDistributionChart"></canvas>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Subject Distribution Chart -->
+            <div class="col-lg-6 col-md-12 mb-4">
+                <div class="chart-card">
+                    <div class="chart-card-header">
+                        <h3 class="chart-title"><i class="fas fa-book me-2"></i>Exams by Subject</h3>
+                    </div>
+                    <div class="chart-body">
+                        <canvas id="subjectDistributionChart"></canvas>
+                    </div>
+                </div>
+            </div>
+
+            <!-- School Performance Chart -->
+            <div class="col-lg-6 col-md-12 mb-4">
+                <div class="chart-card">
+                    <div class="chart-card-header">
+                        <h3 class="chart-title"><i class="fas fa-university me-2"></i>School Performance</h3>
+                    </div>
+                    <div class="chart-body">
+                        <canvas id="schoolPerformanceChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- User Profile Modal -->
+    <div class="modal fade" id="userProfileModal" tabindex="-1" aria-labelledby="userProfileModalLabel"
+         aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content shadow">
+                <div class="modal-header gradient-header">
+                    <h5 class="modal-title" id="userProfileModalLabel">User Profile</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"
+                            aria-label="Close"></button>
+                </div>
+                <div class="modal-body p-0">
+                    <div class="profile-header">
+                        <div class="profile-image-wrapper">
+                            <div class="profile-image-container">
+                                <img id="modalUserProfileImage" src="assets/default-user.jpg" alt="Profile Image"
+                                     class="img-fluid">
+                                <div class="image-overlay">
+                                    <div class="image-overlay-actions">
+                                    <span class="icon-btn upload-icon">
+                                        <i class="fas fa-camera"></i>
+                                    </span>
+                                        <span class="icon-btn delete-btn">
+                                        <i class="fas fa-trash"></i>
+                                    </span>
+                                    </div>
+                                </div>
                             </div>
-                            <div class="col-6">
-                                <a href="#" class="btn btn-light w-100 py-3 d-flex flex-column align-items-center"
-                                   id="quickCreateExam">
-                                    <i class="fas fa-file-alt text-purple-500 mb-2 fa-2x"></i>
-                                    <span>Create Exam</span>
-                                </a>
-                            </div>
-                            <div class="col-6">
-                                <a href="#" class="btn btn-light w-100 py-3 d-flex flex-column align-items-center"
-                                   id="quickViewResults">
-                                    <i class="fas fa-chart-pie text-green-500 mb-2 fa-2x"></i>
-                                    <span>View Results</span>
-                                </a>
-                            </div>
-                            <div class="col-6">
-                                <a href="#" class="btn btn-light w-100 py-3 d-flex flex-column align-items-center"
-                                   id="quickExportData">
-                                    <i class="fas fa-download text-blue-500 mb-2 fa-2x"></i>
-                                    <span>Export Data</span>
-                                </a>
+                            <input type="file" id="profileImageInput" accept="image/*" style="display: none;">
+                        </div>
+                        <h5 class="fw-bold mb-1" id="modalUserFullName">Loading...</h5>
+                        <span class="user-role-badge" id="modalUserRole">Loading...</span>
+                    </div>
+
+                    <div class="p-4">
+                        <div class="card border-0 shadow-sm mb-3">
+                            <div class="card-body">
+                                <div class="mb-3 d-flex align-items-center">
+                                    <div class="detail-icon me-3">
+                                        <i class="fas fa-envelope"></i>
+                                    </div>
+                                    <div>
+                                        <div class="detail-label">Email Address</div>
+                                        <div class="detail-value" id="modalUserEmail">Loading...</div>
+                                    </div>
+                                </div>
+
+                                <div class="mb-3 d-flex align-items-center">
+                                    <div class="detail-icon me-3">
+                                        <i class="fas fa-phone"></i>
+                                    </div>
+                                    <div>
+                                        <div class="detail-label">Phone Number</div>
+                                        <div class="detail-value" id="modalUserPhone">Loading...</div>
+                                    </div>
+                                </div>
+
+                                <div class="mb-3 d-flex align-items-center">
+                                    <div class="detail-icon me-3">
+                                        <i class="fas fa-calendar-alt"></i>
+                                    </div>
+                                    <div>
+                                        <div class="detail-label">Date of Birth</div>
+                                        <div class="detail-value" id="modalUserDOB">Loading...</div>
+                                    </div>
+                                </div>
+
+                                <div class="d-flex align-items-center">
+                                    <div class="detail-icon me-3">
+                                        <i class="fas fa-shield-alt"></i>
+                                    </div>
+                                    <div>
+                                        <div class="detail-label">Account Status</div>
+                                        <div class="detail-value">
+                                        <span id="statusBadgeContainer">
+                                            <span class="status-badge" id="statusBadge">
+                                                <i class="fas fa-circle status-indicator"></i>
+                                                <span id="modalUserStatus">Loading...</span>
+                                            </span>
+                                        </span>
+                                        </div>
+                                    </div>
+                                </div>
                             </div>
                         </div>
                     </div>
                 </div>
-                <div class="card">
-                    <div class="card-header bg-white p-4 border-0">
-                        <h5 class="mb-0 font-semibold">Upcoming Exams</h5>
-                    </div>
-                    <div class="card-body p-0">
-                        <ul class="list-group list-group-flush">
-                            <li class="list-group-item p-3 border-0 border-bottom">
-                                <div class="d-flex justify-content-between align-items-center">
-                                    <div>
-                                        <h6 class="mb-1 font-medium">Algebra Final</h6>
-                                        <p class="text-sm text-gray-500 mb-0">May 15, 2023</p>
-                                    </div>
-                                    <span class="badge bg-warning text-dark">Tomorrow</span>
-                                </div>
-                            </li>
-                            <li class="list-group-item p-3 border-0 border-bottom">
-                                <div class="d-flex justify-content-between align-items-center">
-                                    <div>
-                                        <h6 class="mb-1 font-medium">Geometry Quiz</h6>
-                                        <p class="text-sm text-gray-500 mb-0">May 20, 2023</p>
-                                    </div>
-                                    <span class="badge bg-info text-dark">5 days</span>
-                                </div>
-                            </li>
-                            <li class="list-group-item p-3 border-0">
-                                <div class="d-flex justify-content-between align-items-center">
-                                    <div>
-                                        <h6 class="mb-1 font-medium">Calculus Midterm</h6>
-                                        <p class="text-sm text-gray-500 mb-0">June 1, 2023</p>
-                                    </div>
-                                    <span class="badge bg-secondary text-white">2 weeks</span>
-                                </div>
-                            </li>
-                        </ul>
-                    </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-light" data-bs-dismiss="modal">Close</button>
                 </div>
             </div>
         </div>
     </div>
-</div>
 
-<!-- Manage Questions Modal -->
-<div class="modal fade" id="questionModal" tabindex="-1" aria-hidden="true">
-    <div class="modal-dialog modal-lg">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title font-semibold" id="questionModalTitle">Add New Question</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-            </div>
-            <div class="modal-body">
-                <form id="questionForm">
-                    <input type="hidden" id="questionId">
-                    <div class="row mb-3">
-                        <div class="col-md-6">
-                            <label for="examId" class="form-label">Exam</label>
-                            <select class="form-select" id="examId" required>
-                                <option value="" selected disabled>Select an exam</option>
-                                <option value="1">Algebra Final</option>
-                                <option value="2">Geometry Quiz</option>
-                                <option value="3">Calculus Midterm</option>
-                            </select>
-                        </div>
-                        <div class="col-md-6">
-                            <label for="questionType" class="form-label">Question Type</label>
-                            <select class="form-select" id="questionType" required>
+    <!--  Add question modal -->
+    <div class="modal fade" id="addQuestionModal" tabindex="-1" role="dialog" aria-labelledby="addQuestionModalLabel"
+         aria-hidden="true">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="addQuestionModalLabel">Add Question</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <form>
+                        <input type="hidden" id="examId">
+                        <div class="form-group">
+                            <label for="questionType">Question Type</label>
+                            <select id="questionType" class="form-control">
                                 <option value="MCQ">Multiple Choice</option>
                                 <option value="TRUE_FALSE">True/False</option>
                                 <option value="SHORT_ANSWER">Short Answer</option>
                                 <option value="ESSAY">Essay</option>
                             </select>
                         </div>
-                    </div>
-                    <div class="mb-3">
-                        <label for="questionContent" class="form-label">Question Content</label>
-                        <textarea class="form-control" id="questionContent" rows="3" required></textarea>
-                    </div>
-                    <div class="mb-3" id="optionsField">
-                        <label for="options" class="form-label">Options (comma-separated for MCQ)</label>
-                        <input type="text" class="form-control" id="options"
-                               placeholder="Option A, Option B, Option C, Option D">
-                        <small class="text-muted">For multiple choice questions, enter options separated by
-                            commas</small>
-                    </div>
-                    <div class="mb-3">
-                        <label for="correctAnswer" class="form-label">Correct Answer</label>
-                        <input type="text" class="form-control" id="correctAnswer" required>
-                    </div>
-                    <div class="mb-3">
-                        <label for="difficultyLevel" class="form-label">Difficulty Level</label>
-                        <select class="form-select" id="difficultyLevel">
-                            <option value="EASY">Easy</option>
-                            <option value="MEDIUM" selected>Medium</option>
-                            <option value="HARD">Hard</option>
-                        </select>
-                    </div>
-                    <div class="mb-3">
-                        <label for="points" class="form-label">Points</label>
-                        <input type="number" class="form-control" id="points" value="1" min="1" max="10">
-                    </div>
-                </form>
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-light" data-bs-dismiss="modal">Cancel</button>
-                <button type="button" class="btn btn-primary" id="saveQuestion">Save Question</button>
-            </div>
-        </div>
-    </div>
-</div>
-
-<!-- Profile Modal -->
-<div class="modal fade" id="profileModal" tabindex="-1" aria-hidden="true">
-    <div class="modal-dialog modal-lg">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title font-semibold">Teacher Profile</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-            </div>
-            <div class="modal-body">
-                <div class="row">
-                    <div class="col-md-4 text-center mb-4 mb-md-0">
-                        <div class="profile-image-container position-relative">
-                            <img id="profilePicture" src="default-profile.png" alt="Profile Picture"
-                                 class="profile-picture mb-3 rounded-circle img-fluid"
-                                 style="width: 150px; height: 150px; object-fit: cover;">
-                            <div class="image-overlay position-absolute top-0 start-0 w-100 h-100 d-flex align-items-center justify-content-center rounded-circle"
-                                 style="background: rgba(0,0,0,0.3); cursor: pointer;">
-                                <i class="fas fa-upload fa-2x text-white upload-icon" title="Upload New Picture"></i>
-                            </div>
+                        <div class="form-group">
+                            <label for="questionContent">Question Content</label>
+                            <textarea id="questionContent" class="form-control" rows="3"></textarea>
                         </div>
-                        <input type="file" id="profilePictureInput" accept="image/*" class="d-none">
-                    </div>
-                    <div class="col-md-8">
-                        <form id="profileForm">
-                            <!-- Personal Information -->
-                            <h6 class="mb-3 text-primary">Personal Information</h6>
-                            <div class="row mb-3">
-                                <div class="col-md-6">
-                                    <label for="teacherFullName" class="form-label">Full Name</label>
-                                    <input type="text" class="form-control" id="teacherFullName" required>
-                                </div>
-                                <div class="col-md-6">
-                                    <label for="teacherUsername" class="form-label">Username</label>
-                                    <input type="text" class="form-control" id="teacherUsername" required>
-                                </div>
+                        <div id="optionsField">
+                            <label>Options (for MCQ)</label>
+                            <div id="options-container">
+                                <!-- Options will be added here by JavaScript -->
                             </div>
-                            <div class="row mb-3">
-                                <div class="col-md-6">
-                                    <label for="teacherEmail" class="form-label">Email</label>
-                                    <input type="email" class="form-control" id="teacherEmail" readonly>
-                                </div>
-                                <div class="col-md-6">
-                                    <label for="teacherNIC" class="form-label">NIC</label>
-                                    <input type="text" class="form-control" id="teacherNIC" readonly>
-                                </div>
-                            </div>
-                            <div class="row mb-3">
-                                <div class="col-md-6">
-                                    <label for="teacherDOB" class="form-label">Date of Birth</label>
-                                    <input type="date" class="form-control" id="teacherDOB">
-                                </div>
-                            </div>
-
-                            <!-- Contact Information -->
-                            <h6 class="mb-3 text-primary">Contact Information</h6>
-                            <div class="row mb-3">
-                                <div class="col-md-6">
-                                    <label for="teacherPhone" class="form-label">Phone Number</label>
-                                    <input type="tel" class="form-control" id="teacherPhone">
-                                </div>
-                            </div>
-
-                            <!-- Professional Details -->
-                            <h6 class="mb-3 text-primary">Professional Details</h6>
-                            <div class="row mb-3">
-                                <div class="col-md-6">
-                                    <label for="teacherSubject" class="form-label">Subject</label>
-                                    <input type="text" class="form-control" id="teacherSubject">
-                                </div>
-                                <div class="col-md-6">
-                                    <label for="teacherSchoolName" class="form-label">School Name</label>
-                                    <input type="text" class="form-control" id="teacherSchoolName">
-                                </div>
-                            </div>
-
-                            <!-- Status -->
-                            <h6 class="mb-3 text-primary">Status</h6>
-                            <div class="mb-3">
-                                <label class="form-label">Account Status</label>
-                                <span id="teacherStatus" class="badge"></span>
-                            </div>
-                        </form>
-                    </div>
+                            <button type="button" id="add-option-btn" class="btn btn-sm btn-secondary">Add Option
+                            </button>
+                        </div>
+                        <div class="form-group">
+                            <label for="correctAnswer">Correct Answer</label>
+                            <input type="text" id="correctAnswer" class="form-control">
+                            <small id="correctAnswerHelp" class="form-text text-muted"></small>
+                        </div>
+                    </form>
                 </div>
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-light" data-bs-dismiss="modal">Cancel</button>
-                <button type="button" class="btn btn-primary" id="saveProfile">
-                    <i class="bi bi-check-circle me-1"></i>Save Changes
-                </button>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+                    <button type="button" class="btn btn-primary" id="addQuestionBtn">Add Question</button>
+                </div>
             </div>
         </div>
     </div>
+
 </div>
 
-<!-- View Students Section -->
-<div id="studentsContent" class="fade-in d-none">
-    <div class="d-flex justify-content-between align-items-center mb-4">
-        <h3 class="text-xl font-semibold text-gray-800">Student Management</h3>
-        <div>
-            <button class="btn btn-light me-2">
-                <i class="fas fa-filter me-1"></i> Filter
-            </button>
-            <button class="btn btn-primary">
-                <i class="fas fa-download me-1"></i> Export
-            </button>
-        </div>
-    </div>
-
-    <div class="card mb-4">
-        <div class="card-body">
-            <div class="row">
-                <div class="col-md-4 mb-3 mb-md-0">
-                    <label for="subjectFilter" class="form-label">Subject</label>
-                    <select class="form-select" id="subjectFilter">
-                        <option value="">All Subjects</option>
-                        <option value="Mathematics">Mathematics</option>
-                        <option value="Physics">Physics</option>
-                        <option value="Chemistry">Chemistry</option>
-                        <option value="Biology">Biology</option>
-                    </select>
-                </div>
-                <div class="col-md-4 mb-3 mb-md-0">
-                    <label for="examFilter" class="form-label">Exam</label>
-                    <select class="form-select" id="examFilter">
-                        <option value="">All Exams</option>
-                        <option value="1">Algebra Final</option>
-                        <option value="2">Geometry Quiz</option>
-                        <option value="3">Calculus Midterm</option>
-                    </select>
-                </div>
-                <div class="col-md-4">
-                    <label for="completionFilter" class="form-label">Completion Status</label>
-                    <select class="form-select" id="completionFilter">
-                        <option value="">All Statuses</option>
-                        <option value="completed">Completed</option>
-                        <option value="pending">Pending</option>
-                    </select>
-                </div>
-            </div>
-            <div class="d-flex justify-content-end mt-3">
-                <button class="btn btn-primary" id="applyFilters">
-                    <i class="fas fa-search me-1"></i> Search
-                </button>
-            </div>
-        </div>
-    </div>
-
-    <div class="card">
-        <div class="card-body p-0">
-            <div class="table-responsive">
-                <table class="table mb-0" id="studentTable">
-                    <thead>
-                    <tr>
-                        <th>Student</th>
-                        <th>Email</th>
-                        <th>Subject</th>
-                        <th>Exam</th>
-                        <th>Score</th>
-                        <th>Status</th>
-                        <th>Actions</th>
-                    </tr>
-                    </thead>
-                    <tbody>
-                    <tr>
-                        <td>
-                            <div class="d-flex align-items-center">
-                                <img src="https://via.placeholder.com/40" class="rounded-circle me-2" alt="Student">
-                                <div>
-                                    <h6 class="mb-0 font-medium">Sarah Johnson</h6>
-                                    <small class="text-muted">ID: S12345</small>
-                                </div>
-                            </div>
-                        </td>
-                        <td>sarah.j@example.com</td>
-                        <td>Mathematics</td>
-                        <td>Algebra Final</td>
-                        <td>92/100</td>
-                        <td><span class="badge bg-success">Completed</span></td>
-                        <td>
-                            <button class="btn btn-sm btn-light custom-tooltip" data-tooltip="View Details">
-                                <i class="fas fa-eye"></i>
-                            </button>
-                            <button class="btn btn-sm btn-light custom-tooltip" data-tooltip="Send Message">
-                                <i class="fas fa-envelope"></i>
-                            </button>
-                        </td>
-                    </tr>
-                    <tr>
-                        <td>
-                            <div class="d-flex align-items-center">
-                                <img src="https://via.placeholder.com/40" class="rounded-circle me-2" alt="Student">
-                                <div>
-                                    <h6 class="mb-0 font-medium">Michael Brown</h6>
-                                    <small class="text-muted">ID: S12346</small>
-                                </div>
-                            </div>
-                        </td>
-                        <td>michael.b@example.com</td>
-                        <td>Mathematics</td>
-                        <td>Algebra Final</td>
-                        <td>78/100</td>
-                        <td><span class="badge bg-success">Completed</span></td>
-                        <td>
-                            <button class="btn btn-sm btn-light custom-tooltip" data-tooltip="View Details">
-                                <i class="fas fa-eye"></i>
-                            </button>
-                            <button class="btn btn-sm btn-light custom-tooltip" data-tooltip="Send Message">
-                                <i class="fas fa-envelope"></i>
-                            </button>
-                        </td>
-                    </tr>
-                    <tr>
-                        <td>
-                            <div class="d-flex align-items-center">
-                                <img src="https://via.placeholder.com/40" class="rounded-circle me-2" alt="Student">
-                                <div>
-                                    <h6 class="mb-0 font-medium">Emily Davis</h6>
-                                    <small class="text-muted">ID: S12347</small>
-                                </div>
-                            </div>
-                        </td>
-                        <td>emily.d@example.com</td>
-                        <td>Mathematics</td>
-                        <td>Geometry Quiz</td>
-                        <td>--</td>
-                        <td><span class="badge bg-warning text-dark">Pending</span></td>
-                        <td>
-                            <button class="btn btn-sm btn-light custom-tooltip" data-tooltip="View Details">
-                                <i class="fas fa-eye"></i>
-                            </button>
-                            <button class="btn btn-sm btn-light custom-tooltip" data-tooltip="Send Message">
-                                <i class="fas fa-envelope"></i>
-                            </button>
-                        </td>
-                    </tr>
-                    <tr>
-                        <td>
-                            <div class="d-flex align-items-center">
-                                <img src="https://via.placeholder.com/40" class="rounded-circle me-2" alt="Student">
-                                <div>
-                                    <h6 class="mb-0 font-medium">James Wilson</h6>
-                                    <small class="text-muted">ID: S12348</small>
-                                </div>
-                            </div>
-                        </td>
-                        <td>james.w@example.com</td>
-                        <td>Mathematics</td>
-                        <td>Calculus Midterm</td>
-                        <td>85/100</td>
-                        <td><span class="badge bg-success">Completed</span></td>
-                        <td>
-                            <button class="btn btn-sm btn-light custom-tooltip" data-tooltip="View Details">
-                                <i class="fas fa-eye"></i>
-                            </button>
-                            <button class="btn btn-sm btn-light custom-tooltip" data-tooltip="Send Message">
-                                <i class="fas fa-envelope"></i>
-                            </button>
-                        </td>
-                    </tr>
-                    <tr>
-                        <td>
-                            <div class="d-flex align-items-center">
-                                <img src="https://via.placeholder.com/40" class="rounded-circle me-2" alt="Student">
-                                <div>
-                                    <h6 class="mb-0 font-medium">Olivia Martinez</h6>
-                                    <small class="text-muted">ID: S12349</small>
-                                </div>
-                            </div>
-                        </td>
-                        <td>olivia.m@example.com</td>
-                        <td>Mathematics</td>
-                        <td>Geometry Quiz</td>
-                        <td>--</td>
-                        <td><span class="badge bg-warning text-dark">Pending</span></td>
-                        <td>
-                            <button class="btn btn-sm btn-light custom-tooltip" data-tooltip="View Details">
-                                <i class="fas fa-eye"></i>
-                            </button>
-                            <button class="btn btn-sm btn-light custom-tooltip" data-tooltip="Send Message">
-                                <i class="fas fa-envelope"></i>
-                            </button>
-                        </td>
-                    </tr>
-                    </tbody>
-                </table>
-            </div>
-        </div>
-        <div class="card-footer bg-white p-3">
-            <nav aria-label="Page navigation">
-                <ul class="pagination justify-content-center mb-0">
-                    <li class="page-item disabled">
-                        <a class="page-link" href="#" tabindex="-1" aria-disabled="true">Previous</a>
-                    </li>
-                    <li class="page-item active"><a class="page-link" href="#">1</a></li>
-                    <li class="page-item"><a class="page-link" href="#">2</a></li>
-                    <li class="page-item"><a class="page-link" href="#">3</a></li>
-                    <li class="page-item">
-                        <a class="page-link" href="#">Next</a>
-                    </li>
-                </ul>
-            </nav>
-        </div>
-    </div>
-</div>
-
-<!-- Manage Questions Section -->
-<div id="questionsContent" class="fade-in d-none">
-    <div class="d-flex justify-content-between align-items-center mb-4">
-        <h3 class="text-xl font-semibold text-gray-800">Question Bank</h3>
-        <div>
-            <button class="btn btn-light me-2">
-                <i class="fas fa-filter me-1"></i> Filter
-            </button>
-            <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#questionModal">
-                <i class="fas fa-plus me-1"></i> Add Question
-            </button>
-        </div>
-    </div>
-
-    <div class="card">
-        <div class="card-body p-0">
-            <div class="table-responsive">
-                <table class="table mb-0" id="questionBankTable">
-                    <thead>
-                    <tr>
-                        <th>ID</th>
-                        <th>Question</th>
-                        <th>Type</th>
-                        <th>Exam</th>
-                        <th>Difficulty</th>
-                        <th>Points</th>
-                        <th>Actions</th>
-                    </tr>
-                    </thead>
-                    <tbody>
-                    <tr>
-                        <td>Q001</td>
-                        <td>What is the formula for the area of a circle?</td>
-                        <td><span class="badge bg-blue-100 text-blue-800">Multiple Choice</span></td>
-                        <td>Geometry Quiz</td>
-                        <td><span class="badge bg-success">Easy</span></td>
-                        <td>1</td>
-                        <td>
-                            <button class="btn btn-sm btn-warning custom-tooltip" data-tooltip="Edit">
-                                <i class="fas fa-edit"></i>
-                            </button>
-                            <button class="btn btn-sm btn-danger custom-tooltip" data-tooltip="Delete">
-                                <i class="fas fa-trash"></i>
-                            </button>
-                        </td>
-                    </tr>
-                    <tr>
-                        <td>Q002</td>
-                        <td>Solve for x: 2x + 5 = 15</td>
-                        <td><span class="badge bg-purple-100 text-purple-800">Short Answer</span></td>
-                        <td>Algebra Final</td>
-                        <td><span class="badge bg-warning text-dark">Medium</span></td>
-                        <td>2</td>
-                        <td>
-                            <button class="btn btn-sm btn-warning custom-tooltip" data-tooltip="Edit">
-                                <i class="fas fa-edit"></i>
-                            </button>
-                            <button class="btn btn-sm btn-danger custom-tooltip" data-tooltip="Delete">
-                                <i class="fas fa-trash"></i>
-                            </button>
-                        </td>
-                    </tr>
-                    <tr>
-                        <td>Q003</td>
-                        <td>The derivative of f(x) = x² is f'(x) = 2x.</td>
-                        <td><span class="badge bg-green-100 text-green-800">True/False</span></td>
-                        <td>Calculus Midterm</td>
-                        <td><span class="badge bg-success">Easy</span></td>
-                        <td>1</td>
-                        <td>
-                            <button class="btn btn-sm btn-warning custom-tooltip" data-tooltip="Edit">
-                                <i class="fas fa-edit"></i>
-                            </button>
-                            <button class="btn btn-sm btn-danger custom-tooltip" data-tooltip="Delete">
-                                <i class="fas fa-trash"></i>
-                            </button>
-                        </td>
-                    </tr>
-                    <tr>
-                        <td>Q004</td>
-                        <td>Find the indefinite integral of f(x) = 3x² + 2x - 5.</td>
-                        <td><span class="badge bg-purple-100 text-purple-800">Short Answer</span></td>
-                        <td>Calculus Midterm</td>
-                        <td><span class="badge bg-danger">Hard</span></td>
-                        <td>3</td>
-                        <td>
-                            <button class="btn btn-sm btn-warning custom-tooltip" data-tooltip="Edit">
-                                <i class="fas fa-edit"></i>
-                            </button>
-                            <button class="btn btn-sm btn-danger custom-tooltip" data-tooltip="Delete">
-                                <i class="fas fa-trash"></i>
-                            </button>
-                        </td>
-                    </tr>
-                    <tr>
-                        <td>Q005</td>
-                        <td>Explain the Pythagorean theorem and provide an example of its application.</td>
-                        <td><span class="badge bg-red-100 text-red-800">Essay</span></td>
-                        <td>Geometry Quiz</td>
-                        <td><span class="badge bg-warning text-dark">Medium</span></td>
-                        <td>5</td>
-                        <td>
-                            <button class="btn btn-sm btn-warning custom-tooltip" data-tooltip="Edit">
-                                <i class="fas fa-edit"></i>
-                            </button>
-                            <button class="btn btn-sm btn-danger custom-tooltip" data-tooltip="Delete">
-                                <i class="fas fa-trash"></i>
-                            </button>
-                        </td>
-                    </tr>
-                    </tbody>
-                </table>
-            </div>
-        </div>
-        <div class="card-footer bg-white p-3">
-            <nav aria-label="Page navigation">
-                <ul class="pagination justify-content-center mb-0">
-                    <li class="page-item disabled">
-                        <a class="page-link" href="#" tabindex="-1" aria-disabled="true">Previous</a>
-                    </li>
-                    <li class="page-item active"><a class="page-link" href="#">1</a></li>
-                    <li class="page-item"><a class="page-link" href="#">2</a></li>
-                    <li class="page-item"><a class="page-link" href="#">3</a></li>
-                    <li class="page-item">
-                        <a class="page-link" href="#">Next</a>
-                    </li>
-                </ul>
-            </nav>
-        </div>
-    </div>
-</div>
-
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
 <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-<script src="js/teacher-dashboard.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/toastify-js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script src="js/teacher-dash2.js"></script>
+<script src="js/super-admin-dashboard-charts.js"></script>
 </body>
 </html>

@@ -1,4 +1,3 @@
-// login.js
 document.addEventListener("DOMContentLoaded", function () {
     const togglePassword = document.getElementById('togglePassword');
     const password = document.getElementById('password');

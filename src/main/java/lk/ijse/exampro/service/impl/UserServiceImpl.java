@@ -118,9 +118,6 @@ public class UserServiceImpl implements UserDetailsService, UserService {
         user.setPassword(passwordEncoder.encode(userDTO.getPassword()));
         user.setActive(true);
 
-        user.setProfilePicture("https://asset.cloudinary.com/detaqxoas/70c2c872c22b82a4aacbe7d3ef3d73bb");
-        user.setProfilePicturePublicId("default-profile");
-
         userRepository.save(user);
 
         String schoolName = null;
@@ -598,9 +595,6 @@ public class UserServiceImpl implements UserDetailsService, UserService {
             String publicId = (String) uploadResult.get("public_id");
             user.setProfilePicture(profilePictureUrl);
             user.setProfilePicturePublicId(publicId);
-        } else {
-            user.setProfilePicture("https://asset.cloudinary.com/detaqxoas/70c2c872c22b82a4aacbe7d3ef3d73bb");
-            user.setProfilePicturePublicId("default-profile");
         }
 
         User savedUser = userRepository.save(user);

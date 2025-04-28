@@ -14,13 +14,14 @@ import org.springframework.mail.MailAuthenticationException;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
 @RestController
 @RequestMapping("api/v1/exam")
-@CrossOrigin(origins = "http://localhost:63342")
+@CrossOrigin(origins = {"http://localhost:63342", "http://localhost:3000"})
 public class ExamController {
 
     private static final Logger logger = LoggerFactory.getLogger(ExamController.class);
@@ -46,6 +47,25 @@ public class ExamController {
             logger.error("Error retrieving exams: {}", e.getMessage(), e);
             return ResponseEntity.status(VarList.INTERNAL_SERVER_ERROR)
                     .body(new ResponseDTO(VarList.INTERNAL_SERVER_ERROR, e.getMessage(), null));
+        }
+    }
+
+
+    @GetMapping("/teacher-exams")
+    @PreAuthorize("hasRole('TEACHER')")
+    public ResponseEntity<ResponseDTO> getTeacherExams(Authentication authentication) {
+        try {
+            String teacherEmail = authentication.getName();
+            List<ExamDTO> exams = examService.getExamsForTeacher(teacherEmail);
+            return ResponseEntity.ok(new ResponseDTO(VarList.OK, "Teacher exams retrieved successfully", exams));
+        } catch (IllegalArgumentException e) {
+            logger.warn("Invalid request: {}", e.getMessage());
+            return ResponseEntity.status(VarList.BAD_REQUEST)
+                    .body(new ResponseDTO(VarList.BAD_REQUEST, e.getMessage(), null));
+        } catch (Exception e) {
+            logger.error("Error retrieving teacher exams: {}", e.getMessage(), e);
+            return ResponseEntity.status(VarList.INTERNAL_SERVER_ERROR)
+                    .body(new ResponseDTO(VarList.INTERNAL_SERVER_ERROR, "An unexpected error occurred", null));
         }
     }
 
@@ -113,24 +133,58 @@ public class ExamController {
         }
     }
 
-    @PostMapping("/{examId}/questions")
+    @PostMapping("/questions")
     @PreAuthorize("hasRole('TEACHER')")
-    public ResponseEntity<ResponseDTO> addQuestionToExam(
-            @PathVariable Long examId,
-            @RequestBody QuestionDTO questionDTO
-    ) {
+    public ResponseEntity<ResponseDTO> addQuestionToExam(@RequestBody QuestionDTO questionDTO, Authentication authentication) {
         try {
-            QuestionDTO createdQuestion = examService.addQuestionToExam(examId, questionDTO);
+            String teacherEmail = authentication.getName();
+            examService.addQuestionToExam(questionDTO, teacherEmail);
             return ResponseEntity.status(VarList.CREATED)
-                    .body(new ResponseDTO(VarList.CREATED, "Question added successfully", createdQuestion));
+                    .body(new ResponseDTO(VarList.CREATED, "Question added successfully", null));
         } catch (IllegalArgumentException e) {
-            logger.warn("Invalid question data: {}", e.getMessage());
+            logger.warn("Invalid request: {}", e.getMessage());
             return ResponseEntity.status(VarList.BAD_REQUEST)
                     .body(new ResponseDTO(VarList.BAD_REQUEST, e.getMessage(), null));
         } catch (Exception e) {
-            logger.error("Error adding question to exam {}: {}", examId, e.getMessage(), e);
+            logger.error("Error adding question: {}", e.getMessage(), e);
             return ResponseEntity.status(VarList.INTERNAL_SERVER_ERROR)
-                    .body(new ResponseDTO(VarList.INTERNAL_SERVER_ERROR, e.getMessage(), null));
+                    .body(new ResponseDTO(VarList.INTERNAL_SERVER_ERROR, "An unexpected error occurred", null));
+        }
+    }
+
+    @GetMapping("/{examId}/questions")
+    @PreAuthorize("hasRole('TEACHER')")
+    public ResponseEntity<ResponseDTO> getQuestionsForExam(@PathVariable Long examId, Authentication authentication) {
+        try {
+            String teacherEmail = authentication.getName();
+            List<QuestionDTO> questions = examService.getQuestionsForExam(examId, teacherEmail);
+            return ResponseEntity.ok(new ResponseDTO(VarList.OK, "Questions retrieved successfully", questions));
+        } catch (IllegalArgumentException e) {
+            logger.warn("Invalid request: {}", e.getMessage());
+            return ResponseEntity.status(VarList.BAD_REQUEST)
+                    .body(new ResponseDTO(VarList.BAD_REQUEST, e.getMessage(), null));
+        } catch (Exception e) {
+            logger.error("Error retrieving questions: {}", e.getMessage(), e);
+            return ResponseEntity.status(VarList.INTERNAL_SERVER_ERROR)
+                    .body(new ResponseDTO(VarList.INTERNAL_SERVER_ERROR, "An unexpected error occurred", null));
+        }
+    }
+
+    @GetMapping("/{examId}/student-answers")
+    @PreAuthorize("hasRole('TEACHER')")
+    public ResponseEntity<ResponseDTO> getStudentAnswersForExam(@PathVariable Long examId, Authentication authentication) {
+        try {
+            String teacherEmail = authentication.getName();
+            List<StudentAnswerDTO> answers = examService.getStudentAnswersForExam(examId, teacherEmail);
+            return ResponseEntity.ok(new ResponseDTO(VarList.OK, "Student answers retrieved successfully", answers));
+        } catch (IllegalArgumentException e) {
+            logger.warn("Invalid request: {}", e.getMessage());
+            return ResponseEntity.status(VarList.BAD_REQUEST)
+                    .body(new ResponseDTO(VarList.BAD_REQUEST, e.getMessage(), null));
+        } catch (Exception e) {
+            logger.error("Error retrieving student answers: {}", e.getMessage(), e);
+            return ResponseEntity.status(VarList.INTERNAL_SERVER_ERROR)
+                    .body(new ResponseDTO(VarList.INTERNAL_SERVER_ERROR, "An unexpected error occurred", null));
         }
     }
 
@@ -245,6 +299,24 @@ public class ExamController {
             logger.error("Error retrieving students: {}", e.getMessage(), e);
             return ResponseEntity.status(VarList.INTERNAL_SERVER_ERROR)
                     .body(new ResponseDTO(VarList.INTERNAL_SERVER_ERROR, e.getMessage(), null));
+        }
+    }
+
+    @GetMapping("/answers-to-grade")
+    @PreAuthorize("hasRole('TEACHER')")
+    public ResponseEntity<ResponseDTO> getAnswersToGrade(Authentication authentication) {
+        try {
+            String teacherEmail = authentication.getName();
+            List<StudentAnswerDTO> answers = examService.getAnswersToGrade(teacherEmail);
+            return ResponseEntity.ok(new ResponseDTO(VarList.OK, "Ungraded answers retrieved successfully", answers));
+        } catch (IllegalArgumentException e) {
+            logger.warn("Invalid request: {}", e.getMessage());
+            return ResponseEntity.status(VarList.BAD_REQUEST)
+                    .body(new ResponseDTO(VarList.BAD_REQUEST, e.getMessage(), null));
+        } catch (Exception e) {
+            logger.error("Error retrieving ungraded answers: {}", e.getMessage(), e);
+            return ResponseEntity.status(VarList.INTERNAL_SERVER_ERROR)
+                    .body(new ResponseDTO(VarList.INTERNAL_SERVER_ERROR, "An unexpected error occurred", null));
         }
     }
 }

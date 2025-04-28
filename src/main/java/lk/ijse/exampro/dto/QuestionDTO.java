@@ -8,9 +8,10 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @AllArgsConstructor
 public class QuestionDTO {
-    private Long id;
+    private Long examId;
     private String type;
     private String content;
     private String correctAnswer;
     private String options;
+    private String subject;
 }

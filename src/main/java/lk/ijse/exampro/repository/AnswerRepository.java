@@ -13,6 +13,8 @@ public interface AnswerRepository extends JpaRepository<Answer, Long> {
     // Find all answers for a specific student's exam attempt
     List<Answer> findByStudentResult(StudentResult studentResult);
 
+    List<Answer> findByQuestion_Exam_Id(Long examId);
+
     // Find all answers for a specific student's exam attempt where score is null (ungraded)
     List<Answer> findByStudentResultAndScoreIsNull(StudentResult studentResult);
 

@@ -1,16 +1,35 @@
 package lk.ijse.exampro.service;
 
-import lk.ijse.exampro.dto.AnswerDTO;
-import lk.ijse.exampro.dto.ExamDTO;
-import lk.ijse.exampro.dto.QuestionDTO;
-import lk.ijse.exampro.dto.StudentResultDTO;
+import lk.ijse.exampro.dto.*;
 
 import java.util.List;
 
 public interface ExamService {
+    List<ExamDTO> getAllExams();
+
+    List<ExamDTO> getExamsForTeacher(String teacherEmail);
+
     ExamDTO createExam(ExamDTO examDTO);
 
-    QuestionDTO addQuestionToExam(Long examId, QuestionDTO questionDTO);
+    void deleteExam(Long examId);
+
+    ExamDTO updateExam(Long examId, ExamDTO examDTO);
+
+    void addQuestionToExam(QuestionDTO questionDTO, String teacherEmail);
+
+    List<QuestionDTO> getQuestionsForExam(Long examId, String teacherEmail);
+
+    List<StudentAnswerDTO> getStudentAnswersForExam(Long examId, String teacherEmail);
+
+    void submitAnswers(Long studentExamId, List<AnswerDTO> answers);
+
+    StudentResultDTO startExam(Long examId, String studentEmail);
+
+    long getRemainingTimeForStudent(Long studentExamId);
+
+    void gradeShortAnswer(Long answerId, int score);
+
+    List<StudentResultDTO> getStudentsBySubject(String subject);
 
     QuestionDTO updateQuestion(Long questionId, QuestionDTO questionDTO);
 
@@ -18,23 +37,9 @@ public interface ExamService {
 
     List<QuestionDTO> getQuestionsByExam(Long examId);
 
-    StudentResultDTO startExam(Long examId, String studentEmail);
-
-    void submitAnswers(Long studentExamId, List<AnswerDTO> answers);
-
-    void gradeShortAnswer(Long answerId, int score);
+    ExamDTO getExam(Long examId);
 
     void autoSubmitExam(Long studentExamId);
 
-    long getRemainingTimeForStudent(Long studentExamId);
-
-    ExamDTO getExam(Long examId);
-
-    List<StudentResultDTO> getStudentsBySubject(String subject);
-
-    List<ExamDTO> getAllExams();
-
-    void deleteExam(Long examId);
-
-    ExamDTO updateExam(Long examId, ExamDTO examDTO);
+    List<StudentAnswerDTO> getAnswersToGrade(String teacherEmail);
 }
